@@ -14,16 +14,234 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      comunicados: {
+        Row: {
+          autor: string | null
+          categoria: string | null
+          conteudo: string
+          created_at: string
+          data_publicacao: string
+          destaque: boolean
+          id: string
+          publicado: boolean
+          resumo: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          autor?: string | null
+          categoria?: string | null
+          conteudo: string
+          created_at?: string
+          data_publicacao?: string
+          destaque?: boolean
+          id?: string
+          publicado?: boolean
+          resumo?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          autor?: string | null
+          categoria?: string | null
+          conteudo?: string
+          created_at?: string
+          data_publicacao?: string
+          destaque?: boolean
+          id?: string
+          publicado?: boolean
+          resumo?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contatos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string | null
+          funcao: string | null
+          id: string
+          nome: string
+          telefone_whatsapp: string | null
+          tipo_contato: string | null
+          unidade: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          funcao?: string | null
+          id?: string
+          nome: string
+          telefone_whatsapp?: string | null
+          tipo_contato?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          funcao?: string | null
+          id?: string
+          nome?: string
+          telefone_whatsapp?: string | null
+          tipo_contato?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ferramentas: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          link_acesso: string | null
+          nome: string
+          publico_alvo: string | null
+          responsavel: string | null
+          segmento: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          link_acesso?: string | null
+          nome: string
+          publico_alvo?: string | null
+          responsavel?: string | null
+          segmento?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          link_acesso?: string | null
+          nome?: string
+          publico_alvo?: string | null
+          responsavel?: string | null
+          segmento?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      solicitacoes: {
+        Row: {
+          cargo_funcao: string | null
+          created_at: string
+          descricao: string
+          email_solicitante: string
+          id: string
+          link_referencia: string | null
+          nome_solicitante: string
+          observacoes_adicionais: string | null
+          observacoes_internas: string | null
+          prazo_desejado: string | null
+          publico_impactado: string | null
+          responsavel_te: string | null
+          segmento_area: string | null
+          status: string
+          tipo_solicitacao: string
+          titulo: string
+          unidade: string
+          unidades_impactadas: string | null
+          updated_at: string
+          urgencia: string
+        }
+        Insert: {
+          cargo_funcao?: string | null
+          created_at?: string
+          descricao: string
+          email_solicitante: string
+          id?: string
+          link_referencia?: string | null
+          nome_solicitante: string
+          observacoes_adicionais?: string | null
+          observacoes_internas?: string | null
+          prazo_desejado?: string | null
+          publico_impactado?: string | null
+          responsavel_te?: string | null
+          segmento_area?: string | null
+          status?: string
+          tipo_solicitacao: string
+          titulo: string
+          unidade: string
+          unidades_impactadas?: string | null
+          updated_at?: string
+          urgencia?: string
+        }
+        Update: {
+          cargo_funcao?: string | null
+          created_at?: string
+          descricao?: string
+          email_solicitante?: string
+          id?: string
+          link_referencia?: string | null
+          nome_solicitante?: string
+          observacoes_adicionais?: string | null
+          observacoes_internas?: string | null
+          prazo_desejado?: string | null
+          publico_impactado?: string | null
+          responsavel_te?: string | null
+          segmento_area?: string | null
+          status?: string
+          tipo_solicitacao?: string
+          titulo?: string
+          unidade?: string
+          unidades_impactadas?: string | null
+          updated_at?: string
+          urgencia?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +368,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
