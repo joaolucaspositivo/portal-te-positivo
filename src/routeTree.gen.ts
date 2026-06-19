@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
 import { Route as AreaTeSolicitacoesRouteImport } from './routes/area-te.solicitacoes'
 import { Route as AreaTeFerramentasRouteImport } from './routes/area-te.ferramentas'
+import { Route as AreaTeContatosRouteImport } from './routes/area-te.contatos'
 import { Route as AreaTeComunicadosRouteImport } from './routes/area-te.comunicados'
 import { Route as AreaTeSolicitacoesIdRouteImport } from './routes/area-te.solicitacoes.$id'
 
@@ -78,6 +79,11 @@ const AreaTeFerramentasRoute = AreaTeFerramentasRouteImport.update({
   path: '/ferramentas',
   getParentRoute: () => AreaTeRoute,
 } as any)
+const AreaTeContatosRoute = AreaTeContatosRouteImport.update({
+  id: '/contatos',
+  path: '/contatos',
+  getParentRoute: () => AreaTeRoute,
+} as any)
 const AreaTeComunicadosRoute = AreaTeComunicadosRouteImport.update({
   id: '/comunicados',
   path: '/comunicados',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/solicitacoes': typeof SolicitacoesRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
+  '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/': typeof AreaTeIndexRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/solicitacoes': typeof SolicitacoesRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
+  '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te': typeof AreaTeIndexRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/solicitacoes': typeof SolicitacoesRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
+  '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/': typeof AreaTeIndexRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/solicitacoes'
     | '/area-te/comunicados'
+    | '/area-te/contatos'
     | '/area-te/ferramentas'
     | '/area-te/solicitacoes'
     | '/area-te/'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/solicitacoes'
     | '/area-te/comunicados'
+    | '/area-te/contatos'
     | '/area-te/ferramentas'
     | '/area-te/solicitacoes'
     | '/area-te'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/solicitacoes'
     | '/area-te/comunicados'
+    | '/area-te/contatos'
     | '/area-te/ferramentas'
     | '/area-te/solicitacoes'
     | '/area-te/'
@@ -271,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeFerramentasRouteImport
       parentRoute: typeof AreaTeRoute
     }
+    '/area-te/contatos': {
+      id: '/area-te/contatos'
+      path: '/contatos'
+      fullPath: '/area-te/contatos'
+      preLoaderRoute: typeof AreaTeContatosRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
     '/area-te/comunicados': {
       id: '/area-te/comunicados'
       path: '/comunicados'
@@ -301,6 +320,7 @@ const AreaTeSolicitacoesRouteWithChildren =
 
 interface AreaTeRouteChildren {
   AreaTeComunicadosRoute: typeof AreaTeComunicadosRoute
+  AreaTeContatosRoute: typeof AreaTeContatosRoute
   AreaTeFerramentasRoute: typeof AreaTeFerramentasRoute
   AreaTeSolicitacoesRoute: typeof AreaTeSolicitacoesRouteWithChildren
   AreaTeIndexRoute: typeof AreaTeIndexRoute
@@ -308,6 +328,7 @@ interface AreaTeRouteChildren {
 
 const AreaTeRouteChildren: AreaTeRouteChildren = {
   AreaTeComunicadosRoute: AreaTeComunicadosRoute,
+  AreaTeContatosRoute: AreaTeContatosRoute,
   AreaTeFerramentasRoute: AreaTeFerramentasRoute,
   AreaTeSolicitacoesRoute: AreaTeSolicitacoesRouteWithChildren,
   AreaTeIndexRoute: AreaTeIndexRoute,
