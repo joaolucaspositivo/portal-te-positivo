@@ -19,6 +19,7 @@ import { Route as AreaTeRouteImport } from './routes/area-te'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
 import { Route as AreaTeSolicitacoesRouteImport } from './routes/area-te.solicitacoes'
+import { Route as AreaTeSolicitacoesIdRouteImport } from './routes/area-te.solicitacoes.$id'
 
 const SolicitacoesRoute = SolicitacoesRouteImport.update({
   id: '/solicitacoes',
@@ -70,6 +71,11 @@ const AreaTeSolicitacoesRoute = AreaTeSolicitacoesRouteImport.update({
   path: '/solicitacoes',
   getParentRoute: () => AreaTeRoute,
 } as any)
+const AreaTeSolicitacoesIdRoute = AreaTeSolicitacoesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AreaTeSolicitacoesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,8 +86,9 @@ export interface FileRoutesByFullPath {
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
   '/solicitacoes': typeof SolicitacoesRoute
-  '/area-te/solicitacoes': typeof AreaTeSolicitacoesRoute
+  '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/': typeof AreaTeIndexRoute
+  '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,8 +98,9 @@ export interface FileRoutesByTo {
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
   '/solicitacoes': typeof SolicitacoesRoute
-  '/area-te/solicitacoes': typeof AreaTeSolicitacoesRoute
+  '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te': typeof AreaTeIndexRoute
+  '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,8 +112,9 @@ export interface FileRoutesById {
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
   '/solicitacoes': typeof SolicitacoesRoute
-  '/area-te/solicitacoes': typeof AreaTeSolicitacoesRoute
+  '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/': typeof AreaTeIndexRoute
+  '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/solicitacoes'
     | '/area-te/solicitacoes'
     | '/area-te/'
+    | '/area-te/solicitacoes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/solicitacoes'
     | '/area-te/solicitacoes'
     | '/area-te'
+    | '/area-te/solicitacoes/$id'
   id:
     | '__root__'
     | '/'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/solicitacoes'
     | '/area-te/solicitacoes'
     | '/area-te/'
+    | '/area-te/solicitacoes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -228,16 +240,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeSolicitacoesRouteImport
       parentRoute: typeof AreaTeRoute
     }
+    '/area-te/solicitacoes/$id': {
+      id: '/area-te/solicitacoes/$id'
+      path: '/$id'
+      fullPath: '/area-te/solicitacoes/$id'
+      preLoaderRoute: typeof AreaTeSolicitacoesIdRouteImport
+      parentRoute: typeof AreaTeSolicitacoesRoute
+    }
   }
 }
 
+interface AreaTeSolicitacoesRouteChildren {
+  AreaTeSolicitacoesIdRoute: typeof AreaTeSolicitacoesIdRoute
+}
+
+const AreaTeSolicitacoesRouteChildren: AreaTeSolicitacoesRouteChildren = {
+  AreaTeSolicitacoesIdRoute: AreaTeSolicitacoesIdRoute,
+}
+
+const AreaTeSolicitacoesRouteWithChildren =
+  AreaTeSolicitacoesRoute._addFileChildren(AreaTeSolicitacoesRouteChildren)
+
 interface AreaTeRouteChildren {
-  AreaTeSolicitacoesRoute: typeof AreaTeSolicitacoesRoute
+  AreaTeSolicitacoesRoute: typeof AreaTeSolicitacoesRouteWithChildren
   AreaTeIndexRoute: typeof AreaTeIndexRoute
 }
 
 const AreaTeRouteChildren: AreaTeRouteChildren = {
-  AreaTeSolicitacoesRoute: AreaTeSolicitacoesRoute,
+  AreaTeSolicitacoesRoute: AreaTeSolicitacoesRouteWithChildren,
   AreaTeIndexRoute: AreaTeIndexRoute,
 }
 
