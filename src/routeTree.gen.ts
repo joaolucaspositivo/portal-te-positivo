@@ -17,6 +17,7 @@ import { Route as ComunicadosRouteImport } from './routes/comunicados'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AreaTeRouteImport } from './routes/area-te'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
 
 const SolicitacoesRoute = SolicitacoesRouteImport.update({
   id: '/solicitacoes',
@@ -58,37 +59,44 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AreaTeIndexRoute = AreaTeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AreaTeRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/area-te': typeof AreaTeRoute
+  '/area-te': typeof AreaTeRouteWithChildren
   '/auth': typeof AuthRoute
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
   '/solicitacoes': typeof SolicitacoesRoute
+  '/area-te/': typeof AreaTeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/area-te': typeof AreaTeRoute
   '/auth': typeof AuthRoute
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
   '/solicitacoes': typeof SolicitacoesRoute
+  '/area-te': typeof AreaTeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/area-te': typeof AreaTeRoute
+  '/area-te': typeof AreaTeRouteWithChildren
   '/auth': typeof AuthRoute
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
   '/solicitacoes': typeof SolicitacoesRoute
+  '/area-te/': typeof AreaTeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,16 +109,17 @@ export interface FileRouteTypes {
     | '/ferramentas'
     | '/sobre'
     | '/solicitacoes'
+    | '/area-te/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/area-te'
     | '/auth'
     | '/comunicados'
     | '/contatos'
     | '/ferramentas'
     | '/sobre'
     | '/solicitacoes'
+    | '/area-te'
   id:
     | '__root__'
     | '/'
@@ -121,11 +130,12 @@ export interface FileRouteTypes {
     | '/ferramentas'
     | '/sobre'
     | '/solicitacoes'
+    | '/area-te/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AreaTeRoute: typeof AreaTeRoute
+  AreaTeRoute: typeof AreaTeRouteWithChildren
   AuthRoute: typeof AuthRoute
   ComunicadosRoute: typeof ComunicadosRoute
   ContatosRoute: typeof ContatosRoute
@@ -192,12 +202,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/area-te/': {
+      id: '/area-te/'
+      path: '/'
+      fullPath: '/area-te/'
+      preLoaderRoute: typeof AreaTeIndexRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
   }
 }
 
+interface AreaTeRouteChildren {
+  AreaTeIndexRoute: typeof AreaTeIndexRoute
+}
+
+const AreaTeRouteChildren: AreaTeRouteChildren = {
+  AreaTeIndexRoute: AreaTeIndexRoute,
+}
+
+const AreaTeRouteWithChildren =
+  AreaTeRoute._addFileChildren(AreaTeRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AreaTeRoute: AreaTeRoute,
+  AreaTeRoute: AreaTeRouteWithChildren,
   AuthRoute: AuthRoute,
   ComunicadosRoute: ComunicadosRoute,
   ContatosRoute: ContatosRoute,
