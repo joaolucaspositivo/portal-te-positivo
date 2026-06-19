@@ -15,6 +15,7 @@ import { Route as FerramentasRouteImport } from './routes/ferramentas'
 import { Route as ContatosRouteImport } from './routes/contatos'
 import { Route as ComunicadosRouteImport } from './routes/comunicados'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AreaTeRouteImport } from './routes/area-te'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SolicitacoesRoute = SolicitacoesRouteImport.update({
@@ -47,6 +48,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AreaTeRoute = AreaTeRouteImport.update({
+  id: '/area-te',
+  path: '/area-te',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +61,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/area-te': typeof AreaTeRoute
   '/auth': typeof AuthRoute
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/area-te': typeof AreaTeRoute
   '/auth': typeof AuthRoute
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/area-te': typeof AreaTeRoute
   '/auth': typeof AuthRoute
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/area-te'
     | '/auth'
     | '/comunicados'
     | '/contatos'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/area-te'
     | '/auth'
     | '/comunicados'
     | '/contatos'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/area-te'
     | '/auth'
     | '/comunicados'
     | '/contatos'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AreaTeRoute: typeof AreaTeRoute
   AuthRoute: typeof AuthRoute
   ComunicadosRoute: typeof ComunicadosRoute
   ContatosRoute: typeof ContatosRoute
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/area-te': {
+      id: '/area-te'
+      path: '/area-te'
+      fullPath: '/area-te'
+      preLoaderRoute: typeof AreaTeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AreaTeRoute: AreaTeRoute,
   AuthRoute: AuthRoute,
   ComunicadosRoute: ComunicadosRoute,
   ContatosRoute: ContatosRoute,

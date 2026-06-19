@@ -13,13 +13,13 @@ export const Route = createFileRoute("/area-te")({
   component: AreaTeLayout,
 });
 
-const nav = [
+const nav: ReadonlyArray<{ to: string; label: string; icon: any; exact?: boolean }> = [
   { to: "/area-te", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/area-te/solicitacoes", label: "Solicitações", icon: Inbox },
   { to: "/area-te/ferramentas", label: "Ferramentas", icon: Wrench },
   { to: "/area-te/comunicados", label: "Comunicados", icon: Megaphone },
   { to: "/area-te/contatos", label: "Contatos", icon: Users },
-] as const;
+];
 
 function AreaTeLayout() {
   const { user, isAdmin, loading } = useAuth();
