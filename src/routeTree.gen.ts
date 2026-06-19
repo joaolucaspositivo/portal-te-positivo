@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as FerramentasRouteImport } from './routes/ferramentas'
+import { Route as ContatosRouteImport } from './routes/contatos'
 import { Route as ComunicadosRouteImport } from './routes/comunicados'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -22,6 +23,11 @@ const SobreRoute = SobreRouteImport.update({
 const FerramentasRoute = FerramentasRouteImport.update({
   id: '/ferramentas',
   path: '/ferramentas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContatosRoute = ContatosRouteImport.update({
+  id: '/contatos',
+  path: '/contatos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComunicadosRoute = ComunicadosRouteImport.update({
@@ -38,12 +44,14 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/comunicados': typeof ComunicadosRoute
+  '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/comunicados': typeof ComunicadosRoute
+  '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
 }
@@ -51,20 +59,28 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/comunicados': typeof ComunicadosRoute
+  '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/comunicados' | '/ferramentas' | '/sobre'
+  fullPaths: '/' | '/comunicados' | '/contatos' | '/ferramentas' | '/sobre'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/comunicados' | '/ferramentas' | '/sobre'
-  id: '__root__' | '/' | '/comunicados' | '/ferramentas' | '/sobre'
+  to: '/' | '/comunicados' | '/contatos' | '/ferramentas' | '/sobre'
+  id:
+    | '__root__'
+    | '/'
+    | '/comunicados'
+    | '/contatos'
+    | '/ferramentas'
+    | '/sobre'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ComunicadosRoute: typeof ComunicadosRoute
+  ContatosRoute: typeof ContatosRoute
   FerramentasRoute: typeof FerramentasRoute
   SobreRoute: typeof SobreRoute
 }
@@ -83,6 +99,13 @@ declare module '@tanstack/react-router' {
       path: '/ferramentas'
       fullPath: '/ferramentas'
       preLoaderRoute: typeof FerramentasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contatos': {
+      id: '/contatos'
+      path: '/contatos'
+      fullPath: '/contatos'
+      preLoaderRoute: typeof ContatosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/comunicados': {
@@ -105,6 +128,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ComunicadosRoute: ComunicadosRoute,
+  ContatosRoute: ContatosRoute,
   FerramentasRoute: FerramentasRoute,
   SobreRoute: SobreRoute,
 }
