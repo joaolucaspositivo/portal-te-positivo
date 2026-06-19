@@ -65,7 +65,7 @@ function AreaTeLayout() {
           {nav.map((i) => {
             const active = i.exact ? pathname === i.to : pathname.startsWith(i.to);
             return (
-              <Link key={i.to} to={i.to}
+              <Link key={i.to} to={i.to as any}
                     className={cn("flex items-center gap-3 px-3 py-2 rounded-md text-sm",
                       active ? "bg-primary text-primary-foreground" : "hover:bg-sidebar-accent")}>
                 <i.icon className="h-4 w-4" /> {i.label}
@@ -94,7 +94,7 @@ function AreaTeLayout() {
           {nav.map((i) => {
             const active = i.exact ? pathname === i.to : pathname.startsWith(i.to);
             return (
-              <Link key={i.to} to={i.to}
+              <Link key={i.to} to={i.to as any}
                     className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap",
                       active ? "bg-primary text-primary-foreground" : "hover:bg-sidebar-accent")}>
                 <i.icon className="h-3.5 w-3.5" /> {i.label}
