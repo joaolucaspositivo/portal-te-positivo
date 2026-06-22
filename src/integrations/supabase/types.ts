@@ -23,6 +23,7 @@ export type Database = {
           data_publicacao: string
           destaque: boolean
           id: string
+          imagem_url: string | null
           publicado: boolean
           resumo: string | null
           titulo: string
@@ -36,6 +37,7 @@ export type Database = {
           data_publicacao?: string
           destaque?: boolean
           id?: string
+          imagem_url?: string | null
           publicado?: boolean
           resumo?: string | null
           titulo: string
@@ -49,6 +51,7 @@ export type Database = {
           data_publicacao?: string
           destaque?: boolean
           id?: string
+          imagem_url?: string | null
           publicado?: boolean
           resumo?: string | null
           titulo?: string
@@ -101,6 +104,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          imagem_url: string | null
           link_acesso: string | null
           nome: string
           publico_alvo: string | null
@@ -114,6 +118,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          imagem_url?: string | null
           link_acesso?: string | null
           nome: string
           publico_alvo?: string | null
@@ -127,6 +132,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          imagem_url?: string | null
           link_acesso?: string | null
           nome?: string
           publico_alvo?: string | null
