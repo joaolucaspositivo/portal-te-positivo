@@ -229,7 +229,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      contatos_public: {
+        Row: {
+          funcao: string | null
+          id: string | null
+          nome: string | null
+          tipo_contato: string | null
+          unidade: string | null
+        }
+        Insert: {
+          funcao?: string | null
+          id?: string | null
+          nome?: string | null
+          tipo_contato?: string | null
+          unidade?: string | null
+        }
+        Update: {
+          funcao?: string | null
+          id?: string | null
+          nome?: string | null
+          tipo_contato?: string | null
+          unidade?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
