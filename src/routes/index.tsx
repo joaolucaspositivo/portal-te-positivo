@@ -7,7 +7,6 @@ import {
   Users,
   Info,
   ArrowRight,
-  LifeBuoy,
   GraduationCap,
   Headphones,
   Lightbulb,
@@ -15,6 +14,7 @@ import {
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
+import { StorageImage } from "@/components/storage-image";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -78,8 +78,7 @@ function Index() {
           <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
           <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-secondary/20 blur-3xl" />
           <div className="container mx-auto px-4 py-16 md:py-24 relative">
-            <div className="grid lg:grid-cols-[1.3fr_1fr] gap-10 items-center">
-              <div>
+            <div className="max-w-3xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-background/10 text-xs font-medium mb-5 uppercase tracking-wider">
                   Portal TE · Colégio Positivo
                 </div>
@@ -104,29 +103,6 @@ function Index() {
                     Ver ferramentas <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
-              </div>
-              {/* Highlight card — primary CTA reinforcement */}
-              <div className="rounded-2xl bg-background/10 border border-background/20 backdrop-blur p-6 md:p-7">
-                <div className="flex items-center gap-2 text-secondary mb-3">
-                  <LifeBuoy className="h-5 w-5" />
-                  <span className="text-xs font-semibold uppercase tracking-wider">
-                    Precisa de apoio?
-                  </span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold mb-2">
-                  Registre uma solicitação à TE
-                </h2>
-                <p className="text-sm text-background/75 mb-5">
-                  Projetos, melhorias, dúvidas ou correções. Sua demanda entra
-                  na fila de priorização da equipe.
-                </p>
-                <Link
-                  to="/solicitacoes"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md bg-secondary text-secondary-foreground font-semibold hover:opacity-90 transition w-full justify-center"
-                >
-                  <Send className="h-4 w-4" /> Abrir agora
-                </Link>
-              </div>
             </div>
           </div>
         </section>
@@ -207,6 +183,13 @@ function Index() {
               <div className="grid gap-4 md:grid-cols-3">
                 {comunicados.map((c) => (
                   <div key={c.id} className="p-5 rounded-xl bg-card border hover:border-primary/50 transition">
+                    {c.imagem_url && (
+                      <StorageImage
+                        path={c.imagem_url}
+                        alt={c.titulo}
+                        className="w-full aspect-video object-cover rounded-md mb-3 -mt-1"
+                      />
+                    )}
                     {c.destaque && (
                       <span className="inline-block px-2 py-0.5 mb-2 text-xs font-semibold rounded bg-secondary text-secondary-foreground">
                         Destaque
@@ -250,6 +233,13 @@ function Index() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {ferramentas.map((f) => (
                   <div key={f.id} className="p-5 rounded-xl border bg-card hover:border-primary/50 transition">
+                    {f.imagem_url && (
+                      <StorageImage
+                        path={f.imagem_url}
+                        alt={f.nome}
+                        className="w-full aspect-video object-cover rounded-md mb-3 -mt-1"
+                      />
+                    )}
                     <div className="text-xs font-medium text-primary mb-1">{f.categoria}</div>
                     <div className="font-semibold mb-2">{f.nome}</div>
                     <p className="text-sm text-muted-foreground line-clamp-3">

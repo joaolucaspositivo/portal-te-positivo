@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminFormShell, Field, inpCls } from "@/components/admin-form-shell";
 import { CATEGORIAS_FERRAMENTA, STATUS_FERRAMENTA, statusColor } from "@/lib/portal-constants";
+import { ImageUploadField } from "@/components/image-upload-field";
 
 export const Route = createFileRoute("/area-te/ferramentas")({
   component: AdminFerramentas,
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/area-te/ferramentas")({
 type F = Partial<{
   id: string; nome: string; descricao: string; categoria: string;
   publico_alvo: string; segmento: string; link_acesso: string;
-  responsavel: string; status: string;
+  responsavel: string; status: string; imagem_url: string | null;
 }>;
 const empty: F = { nome: "", status: "Ativa" };
 
@@ -118,6 +119,13 @@ function AdminFerramentas() {
             </Field>
             <Field label="Responsável" full>
               <input value={edit.responsavel ?? ""} onChange={(e) => setEdit({ ...edit, responsavel: e.target.value })} className={inpCls} />
+            </Field>
+            <Field label="Imagem de capa" full>
+              <ImageUploadField
+                folder="ferramentas"
+                value={edit.imagem_url ?? null}
+                onChange={(path) => setEdit({ ...edit, imagem_url: path })}
+              />
             </Field>
           </div>
         </AdminFormShell>
