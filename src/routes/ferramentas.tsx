@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIAS_FERRAMENTA, STATUS_FERRAMENTA, statusColor } from "@/lib/portal-constants";
+import { StorageImage } from "@/components/storage-image";
 
 export const Route = createFileRoute("/ferramentas")({
   head: () => ({
@@ -75,6 +76,13 @@ function Ferramentas() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((f: any) => (
                 <div key={f.id} className="p-6 rounded-xl border bg-card flex flex-col">
+                  {f.imagem_url && (
+                    <StorageImage
+                      path={f.imagem_url}
+                      alt={f.nome}
+                      className="w-full aspect-video object-cover rounded-md mb-3 -mt-2"
+                    />
+                  )}
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <span className="text-xs text-muted-foreground">{f.categoria}</span>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded ${statusColor(f.status)}`}>

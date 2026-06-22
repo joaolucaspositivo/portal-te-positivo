@@ -6,6 +6,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIAS_COMUNICADO } from "@/lib/portal-constants";
+import { StorageImage } from "@/components/storage-image";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 export const Route = createFileRoute("/comunicados")({
   head: () => ({
@@ -60,6 +62,13 @@ function Comunicados() {
               {filtered.map((c: any) => (
                 <article key={c.id}
                          className={`p-6 rounded-xl border bg-card ${c.destaque ? "border-primary border-2" : ""}`}>
+                  {c.imagem_url && (
+                    <StorageImage
+                      path={c.imagem_url}
+                      alt={c.titulo}
+                      className="w-full aspect-video object-cover rounded-md mb-4"
+                    />
+                  )}
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
                       {c.categoria}
@@ -78,7 +87,10 @@ function Comunicados() {
                   {c.resumo && <p className="text-sm text-muted-foreground mb-3">{c.resumo}</p>}
                   <details className="text-sm">
                     <summary className="cursor-pointer font-medium text-primary">Ler na íntegra</summary>
-                    <div className="mt-3 whitespace-pre-wrap text-foreground/80">{c.conteudo}</div>
+                    <div
+                      className="mt-3 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.conteudo ?? "") }}
+                    />
                   </details>
                 </article>
               ))}

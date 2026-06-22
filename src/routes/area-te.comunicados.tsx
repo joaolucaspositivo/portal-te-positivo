@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminFormShell, Field, inpCls } from "@/components/admin-form-shell";
 import { CATEGORIAS_COMUNICADO } from "@/lib/portal-constants";
+import { RichTextEditor } from "@/components/rich-text-editor";
+import { ImageUploadField } from "@/components/image-upload-field";
 
 export const Route = createFileRoute("/area-te/comunicados")({
   component: AdminComunicados,
@@ -14,7 +16,7 @@ export const Route = createFileRoute("/area-te/comunicados")({
 type C = Partial<{
   id: string; titulo: string; resumo: string; conteudo: string;
   categoria: string; autor: string; data_publicacao: string;
-  destaque: boolean; publicado: boolean;
+  destaque: boolean; publicado: boolean; imagem_url: string | null;
 }>;
 const empty: C = { titulo: "", conteudo: "", publicado: true, destaque: false, data_publicacao: new Date().toISOString().slice(0, 10) };
 
@@ -104,7 +106,18 @@ function AdminComunicados() {
               <textarea rows={2} value={edit.resumo ?? ""} onChange={(e) => setEdit({ ...edit, resumo: e.target.value })} className={inpCls} />
             </Field>
             <Field label="Conteúdo *" full>
-              <textarea rows={6} required value={edit.conteudo ?? ""} onChange={(e) => setEdit({ ...edit, conteudo: e.target.value })} className={inpCls} />
+              <RichTextEditor
+                value={edit.conteudo ?? ""}
+                onChange={(html) => setEdit({ ...edit, conteudo: html })}
+                placeholder="Escreva o comunicado. Use os botões para títulos, negrito, listas e links."
+              />
+            </Field>
+            <Field label="Imagem de capa" full>
+              <ImageUploadField
+                folder="comunicados"
+                value={edit.imagem_url ?? null}
+                onChange={(path) => setEdit({ ...edit, imagem_url: path })}
+              />
             </Field>
             <Field label="Categoria">
               <select value={edit.categoria ?? ""} onChange={(e) => setEdit({ ...edit, categoria: e.target.value })} className={inpCls}>

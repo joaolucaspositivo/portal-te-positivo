@@ -14,6 +14,7 @@ import {
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
+import { StorageImage } from "@/components/storage-image";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -182,6 +183,13 @@ function Index() {
               <div className="grid gap-4 md:grid-cols-3">
                 {comunicados.map((c) => (
                   <div key={c.id} className="p-5 rounded-xl bg-card border hover:border-primary/50 transition">
+                    {c.imagem_url && (
+                      <StorageImage
+                        path={c.imagem_url}
+                        alt={c.titulo}
+                        className="w-full aspect-video object-cover rounded-md mb-3 -mt-1"
+                      />
+                    )}
                     {c.destaque && (
                       <span className="inline-block px-2 py-0.5 mb-2 text-xs font-semibold rounded bg-secondary text-secondary-foreground">
                         Destaque
@@ -225,6 +233,13 @@ function Index() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {ferramentas.map((f) => (
                   <div key={f.id} className="p-5 rounded-xl border bg-card hover:border-primary/50 transition">
+                    {f.imagem_url && (
+                      <StorageImage
+                        path={f.imagem_url}
+                        alt={f.nome}
+                        className="w-full aspect-video object-cover rounded-md mb-3 -mt-1"
+                      />
+                    )}
                     <div className="text-xs font-medium text-primary mb-1">{f.categoria}</div>
                     <div className="font-semibold mb-2">{f.nome}</div>
                     <p className="text-sm text-muted-foreground line-clamp-3">
