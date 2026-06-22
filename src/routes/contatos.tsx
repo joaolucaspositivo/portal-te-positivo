@@ -25,7 +25,9 @@ function Contatos() {
     queryKey: ["contatos-public"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("contatos").select("*").eq("ativo", true).order("nome");
+        .from("contatos")
+        .select("id, nome, funcao, unidade, tipo_contato")
+        .eq("ativo", true).order("nome");
       if (error) throw error;
       return data ?? [];
     },
