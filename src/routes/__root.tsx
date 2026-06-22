@@ -85,7 +85,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Central de informações, ferramentas, comunicados, contatos e solicitações da Tecnologia Educacional do Colégio Positivo.",
       },
       { name: "author", content: "Colégio Positivo" },
-      { property: "og:title", content: "Portal TE — Colégio Positivo" },
+      { property: "og:title", content: "Portal TE — Tecnologia Educacional · Colégio Positivo" },
       {
         property: "og:description",
         content:
@@ -94,6 +94,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Portal TE — Tecnologia Educacional · Colégio Positivo" },
+      { name: "description", content: "Portal TE Positivo centraliza informações, ferramentas, comunicados, contatos e solicitações para a equipe de Tecnologia Educacional." },
+      { property: "og:description", content: "Portal TE Positivo centraliza informações, ferramentas, comunicados, contatos e solicitações para a equipe de Tecnologia Educacional." },
+      { name: "twitter:description", content: "Portal TE Positivo centraliza informações, ferramentas, comunicados, contatos e solicitações para a equipe de Tecnologia Educacional." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e73dce5c-bdc6-42e9-bb0d-8f979e263e2d/id-preview-94b333ee--152d8287-7abc-4a50-b9f9-b67dfddaa2c7.lovable.app-1782132943802.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e73dce5c-bdc6-42e9-bb0d-8f979e263e2d/id-preview-94b333ee--152d8287-7abc-4a50-b9f9-b67dfddaa2c7.lovable.app-1782132943802.png" },
     ],
     links: [
       {
