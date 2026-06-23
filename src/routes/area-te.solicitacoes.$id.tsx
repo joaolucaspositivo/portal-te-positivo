@@ -23,22 +23,44 @@ function SolicDetail() {
     },
   });
 
+  const { data: equipe = [] } = useQuery({
+    queryKey: ["equipe-te-options"],
+    queryFn: async () => {
+      // members with equipe_te or admin role
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("role", ["equipe_te", "admin"]);
+      const ids = Array.from(new Set((roles ?? []).map((r: any) => r.user_id)));
+      if (ids.length === 0) return [];
+      const { data: profs } = await supabase.from("profiles").select("id, nome_completo").in("id", ids);
+      return profs ?? [];
+    },
+  });
+
   const [status, setStatus] = useState("");
   const [resp, setResp] = useState("");
   const [obs, setObs] = useState("");
+  const [responsavelId, setResponsavelId] = useState<string>("");
 
   useEffect(() => {
     if (data) {
       setStatus(data.status ?? "");
       setResp(data.responsavel_te ?? "");
       setObs(data.observacoes_internas ?? "");
+      setResponsavelId(data.responsavel_id ?? "");
     }
   }, [data]);
 
   const save = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("solicitacoes")
-        .update({ status, responsavel_te: resp, observacoes_internas: obs })
+        .update({
+          status,
+          responsavel_te: resp,
+          observacoes_internas: obs,
+          responsavel_id: responsavelId || null,
+        })
         .eq("id", id);
       if (error) throw error;
     },
@@ -117,7 +139,17 @@ function SolicDetail() {
               </select>
             </label>
             <label className="block mb-3">
-              <span className="text-sm font-medium">Responsável TE</span>
+              <span className="text-sm font-medium">Responsável (equipe TE)</span>
+              <select value={responsavelId} onChange={(e) => setResponsavelId(e.target.value)}
+                      className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm">
+                <option value="">— Não atribuído</option>
+                {equipe.map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.nome_completo || p.id}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block mb-3">
+              <span className="text-sm font-medium">Responsável (texto livre — legado)</span>
               <input value={resp} onChange={(e) => setResp(e.target.value)}
                      className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm" />
             </label>
