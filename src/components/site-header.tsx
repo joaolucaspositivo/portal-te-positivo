@@ -2,6 +2,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/use-auth";
+import { UserAvatar } from "@/components/user-avatar";
 
 const navItems = [
   { to: "/", label: "Início" },
@@ -15,6 +17,7 @@ const navItems = [
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user, profile, loading } = useAuth();
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -47,12 +50,24 @@ export function SiteHeader() {
               </Link>
             );
           })}
-          <Link
-            to="/area-te"
-            className="ml-2 px-3 py-2 rounded-md text-sm font-semibold border border-border hover:bg-muted"
-          >
-            Área da TE
-          </Link>
+          {loading ? null : user ? (
+            <Link
+              to="/area-te/perfil"
+              className="ml-2 inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border hover:bg-muted"
+            >
+              <UserAvatar path={profile?.avatar_url} name={profile?.nome_completo ?? user.email} size={28} />
+              <span className="text-sm font-medium truncate max-w-[140px]">
+                {profile?.nome_completo || user.email}
+              </span>
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="ml-2 px-3 py-2 rounded-md text-sm font-semibold border border-border hover:bg-muted"
+            >
+              Entrar
+            </Link>
+          )}
         </nav>
         <button
           className="lg:hidden p-2"

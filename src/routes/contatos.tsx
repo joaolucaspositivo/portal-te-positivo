@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { UNIDADES, TIPOS_CONTATO } from "@/lib/portal-constants";
+import { UserAvatar } from "@/components/user-avatar";
 
 export const Route = createFileRoute("/contatos")({
   head: () => ({
@@ -26,10 +27,18 @@ function Contatos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contatos")
-        .select("id, nome, funcao, unidade, tipo_contato")
+        .select("id, nome, funcao, unidade, tipo_contato, user_id, email, telefone_whatsapp")
         .eq("ativo", true).order("nome");
       if (error) throw error;
-      return data ?? [];
+      const list = data ?? [];
+      const ids = list.map((c: any) => c.user_id).filter(Boolean);
+      if (ids.length === 0) return list.map((c: any) => ({ ...c, avatar_url: null }));
+      const { data: profs } = await supabase
+        .from("profiles_public")
+        .select("id, avatar_url")
+        .in("id", ids);
+      const map = new Map((profs ?? []).map((p: any) => [p.id, p.avatar_url]));
+      return list.map((c: any) => ({ ...c, avatar_url: map.get(c.user_id) ?? null }));
     },
   });
   const filtered = items.filter((c: any) => {
@@ -75,10 +84,15 @@ function Contatos() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((c: any) => (
                 <div key={c.id} className="p-6 rounded-xl border bg-card">
-                  <div className="text-xs text-muted-foreground mb-1">{c.tipo_contato}</div>
-                  <div className="font-semibold">{c.nome}</div>
-                  {c.funcao && <div className="text-sm text-muted-foreground">{c.funcao}</div>}
-                  {c.unidade && <div className="text-sm mt-1">{c.unidade}</div>}
+                  <div className="flex items-start gap-3">
+                    <UserAvatar path={c.avatar_url} name={c.nome} size={48} />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs text-muted-foreground">{c.tipo_contato}</div>
+                      <div className="font-semibold truncate">{c.nome}</div>
+                      {c.funcao && <div className="text-sm text-muted-foreground truncate">{c.funcao}</div>}
+                      {c.unidade && <div className="text-sm">{c.unidade}</div>}
+                    </div>
+                  </div>
                   <div className="mt-3 space-y-1 text-sm">
                     {c.email && (
                       <a href={`mailto:${c.email}`} className="flex items-center gap-2 text-primary hover:underline">

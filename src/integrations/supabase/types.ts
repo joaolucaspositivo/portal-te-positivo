@@ -71,6 +71,7 @@ export type Database = {
           tipo_contato: string | null
           unidade: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           ativo?: boolean
@@ -83,6 +84,7 @@ export type Database = {
           tipo_contato?: string | null
           unidade?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           ativo?: boolean
@@ -95,8 +97,24 @@ export type Database = {
           tipo_contato?: string | null
           unidade?: string | null
           updated_at?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contatos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contatos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ferramentas: {
         Row: {
@@ -143,6 +161,158 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          cargo: string | null
+          created_at: string
+          id: string
+          nome_completo: string | null
+          status: Database["public"]["Enums"]["profile_status"]
+          telefone: string | null
+          unidade: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          cargo?: string | null
+          created_at?: string
+          id: string
+          nome_completo?: string | null
+          status?: Database["public"]["Enums"]["profile_status"]
+          telefone?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          cargo?: string | null
+          created_at?: string
+          id?: string
+          nome_completo?: string | null
+          status?: Database["public"]["Enums"]["profile_status"]
+          telefone?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      solicitacao_campos: {
+        Row: {
+          chave: string
+          created_at: string
+          help_text: string | null
+          id: string
+          label: string
+          obrigatorio: boolean
+          opcoes: Json
+          ordem: number
+          placeholder: string | null
+          tipo_campo: Database["public"]["Enums"]["campo_tipo"]
+          tipo_id: string
+          updated_at: string
+          validacao: Json
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          help_text?: string | null
+          id?: string
+          label: string
+          obrigatorio?: boolean
+          opcoes?: Json
+          ordem?: number
+          placeholder?: string | null
+          tipo_campo?: Database["public"]["Enums"]["campo_tipo"]
+          tipo_id: string
+          updated_at?: string
+          validacao?: Json
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          help_text?: string | null
+          id?: string
+          label?: string
+          obrigatorio?: boolean
+          opcoes?: Json
+          ordem?: number
+          placeholder?: string | null
+          tipo_campo?: Database["public"]["Enums"]["campo_tipo"]
+          tipo_id?: string
+          updated_at?: string
+          validacao?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacao_campos_tipo_id_fkey"
+            columns: ["tipo_id"]
+            isOneToOne: false
+            referencedRelation: "solicitacao_tipos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solicitacao_tipos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          permite_anonimo: boolean
+          responsavel_padrao_id: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          permite_anonimo?: boolean
+          responsavel_padrao_id?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          permite_anonimo?: boolean
+          responsavel_padrao_id?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacao_tipos_responsavel_padrao_id_fkey"
+            columns: ["responsavel_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacao_tipos_responsavel_padrao_id_fkey"
+            columns: ["responsavel_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solicitacoes: {
         Row: {
           cargo_funcao: string | null
@@ -156,9 +326,13 @@ export type Database = {
           observacoes_internas: string | null
           prazo_desejado: string | null
           publico_impactado: string | null
+          responsavel_id: string | null
           responsavel_te: string | null
+          respostas: Json
           segmento_area: string | null
+          solicitante_id: string | null
           status: string
+          tipo_id: string | null
           tipo_solicitacao: string
           titulo: string
           unidade: string
@@ -178,9 +352,13 @@ export type Database = {
           observacoes_internas?: string | null
           prazo_desejado?: string | null
           publico_impactado?: string | null
+          responsavel_id?: string | null
           responsavel_te?: string | null
+          respostas?: Json
           segmento_area?: string | null
+          solicitante_id?: string | null
           status?: string
+          tipo_id?: string | null
           tipo_solicitacao: string
           titulo: string
           unidade: string
@@ -200,9 +378,13 @@ export type Database = {
           observacoes_internas?: string | null
           prazo_desejado?: string | null
           publico_impactado?: string | null
+          responsavel_id?: string | null
           responsavel_te?: string | null
+          respostas?: Json
           segmento_area?: string | null
+          solicitante_id?: string | null
           status?: string
+          tipo_id?: string | null
           tipo_solicitacao?: string
           titulo?: string
           unidade?: string
@@ -210,7 +392,43 @@ export type Database = {
           updated_at?: string
           urgencia?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_solicitante_id_fkey"
+            columns: ["solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_solicitante_id_fkey"
+            columns: ["solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_tipo_id_fkey"
+            columns: ["tipo_id"]
+            isOneToOne: false
+            referencedRelation: "solicitacao_tipos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -235,7 +453,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          cargo: string | null
+          id: string | null
+          nome_completo: string | null
+          unidade: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          cargo?: string | null
+          id?: string | null
+          nome_completo?: string | null
+          unidade?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          cargo?: string | null
+          id?: string | null
+          nome_completo?: string | null
+          unidade?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -247,7 +488,18 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "equipe_te" | "editor" | "usuario"
+      campo_tipo:
+        | "text"
+        | "textarea"
+        | "email"
+        | "url"
+        | "number"
+        | "date"
+        | "select"
+        | "multiselect"
+        | "checkbox"
+      profile_status: "pendente" | "ativo" | "bloqueado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -375,7 +627,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "equipe_te", "editor", "usuario"],
+      campo_tipo: [
+        "text",
+        "textarea",
+        "email",
+        "url",
+        "number",
+        "date",
+        "select",
+        "multiselect",
+        "checkbox",
+      ],
+      profile_status: ["pendente", "ativo", "bloqueado"],
     },
   },
 } as const

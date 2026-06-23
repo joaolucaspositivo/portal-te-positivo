@@ -13,7 +13,7 @@ export const Route = createFileRoute("/area-te/contatos")({
 
 type C = Partial<{
   id: string; nome: string; funcao: string; unidade: string; email: string;
-  telefone_whatsapp: string; tipo_contato: string; ativo: boolean;
+  telefone_whatsapp: string; tipo_contato: string; ativo: boolean; user_id: string | null;
 }>;
 const empty: C = { nome: "", ativo: true };
 
@@ -25,6 +25,19 @@ function AdminContatos() {
     queryFn: async () => {
       const { data, error } = await supabase.from("contatos").select("*").order("nome");
       if (error) throw error; return data ?? [];
+    },
+  });
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles-options"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, nome_completo, cargo, unidade")
+        .eq("status", "ativo")
+        .order("nome_completo");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -108,6 +121,17 @@ function AdminContatos() {
               <select value={edit.tipo_contato ?? ""} onChange={(e) => setEdit({ ...edit, tipo_contato: e.target.value })} className={inpCls}>
                 <option value="">—</option>{TIPOS_CONTATO.map((u) => <option key={u}>{u}</option>)}
               </select>
+            </Field>
+            <Field label="Vincular a um usuário do sistema" full>
+              <select value={edit.user_id ?? ""} onChange={(e) => setEdit({ ...edit, user_id: e.target.value || null })} className={inpCls}>
+                <option value="">— Nenhum (contato externo)</option>
+                {profiles.map((p: any) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome_completo || p.id}{p.unidade ? ` · ${p.unidade}` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">Quando vinculado, a foto de perfil do usuário aparece no card.</p>
             </Field>
             <label className="flex items-center gap-2 text-sm col-span-2">
               <input type="checkbox" checked={!!edit.ativo} onChange={(e) => setEdit({ ...edit, ativo: e.target.checked })} />

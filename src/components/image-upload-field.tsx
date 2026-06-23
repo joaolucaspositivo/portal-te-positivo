@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSignedUrl } from "./storage-image";
 
-const BUCKET = "portal-media";
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
@@ -12,14 +11,16 @@ export function ImageUploadField({
   folder,
   value,
   onChange,
+  bucket = "portal-media",
 }: {
   folder: string;
   value?: string | null;
   onChange: (path: string | null) => void;
+  bucket?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const { data: previewUrl } = useSignedUrl(value);
+  const { data: previewUrl } = useSignedUrl(value, bucket);
 
   async function handleFile(file: File) {
     if (!ALLOWED.includes(file.type)) {
@@ -35,12 +36,12 @@ export function ImageUploadField({
       const ext = file.name.split(".").pop() || "bin";
       const path = `${folder}/${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage
-        .from(BUCKET)
+        .from(bucket)
         .upload(path, file, { contentType: file.type, upsert: false });
       if (error) throw error;
       // best-effort cleanup of previous file
       if (value) {
-        await supabase.storage.from(BUCKET).remove([value]).catch(() => {});
+        await supabase.storage.from(bucket).remove([value]).catch(() => {});
       }
       onChange(path);
       toast.success("Imagem enviada.");
@@ -53,7 +54,7 @@ export function ImageUploadField({
 
   async function remove() {
     if (!value) return;
-    await supabase.storage.from(BUCKET).remove([value]).catch(() => {});
+    await supabase.storage.from(bucket).remove([value]).catch(() => {});
     onChange(null);
   }
 
