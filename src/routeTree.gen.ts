@@ -18,6 +18,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AreaTeRouteImport } from './routes/area-te'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
+import { Route as AreaTeUsuariosRouteImport } from './routes/area-te.usuarios'
 import { Route as AreaTeSolicitacoesRouteImport } from './routes/area-te.solicitacoes'
 import { Route as AreaTeFerramentasRouteImport } from './routes/area-te.ferramentas'
 import { Route as AreaTeContatosRouteImport } from './routes/area-te.contatos'
@@ -69,6 +70,11 @@ const AreaTeIndexRoute = AreaTeIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AreaTeRoute,
 } as any)
+const AreaTeUsuariosRoute = AreaTeUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AreaTeRoute,
+} as any)
 const AreaTeSolicitacoesRoute = AreaTeSolicitacoesRouteImport.update({
   id: '/solicitacoes',
   path: '/solicitacoes',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
+  '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/area-te/': typeof AreaTeIndexRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
 }
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
+  '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/area-te': typeof AreaTeIndexRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
 }
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
+  '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/area-te/': typeof AreaTeIndexRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
 }
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/area-te/contatos'
     | '/area-te/ferramentas'
     | '/area-te/solicitacoes'
+    | '/area-te/usuarios'
     | '/area-te/'
     | '/area-te/solicitacoes/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/area-te/contatos'
     | '/area-te/ferramentas'
     | '/area-te/solicitacoes'
+    | '/area-te/usuarios'
     | '/area-te'
     | '/area-te/solicitacoes/$id'
   id:
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/area-te/contatos'
     | '/area-te/ferramentas'
     | '/area-te/solicitacoes'
+    | '/area-te/usuarios'
     | '/area-te/'
     | '/area-te/solicitacoes/$id'
   fileRoutesById: FileRoutesById
@@ -269,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeIndexRouteImport
       parentRoute: typeof AreaTeRoute
     }
+    '/area-te/usuarios': {
+      id: '/area-te/usuarios'
+      path: '/usuarios'
+      fullPath: '/area-te/usuarios'
+      preLoaderRoute: typeof AreaTeUsuariosRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
     '/area-te/solicitacoes': {
       id: '/area-te/solicitacoes'
       path: '/solicitacoes'
@@ -323,6 +342,7 @@ interface AreaTeRouteChildren {
   AreaTeContatosRoute: typeof AreaTeContatosRoute
   AreaTeFerramentasRoute: typeof AreaTeFerramentasRoute
   AreaTeSolicitacoesRoute: typeof AreaTeSolicitacoesRouteWithChildren
+  AreaTeUsuariosRoute: typeof AreaTeUsuariosRoute
   AreaTeIndexRoute: typeof AreaTeIndexRoute
 }
 
@@ -331,6 +351,7 @@ const AreaTeRouteChildren: AreaTeRouteChildren = {
   AreaTeContatosRoute: AreaTeContatosRoute,
   AreaTeFerramentasRoute: AreaTeFerramentasRoute,
   AreaTeSolicitacoesRoute: AreaTeSolicitacoesRouteWithChildren,
+  AreaTeUsuariosRoute: AreaTeUsuariosRoute,
   AreaTeIndexRoute: AreaTeIndexRoute,
 }
 
