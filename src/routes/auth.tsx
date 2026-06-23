@@ -58,7 +58,9 @@ function AuthPage() {
             {mode === "login" ? "Entrar na Área da TE" : "Criar conta"}
           </h1>
           <p className="text-sm text-muted-foreground mb-6">
-            Acesso restrito à equipe de Tecnologia Educacional.
+            {mode === "signup"
+              ? "Crie sua conta — o acesso à Área da TE será liberado após aprovação de um administrador."
+              : "Acesse sua conta do Portal TE."}
           </p>
           <form onSubmit={submit} className="space-y-4">
             {mode === "signup" && (
