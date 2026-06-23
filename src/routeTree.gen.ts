@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
 import { Route as AreaTeUsuariosRouteImport } from './routes/area-te.usuarios'
 import { Route as AreaTeSolicitacoesRouteImport } from './routes/area-te.solicitacoes'
+import { Route as AreaTePerfilRouteImport } from './routes/area-te.perfil'
 import { Route as AreaTeFerramentasRouteImport } from './routes/area-te.ferramentas'
 import { Route as AreaTeContatosRouteImport } from './routes/area-te.contatos'
 import { Route as AreaTeComunicadosRouteImport } from './routes/area-te.comunicados'
@@ -80,6 +81,11 @@ const AreaTeSolicitacoesRoute = AreaTeSolicitacoesRouteImport.update({
   path: '/solicitacoes',
   getParentRoute: () => AreaTeRoute,
 } as any)
+const AreaTePerfilRoute = AreaTePerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AreaTeRoute,
+} as any)
 const AreaTeFerramentasRoute = AreaTeFerramentasRouteImport.update({
   id: '/ferramentas',
   path: '/ferramentas',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
+  '/area-te/perfil': typeof AreaTePerfilRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/area-te/': typeof AreaTeIndexRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
+  '/area-te/perfil': typeof AreaTePerfilRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/area-te': typeof AreaTeIndexRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
+  '/area-te/perfil': typeof AreaTePerfilRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/area-te/': typeof AreaTeIndexRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/area-te/comunicados'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
+    | '/area-te/perfil'
     | '/area-te/solicitacoes'
     | '/area-te/usuarios'
     | '/area-te/'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/area-te/comunicados'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
+    | '/area-te/perfil'
     | '/area-te/solicitacoes'
     | '/area-te/usuarios'
     | '/area-te'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/area-te/comunicados'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
+    | '/area-te/perfil'
     | '/area-te/solicitacoes'
     | '/area-te/usuarios'
     | '/area-te/'
@@ -295,6 +307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeSolicitacoesRouteImport
       parentRoute: typeof AreaTeRoute
     }
+    '/area-te/perfil': {
+      id: '/area-te/perfil'
+      path: '/perfil'
+      fullPath: '/area-te/perfil'
+      preLoaderRoute: typeof AreaTePerfilRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
     '/area-te/ferramentas': {
       id: '/area-te/ferramentas'
       path: '/ferramentas'
@@ -341,6 +360,7 @@ interface AreaTeRouteChildren {
   AreaTeComunicadosRoute: typeof AreaTeComunicadosRoute
   AreaTeContatosRoute: typeof AreaTeContatosRoute
   AreaTeFerramentasRoute: typeof AreaTeFerramentasRoute
+  AreaTePerfilRoute: typeof AreaTePerfilRoute
   AreaTeSolicitacoesRoute: typeof AreaTeSolicitacoesRouteWithChildren
   AreaTeUsuariosRoute: typeof AreaTeUsuariosRoute
   AreaTeIndexRoute: typeof AreaTeIndexRoute
@@ -350,6 +370,7 @@ const AreaTeRouteChildren: AreaTeRouteChildren = {
   AreaTeComunicadosRoute: AreaTeComunicadosRoute,
   AreaTeContatosRoute: AreaTeContatosRoute,
   AreaTeFerramentasRoute: AreaTeFerramentasRoute,
+  AreaTePerfilRoute: AreaTePerfilRoute,
   AreaTeSolicitacoesRoute: AreaTeSolicitacoesRouteWithChildren,
   AreaTeUsuariosRoute: AreaTeUsuariosRoute,
   AreaTeIndexRoute: AreaTeIndexRoute,
