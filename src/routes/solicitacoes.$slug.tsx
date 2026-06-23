@@ -92,6 +92,7 @@ function SolicSlug() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!tipo) return;
     if (!base.nome_solicitante || !base.email_solicitante || !base.unidade || !base.titulo || !base.descricao) {
       toast.error("Preencha os campos obrigatórios.");
       return;
