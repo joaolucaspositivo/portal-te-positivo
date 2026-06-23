@@ -71,6 +71,7 @@ export type Database = {
           tipo_contato: string | null
           unidade: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           ativo?: boolean
@@ -83,6 +84,7 @@ export type Database = {
           tipo_contato?: string | null
           unidade?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           ativo?: boolean
@@ -95,8 +97,24 @@ export type Database = {
           tipo_contato?: string | null
           unidade?: string | null
           updated_at?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contatos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contatos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ferramentas: {
         Row: {
@@ -139,6 +157,45 @@ export type Database = {
           responsavel?: string | null
           segmento?: string | null
           status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          cargo: string | null
+          created_at: string
+          id: string
+          nome_completo: string | null
+          status: Database["public"]["Enums"]["profile_status"]
+          telefone: string | null
+          unidade: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          cargo?: string | null
+          created_at?: string
+          id: string
+          nome_completo?: string | null
+          status?: Database["public"]["Enums"]["profile_status"]
+          telefone?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          cargo?: string | null
+          created_at?: string
+          id?: string
+          nome_completo?: string | null
+          status?: Database["public"]["Enums"]["profile_status"]
+          telefone?: string | null
+          unidade?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -235,7 +292,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          cargo: string | null
+          id: string | null
+          nome_completo: string | null
+          unidade: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          cargo?: string | null
+          id?: string | null
+          nome_completo?: string | null
+          unidade?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          cargo?: string | null
+          id?: string | null
+          nome_completo?: string | null
+          unidade?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -247,7 +327,8 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "equipe_te" | "editor" | "usuario"
+      profile_status: "pendente" | "ativo" | "bloqueado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -375,7 +456,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "equipe_te", "editor", "usuario"],
+      profile_status: ["pendente", "ativo", "bloqueado"],
     },
   },
 } as const
