@@ -7,6 +7,7 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
     _user_id: ctx.userId,
     _role: "admin",
   });
+
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Forbidden");
 }
@@ -15,25 +16,59 @@ export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({
       page: 1,
       perPage: 200,
     });
+
     if (error) throw new Error(error.message);
 
     const ids = list.users.map((u) => u.id);
-    const [{ data: profiles }, { data: roles }] = await Promise.all([
+
+    if (ids.length === 0) return [];
+
+    const [{ data: profiles }, { data: roles }, { data: vinculos }] = await Promise.all([
       supabaseAdmin.from("profiles").select("*").in("id", ids),
       supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids),
+      supabaseAdmin
+        .from("usuario_unidades")
+        .select("user_id, principal, unidades(id, nome, sigla, status)")
+        .in("user_id", ids),
     ]);
+
     const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+
     const rMap = new Map<string, string[]>();
+
     (roles ?? []).forEach((r: any) => {
       const arr = rMap.get(r.user_id) ?? [];
       arr.push(r.role);
       rMap.set(r.user_id, arr);
     });
+
+    const unidadesMap = new Map<string, any[]>();
+
+    (vinculos ?? []).forEach((v: any) => {
+      const unidade = Array.isArray(v.unidades) ? v.unidades[0] : v.unidades;
+
+      if (!unidade) return;
+
+      const arr = unidadesMap.get(v.user_id) ?? [];
+
+      arr.push({
+        id: unidade.id,
+        nome: unidade.nome,
+        sigla: unidade.sigla,
+        status: unidade.status,
+        principal: v.principal,
+      });
+
+      unidadesMap.set(v.user_id, arr);
+    });
+
     return list.users
       .map((u) => ({
         id: u.id,
@@ -42,6 +77,7 @@ export const listUsers = createServerFn({ method: "GET" })
         last_sign_in_at: u.last_sign_in_at ?? null,
         profile: pMap.get(u.id) ?? null,
         roles: rMap.get(u.id) ?? [],
+        unidades: unidadesMap.get(u.id) ?? [],
       }))
       .sort((a, b) => (a.email ?? "").localeCompare(b.email ?? ""));
   });
@@ -56,12 +92,16 @@ export const setUserStatus = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => StatusSchema.parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({ status: data.status })
       .eq("id", data.userId);
+
     if (error) throw new Error(error.message);
+
     return { ok: true };
   });
 
@@ -75,21 +115,31 @@ export const setUserRoles = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => RolesSchema.parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+
     if (data.userId === context.userId && !data.roles.includes("admin")) {
       throw new Error("Você não pode remover seu próprio papel de admin.");
     }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     const { error: delErr } = await supabaseAdmin
       .from("user_roles")
       .delete()
       .eq("user_id", data.userId);
+
     if (delErr) throw new Error(delErr.message);
+
     const rows = Array.from(new Set(data.roles)).map((role) => ({
       user_id: data.userId,
       role,
     }));
-    const { error: insErr } = await supabaseAdmin.from("user_roles").insert(rows);
+
+    const { error: insErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert(rows);
+
     if (insErr) throw new Error(insErr.message);
+
     return { ok: true };
   });
 
@@ -107,36 +157,59 @@ export const adminUpdateProfile = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ProfileSchema.parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     const { userId, ...rest } = data;
-    const { error } = await supabaseAdmin.from("profiles").update(rest).eq("id", userId);
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update(rest)
+      .eq("id", userId);
+
     if (error) throw new Error(error.message);
+
     return { ok: true };
   });
 
-const ResetSchema = z.object({ email: z.string().email() });
+const ResetSchema = z.object({
+  email: z.string().email(),
+});
 
 export const sendPasswordReset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => ResetSchema.parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email);
+
     if (error) throw new Error(error.message);
+
     return { ok: true };
   });
 
-const DeleteSchema = z.object({ userId: z.string().uuid() });
+const DeleteSchema = z.object({
+  userId: z.string().uuid(),
+});
 
 export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => DeleteSchema.parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    if (data.userId === context.userId) throw new Error("Você não pode excluir a si mesmo.");
+
+    if (data.userId === context.userId) {
+      throw new Error("Você não pode excluir a si mesmo.");
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+
     if (error) throw new Error(error.message);
+
     return { ok: true };
   });
