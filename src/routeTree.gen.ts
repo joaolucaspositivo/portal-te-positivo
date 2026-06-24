@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SolicitacoesRouteImport } from './routes/solicitacoes'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as FerramentasRouteImport } from './routes/ferramentas'
 import { Route as ContatosRouteImport } from './routes/contatos'
@@ -17,6 +16,7 @@ import { Route as ComunicadosRouteImport } from './routes/comunicados'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AreaTeRouteImport } from './routes/area-te'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SolicitacoesIndexRouteImport } from './routes/solicitacoes.index'
 import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
 import { Route as SolicitacoesSlugRouteImport } from './routes/solicitacoes.$slug'
 import { Route as AreaTeUsuariosRouteImport } from './routes/area-te.usuarios'
@@ -29,11 +29,6 @@ import { Route as AreaTeComunicadosRouteImport } from './routes/area-te.comunica
 import { Route as AreaTeTiposSolicitacaoIdRouteImport } from './routes/area-te.tipos-solicitacao.$id'
 import { Route as AreaTeSolicitacoesIdRouteImport } from './routes/area-te.solicitacoes.$id'
 
-const SolicitacoesRoute = SolicitacoesRouteImport.update({
-  id: '/solicitacoes',
-  path: '/solicitacoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
   path: '/sobre',
@@ -69,15 +64,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SolicitacoesIndexRoute = SolicitacoesIndexRouteImport.update({
+  id: '/solicitacoes/',
+  path: '/solicitacoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AreaTeIndexRoute = AreaTeIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AreaTeRoute,
 } as any)
 const SolicitacoesSlugRoute = SolicitacoesSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => SolicitacoesRoute,
+  id: '/solicitacoes/$slug',
+  path: '/solicitacoes/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AreaTeUsuariosRoute = AreaTeUsuariosRouteImport.update({
   id: '/usuarios',
@@ -134,7 +134,6 @@ export interface FileRoutesByFullPath {
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
-  '/solicitacoes': typeof SolicitacoesRouteWithChildren
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
@@ -144,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/solicitacoes/$slug': typeof SolicitacoesSlugRoute
   '/area-te/': typeof AreaTeIndexRoute
+  '/solicitacoes/': typeof SolicitacoesIndexRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
   '/area-te/tipos-solicitacao/$id': typeof AreaTeTiposSolicitacaoIdRoute
 }
@@ -154,7 +154,6 @@ export interface FileRoutesByTo {
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
-  '/solicitacoes': typeof SolicitacoesRouteWithChildren
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
@@ -164,6 +163,7 @@ export interface FileRoutesByTo {
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/solicitacoes/$slug': typeof SolicitacoesSlugRoute
   '/area-te': typeof AreaTeIndexRoute
+  '/solicitacoes': typeof SolicitacoesIndexRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
   '/area-te/tipos-solicitacao/$id': typeof AreaTeTiposSolicitacaoIdRoute
 }
@@ -176,7 +176,6 @@ export interface FileRoutesById {
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
   '/sobre': typeof SobreRoute
-  '/solicitacoes': typeof SolicitacoesRouteWithChildren
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
@@ -186,6 +185,7 @@ export interface FileRoutesById {
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/solicitacoes/$slug': typeof SolicitacoesSlugRoute
   '/area-te/': typeof AreaTeIndexRoute
+  '/solicitacoes/': typeof SolicitacoesIndexRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
   '/area-te/tipos-solicitacao/$id': typeof AreaTeTiposSolicitacaoIdRoute
 }
@@ -199,7 +199,6 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/ferramentas'
     | '/sobre'
-    | '/solicitacoes'
     | '/area-te/comunicados'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
@@ -209,6 +208,7 @@ export interface FileRouteTypes {
     | '/area-te/usuarios'
     | '/solicitacoes/$slug'
     | '/area-te/'
+    | '/solicitacoes/'
     | '/area-te/solicitacoes/$id'
     | '/area-te/tipos-solicitacao/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -219,7 +219,6 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/ferramentas'
     | '/sobre'
-    | '/solicitacoes'
     | '/area-te/comunicados'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
@@ -229,6 +228,7 @@ export interface FileRouteTypes {
     | '/area-te/usuarios'
     | '/solicitacoes/$slug'
     | '/area-te'
+    | '/solicitacoes'
     | '/area-te/solicitacoes/$id'
     | '/area-te/tipos-solicitacao/$id'
   id:
@@ -240,7 +240,6 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/ferramentas'
     | '/sobre'
-    | '/solicitacoes'
     | '/area-te/comunicados'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
@@ -250,6 +249,7 @@ export interface FileRouteTypes {
     | '/area-te/usuarios'
     | '/solicitacoes/$slug'
     | '/area-te/'
+    | '/solicitacoes/'
     | '/area-te/solicitacoes/$id'
     | '/area-te/tipos-solicitacao/$id'
   fileRoutesById: FileRoutesById
@@ -262,18 +262,12 @@ export interface RootRouteChildren {
   ContatosRoute: typeof ContatosRoute
   FerramentasRoute: typeof FerramentasRoute
   SobreRoute: typeof SobreRoute
-  SolicitacoesRoute: typeof SolicitacoesRouteWithChildren
+  SolicitacoesSlugRoute: typeof SolicitacoesSlugRoute
+  SolicitacoesIndexRoute: typeof SolicitacoesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/solicitacoes': {
-      id: '/solicitacoes'
-      path: '/solicitacoes'
-      fullPath: '/solicitacoes'
-      preLoaderRoute: typeof SolicitacoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sobre': {
       id: '/sobre'
       path: '/sobre'
@@ -323,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/solicitacoes/': {
+      id: '/solicitacoes/'
+      path: '/solicitacoes'
+      fullPath: '/solicitacoes/'
+      preLoaderRoute: typeof SolicitacoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/area-te/': {
       id: '/area-te/'
       path: '/'
@@ -332,10 +333,10 @@ declare module '@tanstack/react-router' {
     }
     '/solicitacoes/$slug': {
       id: '/solicitacoes/$slug'
-      path: '/$slug'
+      path: '/solicitacoes/$slug'
       fullPath: '/solicitacoes/$slug'
       preLoaderRoute: typeof SolicitacoesSlugRouteImport
-      parentRoute: typeof SolicitacoesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/area-te/usuarios': {
       id: '/area-te/usuarios'
@@ -453,18 +454,6 @@ const AreaTeRouteChildren: AreaTeRouteChildren = {
 const AreaTeRouteWithChildren =
   AreaTeRoute._addFileChildren(AreaTeRouteChildren)
 
-interface SolicitacoesRouteChildren {
-  SolicitacoesSlugRoute: typeof SolicitacoesSlugRoute
-}
-
-const SolicitacoesRouteChildren: SolicitacoesRouteChildren = {
-  SolicitacoesSlugRoute: SolicitacoesSlugRoute,
-}
-
-const SolicitacoesRouteWithChildren = SolicitacoesRoute._addFileChildren(
-  SolicitacoesRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AreaTeRoute: AreaTeRouteWithChildren,
@@ -473,7 +462,8 @@ const rootRouteChildren: RootRouteChildren = {
   ContatosRoute: ContatosRoute,
   FerramentasRoute: FerramentasRoute,
   SobreRoute: SobreRoute,
-  SolicitacoesRoute: SolicitacoesRouteWithChildren,
+  SolicitacoesSlugRoute: SolicitacoesSlugRoute,
+  SolicitacoesIndexRoute: SolicitacoesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

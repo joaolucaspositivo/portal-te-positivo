@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/solicitacoes")({
+export const Route = createFileRoute("/solicitacoes/")({
   head: () => ({
     meta: [
       { title: "Solicitações — Portal TE" },
