@@ -15,6 +15,9 @@ import {
   sendPasswordReset,
   deleteUser,
 } from "@/lib/users.functions";
+import { listUnidades, setUserUnidades } from "@/lib/unidades.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery as useRQ } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/area-te/usuarios")({
   component: AdminUsers,
