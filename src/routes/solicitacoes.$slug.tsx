@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { UNIDADES, URGENCIAS } from "@/lib/portal-constants";
 import { DynamicFormFields, type DynamicField } from "@/components/dynamic-form";
 import { useAuth } from "@/lib/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { listMinhasUnidades } from "@/lib/unidades.functions";
 
 export const Route = createFileRoute("/solicitacoes/$slug")({
   component: SolicSlug,
@@ -18,6 +20,7 @@ type Base = {
   nome_solicitante: string;
   email_solicitante: string;
   unidade: string;
+  unidade_id: string | null;
   cargo_funcao: string;
   titulo: string;
   descricao: string;
@@ -30,6 +33,12 @@ function SolicSlug() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const minhasUnidadesFn = useServerFn(listMinhasUnidades);
+  const { data: minhasUnidades = [] } = useQuery({
+    enabled: !!user,
+    queryKey: ["minhas-unidades", user?.id],
+    queryFn: () => minhasUnidadesFn(),
+  });
 
   const { data: tipo, isLoading: tipoLoading } = useQuery({
     queryKey: ["public-tipo", slug],
@@ -63,6 +72,7 @@ function SolicSlug() {
     nome_solicitante: "",
     email_solicitante: "",
     unidade: "",
+    unidade_id: null,
     cargo_funcao: "",
     titulo: "",
     descricao: "",
@@ -83,6 +93,17 @@ function SolicSlug() {
       }));
     }
   }, [user, profile]);
+
+  useEffect(() => {
+    if (minhasUnidades.length > 0) {
+      const principal = minhasUnidades.find((u: any) => u.principal) ?? minhasUnidades[0];
+      setBase((b) => ({
+        ...b,
+        unidade_id: b.unidade_id ?? principal.unidade_id,
+        unidade: b.unidade || principal.nome,
+      }));
+    }
+  }, [minhasUnidades]);
 
   if (tipoLoading) return <PageShell><p className="text-muted-foreground">Carregando…</p></PageShell>;
   if (!tipo) return <PageShell>
@@ -169,10 +190,21 @@ function SolicSlug() {
             <input type="email" required value={base.email_solicitante} onChange={(e) => setBase({ ...base, email_solicitante: e.target.value })} className={inp} />
           </FieldLabel>
           <FieldLabel label="Unidade *">
-            <select required value={base.unidade} onChange={(e) => setBase({ ...base, unidade: e.target.value })} className={inp}>
-              <option value="">Selecione…</option>
-              {UNIDADES.map((u) => <option key={u}>{u}</option>)}
-            </select>
+            {minhasUnidades.length > 0 ? (
+              <select required value={base.unidade_id ?? ""}
+                      onChange={(e) => {
+                        const u = minhasUnidades.find((x: any) => x.unidade_id === e.target.value);
+                        setBase({ ...base, unidade_id: e.target.value, unidade: u?.nome ?? "" });
+                      }} className={inp}>
+                <option value="">Selecione…</option>
+                {minhasUnidades.map((u: any) => <option key={u.unidade_id} value={u.unidade_id}>{u.nome}</option>)}
+              </select>
+            ) : (
+              <select required value={base.unidade} onChange={(e) => setBase({ ...base, unidade: e.target.value })} className={inp}>
+                <option value="">Selecione…</option>
+                {UNIDADES.map((u) => <option key={u}>{u}</option>)}
+              </select>
+            )}
           </FieldLabel>
           <FieldLabel label="Cargo / função">
             <input value={base.cargo_funcao} onChange={(e) => setBase({ ...base, cargo_funcao: e.target.value })} className={inp} />
