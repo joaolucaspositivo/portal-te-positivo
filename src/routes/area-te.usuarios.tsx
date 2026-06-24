@@ -211,15 +211,48 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
   const setStatusFn = useServerFn(setUserStatus);
   const resetFn = useServerFn(sendPasswordReset);
   const deleteFn = useServerFn(deleteUser);
+  const listUnidadesFn = useServerFn(listUnidades);
+  const setUserUnidadesFn = useServerFn(setUserUnidades);
+
+  const { data: unidades = [] } = useQuery({
+    queryKey: ["admin-unidades"],
+    queryFn: () => listUnidadesFn(),
+  });
+  const { data: vinculosAtuais = [] } = useQuery({
+    queryKey: ["admin-user-unidades", user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("usuario_unidades")
+        .select("unidade_id, principal")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const [unidadeIds, setUnidadeIds] = useState<string[]>([]);
+  const [principalId, setPrincipalId] = useState<string | null>(null);
+  const [vincLoaded, setVincLoaded] = useState(false);
+  if (!vincLoaded && vinculosAtuais.length >= 0) {
+    // initialize once
+    const ids = vinculosAtuais.map((v: any) => v.unidade_id);
+    const principal = vinculosAtuais.find((v: any) => v.principal)?.unidade_id ?? null;
+    if (ids.join("|") !== unidadeIds.join("|") || principal !== principalId) {
+      setUnidadeIds(ids);
+      setPrincipalId(principal);
+    }
+    if (vinculosAtuais !== undefined) setVincLoaded(true);
+  }
 
   const save = useMutation({
     mutationFn: async () => {
       await updateProfileFn({ data: { userId: user.id, ...profile } });
       await setRolesFn({ data: { userId: user.id, roles: roles as any } });
+      await setUserUnidadesFn({ data: { userId: user.id, unidadeIds, principalId } });
     },
     onSuccess: () => {
       toast.success("Usuário atualizado.");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-user-unidades", user.id] });
       onClose();
     },
     onError: (e: any) => toast.error(e.message ?? "Erro."),
@@ -229,6 +262,15 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
 
   function toggleRole(r: string) {
     setRoles((cur) => (cur.includes(r) ? cur.filter((x) => x !== r) : [...cur, r]));
+  }
+  function toggleUnidade(id: string) {
+    setUnidadeIds((cur) => {
+      if (cur.includes(id)) {
+        if (principalId === id) setPrincipalId(null);
+        return cur.filter((x) => x !== id);
+      }
+      return [...cur, id];
+    });
   }
 
   return (
@@ -265,6 +307,31 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
               </label>
             ))}
           </div>
+        </div>
+
+        <div className="col-span-2 border-t pt-3 mt-1">
+          <div className="text-sm font-medium mb-2">Unidades</div>
+          {unidades.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Nenhuma unidade cadastrada ainda.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {unidades.map((u: any) => {
+                const checked = unidadeIds.includes(u.id);
+                return (
+                  <div key={u.id} className="flex items-center gap-2 text-sm px-3 py-2 rounded border bg-background">
+                    <input type="checkbox" checked={checked} onChange={() => toggleUnidade(u.id)} />
+                    <span className="flex-1">{u.nome} <span className="text-xs text-muted-foreground">({u.sigla})</span></span>
+                    {checked && (
+                      <label className="text-xs flex items-center gap-1 text-muted-foreground">
+                        <input type="radio" name="principal" checked={principalId === u.id}
+                               onChange={() => setPrincipalId(u.id)} /> principal
+                      </label>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="col-span-2 border-t pt-3 mt-1 space-y-2">
