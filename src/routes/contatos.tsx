@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Mail, Phone, Search } from "lucide-react";
+import { Mail, Phone, Search, Lock } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { UNIDADES, TIPOS_CONTATO } from "@/lib/portal-constants";
 import { UserAvatar } from "@/components/user-avatar";
+import { useAuth } from "@/lib/use-auth";
 
 export const Route = createFileRoute("/contatos")({
   head: () => ({
@@ -22,12 +23,17 @@ function Contatos() {
   const [q, setQ] = useState("");
   const [un, setUn] = useState("");
   const [tp, setTp] = useState("");
+  const { user } = useAuth();
+  const isAuthed = !!user;
   const { data: items = [] } = useQuery({
-    queryKey: ["contatos-public"],
+    queryKey: ["contatos-public", isAuthed],
     queryFn: async () => {
+      const cols = isAuthed
+        ? "id, nome, funcao, unidade, tipo_contato, user_id, email, telefone_whatsapp"
+        : "id, nome, funcao, unidade, tipo_contato, user_id";
       const { data, error } = await supabase
         .from("contatos")
-        .select("id, nome, funcao, unidade, tipo_contato, user_id, email, telefone_whatsapp")
+        .select(cols)
         .eq("ativo", true).order("nome");
       if (error) throw error;
       const list = data ?? [];
@@ -94,14 +100,19 @@ function Contatos() {
                     </div>
                   </div>
                   <div className="mt-3 space-y-1 text-sm">
-                    {c.email && (
+                    {isAuthed && c.email && (
                       <a href={`mailto:${c.email}`} className="flex items-center gap-2 text-primary hover:underline">
                         <Mail className="h-3.5 w-3.5" /> {c.email}
                       </a>
                     )}
-                    {c.telefone_whatsapp && (
+                    {isAuthed && c.telefone_whatsapp && (
                       <div className="flex items-center gap-2 text-foreground/80">
                         <Phone className="h-3.5 w-3.5" /> {c.telefone_whatsapp}
+                      </div>
+                    )}
+                    {!isAuthed && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Lock className="h-3.5 w-3.5" /> Faça login para ver e-mail e telefone
                       </div>
                     )}
                   </div>
