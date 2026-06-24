@@ -20,12 +20,14 @@ import { Route as SolicitacoesIndexRouteImport } from './routes/solicitacoes.ind
 import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
 import { Route as SolicitacoesSlugRouteImport } from './routes/solicitacoes.$slug'
 import { Route as AreaTeUsuariosRouteImport } from './routes/area-te.usuarios'
+import { Route as AreaTeUnidadesRouteImport } from './routes/area-te.unidades'
 import { Route as AreaTeTiposSolicitacaoRouteImport } from './routes/area-te.tipos-solicitacao'
 import { Route as AreaTeSolicitacoesRouteImport } from './routes/area-te.solicitacoes'
 import { Route as AreaTePerfilRouteImport } from './routes/area-te.perfil'
 import { Route as AreaTeFerramentasRouteImport } from './routes/area-te.ferramentas'
 import { Route as AreaTeContatosRouteImport } from './routes/area-te.contatos'
 import { Route as AreaTeComunicadosRouteImport } from './routes/area-te.comunicados'
+import { Route as AreaTeUnidadesIdRouteImport } from './routes/area-te.unidades.$id'
 import { Route as AreaTeTiposSolicitacaoIdRouteImport } from './routes/area-te.tipos-solicitacao.$id'
 import { Route as AreaTeSolicitacoesIdRouteImport } from './routes/area-te.solicitacoes.$id'
 
@@ -84,6 +86,11 @@ const AreaTeUsuariosRoute = AreaTeUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AreaTeRoute,
 } as any)
+const AreaTeUnidadesRoute = AreaTeUnidadesRouteImport.update({
+  id: '/unidades',
+  path: '/unidades',
+  getParentRoute: () => AreaTeRoute,
+} as any)
 const AreaTeTiposSolicitacaoRoute = AreaTeTiposSolicitacaoRouteImport.update({
   id: '/tipos-solicitacao',
   path: '/tipos-solicitacao',
@@ -114,6 +121,11 @@ const AreaTeComunicadosRoute = AreaTeComunicadosRouteImport.update({
   path: '/comunicados',
   getParentRoute: () => AreaTeRoute,
 } as any)
+const AreaTeUnidadesIdRoute = AreaTeUnidadesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AreaTeUnidadesRoute,
+} as any)
 const AreaTeTiposSolicitacaoIdRoute =
   AreaTeTiposSolicitacaoIdRouteImport.update({
     id: '/$id',
@@ -140,12 +152,14 @@ export interface FileRoutesByFullPath {
   '/area-te/perfil': typeof AreaTePerfilRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/tipos-solicitacao': typeof AreaTeTiposSolicitacaoRouteWithChildren
+  '/area-te/unidades': typeof AreaTeUnidadesRouteWithChildren
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/solicitacoes/$slug': typeof SolicitacoesSlugRoute
   '/area-te/': typeof AreaTeIndexRoute
   '/solicitacoes/': typeof SolicitacoesIndexRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
   '/area-te/tipos-solicitacao/$id': typeof AreaTeTiposSolicitacaoIdRoute
+  '/area-te/unidades/$id': typeof AreaTeUnidadesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -160,12 +174,14 @@ export interface FileRoutesByTo {
   '/area-te/perfil': typeof AreaTePerfilRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/tipos-solicitacao': typeof AreaTeTiposSolicitacaoRouteWithChildren
+  '/area-te/unidades': typeof AreaTeUnidadesRouteWithChildren
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/solicitacoes/$slug': typeof SolicitacoesSlugRoute
   '/area-te': typeof AreaTeIndexRoute
   '/solicitacoes': typeof SolicitacoesIndexRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
   '/area-te/tipos-solicitacao/$id': typeof AreaTeTiposSolicitacaoIdRoute
+  '/area-te/unidades/$id': typeof AreaTeUnidadesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -182,12 +198,14 @@ export interface FileRoutesById {
   '/area-te/perfil': typeof AreaTePerfilRoute
   '/area-te/solicitacoes': typeof AreaTeSolicitacoesRouteWithChildren
   '/area-te/tipos-solicitacao': typeof AreaTeTiposSolicitacaoRouteWithChildren
+  '/area-te/unidades': typeof AreaTeUnidadesRouteWithChildren
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
   '/solicitacoes/$slug': typeof SolicitacoesSlugRoute
   '/area-te/': typeof AreaTeIndexRoute
   '/solicitacoes/': typeof SolicitacoesIndexRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
   '/area-te/tipos-solicitacao/$id': typeof AreaTeTiposSolicitacaoIdRoute
+  '/area-te/unidades/$id': typeof AreaTeUnidadesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -205,12 +223,14 @@ export interface FileRouteTypes {
     | '/area-te/perfil'
     | '/area-te/solicitacoes'
     | '/area-te/tipos-solicitacao'
+    | '/area-te/unidades'
     | '/area-te/usuarios'
     | '/solicitacoes/$slug'
     | '/area-te/'
     | '/solicitacoes/'
     | '/area-te/solicitacoes/$id'
     | '/area-te/tipos-solicitacao/$id'
+    | '/area-te/unidades/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -225,12 +245,14 @@ export interface FileRouteTypes {
     | '/area-te/perfil'
     | '/area-te/solicitacoes'
     | '/area-te/tipos-solicitacao'
+    | '/area-te/unidades'
     | '/area-te/usuarios'
     | '/solicitacoes/$slug'
     | '/area-te'
     | '/solicitacoes'
     | '/area-te/solicitacoes/$id'
     | '/area-te/tipos-solicitacao/$id'
+    | '/area-te/unidades/$id'
   id:
     | '__root__'
     | '/'
@@ -246,12 +268,14 @@ export interface FileRouteTypes {
     | '/area-te/perfil'
     | '/area-te/solicitacoes'
     | '/area-te/tipos-solicitacao'
+    | '/area-te/unidades'
     | '/area-te/usuarios'
     | '/solicitacoes/$slug'
     | '/area-te/'
     | '/solicitacoes/'
     | '/area-te/solicitacoes/$id'
     | '/area-te/tipos-solicitacao/$id'
+    | '/area-te/unidades/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -345,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeUsuariosRouteImport
       parentRoute: typeof AreaTeRoute
     }
+    '/area-te/unidades': {
+      id: '/area-te/unidades'
+      path: '/unidades'
+      fullPath: '/area-te/unidades'
+      preLoaderRoute: typeof AreaTeUnidadesRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
     '/area-te/tipos-solicitacao': {
       id: '/area-te/tipos-solicitacao'
       path: '/tipos-solicitacao'
@@ -386,6 +417,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/area-te/comunicados'
       preLoaderRoute: typeof AreaTeComunicadosRouteImport
       parentRoute: typeof AreaTeRoute
+    }
+    '/area-te/unidades/$id': {
+      id: '/area-te/unidades/$id'
+      path: '/$id'
+      fullPath: '/area-te/unidades/$id'
+      preLoaderRoute: typeof AreaTeUnidadesIdRouteImport
+      parentRoute: typeof AreaTeUnidadesRoute
     }
     '/area-te/tipos-solicitacao/$id': {
       id: '/area-te/tipos-solicitacao/$id'
@@ -429,6 +467,18 @@ const AreaTeTiposSolicitacaoRouteWithChildren =
     AreaTeTiposSolicitacaoRouteChildren,
   )
 
+interface AreaTeUnidadesRouteChildren {
+  AreaTeUnidadesIdRoute: typeof AreaTeUnidadesIdRoute
+}
+
+const AreaTeUnidadesRouteChildren: AreaTeUnidadesRouteChildren = {
+  AreaTeUnidadesIdRoute: AreaTeUnidadesIdRoute,
+}
+
+const AreaTeUnidadesRouteWithChildren = AreaTeUnidadesRoute._addFileChildren(
+  AreaTeUnidadesRouteChildren,
+)
+
 interface AreaTeRouteChildren {
   AreaTeComunicadosRoute: typeof AreaTeComunicadosRoute
   AreaTeContatosRoute: typeof AreaTeContatosRoute
@@ -436,6 +486,7 @@ interface AreaTeRouteChildren {
   AreaTePerfilRoute: typeof AreaTePerfilRoute
   AreaTeSolicitacoesRoute: typeof AreaTeSolicitacoesRouteWithChildren
   AreaTeTiposSolicitacaoRoute: typeof AreaTeTiposSolicitacaoRouteWithChildren
+  AreaTeUnidadesRoute: typeof AreaTeUnidadesRouteWithChildren
   AreaTeUsuariosRoute: typeof AreaTeUsuariosRoute
   AreaTeIndexRoute: typeof AreaTeIndexRoute
 }
@@ -447,6 +498,7 @@ const AreaTeRouteChildren: AreaTeRouteChildren = {
   AreaTePerfilRoute: AreaTePerfilRoute,
   AreaTeSolicitacoesRoute: AreaTeSolicitacoesRouteWithChildren,
   AreaTeTiposSolicitacaoRoute: AreaTeTiposSolicitacaoRouteWithChildren,
+  AreaTeUnidadesRoute: AreaTeUnidadesRouteWithChildren,
   AreaTeUsuariosRoute: AreaTeUsuariosRoute,
   AreaTeIndexRoute: AreaTeIndexRoute,
 }
