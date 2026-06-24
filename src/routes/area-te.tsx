@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import {
-  LayoutDashboard, Inbox, Wrench, Megaphone, Users, LogOut, Home, UserCog, FormInput, User as UserIcon,
+  LayoutDashboard, Inbox, Wrench, Megaphone, Users, LogOut, Home, UserCog, FormInput, User as UserIcon, Building2,
 } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ const nav: ReadonlyArray<NavItem> = [
   { to: "/area-te/ferramentas", label: "Ferramentas", icon: Wrench, show: (r) => r.isEditor },
   { to: "/area-te/comunicados", label: "Comunicados", icon: Megaphone, show: (r) => r.isEditor },
   { to: "/area-te/contatos", label: "Contatos", icon: Users, show: (r) => r.isEditor },
+  { to: "/area-te/unidades", label: "Unidades", icon: Building2, show: (r) => r.isAdmin },
   { to: "/area-te/usuarios", label: "Usuários", icon: UserCog, show: (r) => r.isAdmin },
   { to: "/area-te/perfil", label: "Meu perfil", icon: UserIcon, show: () => true },
 ];
