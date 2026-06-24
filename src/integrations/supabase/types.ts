@@ -336,6 +336,7 @@ export type Database = {
           tipo_solicitacao: string
           titulo: string
           unidade: string
+          unidade_id: string | null
           unidades_impactadas: string | null
           updated_at: string
           urgencia: string
@@ -362,6 +363,7 @@ export type Database = {
           tipo_solicitacao: string
           titulo: string
           unidade: string
+          unidade_id?: string | null
           unidades_impactadas?: string | null
           updated_at?: string
           urgencia?: string
@@ -388,6 +390,7 @@ export type Database = {
           tipo_solicitacao?: string
           titulo?: string
           unidade?: string
+          unidade_id?: string | null
           unidades_impactadas?: string | null
           updated_at?: string
           urgencia?: string
@@ -428,7 +431,74 @@ export type Database = {
             referencedRelation: "solicitacao_tipos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "solicitacoes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      unidades: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          created_at: string
+          email: string | null
+          estado: string | null
+          id: string
+          logradouro: string | null
+          nome: string
+          numero: string | null
+          responsavel_cargo: string | null
+          responsavel_nome: string | null
+          sigla: string
+          status: Database["public"]["Enums"]["unidade_status"]
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          estado?: string | null
+          id?: string
+          logradouro?: string | null
+          nome: string
+          numero?: string | null
+          responsavel_cargo?: string | null
+          responsavel_nome?: string | null
+          sigla: string
+          status?: Database["public"]["Enums"]["unidade_status"]
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          estado?: string | null
+          id?: string
+          logradouro?: string | null
+          nome?: string
+          numero?: string | null
+          responsavel_cargo?: string | null
+          responsavel_nome?: string | null
+          sigla?: string
+          status?: Database["public"]["Enums"]["unidade_status"]
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -450,6 +520,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      usuario_unidades: {
+        Row: {
+          created_at: string
+          principal: boolean
+          unidade_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          principal?: boolean
+          unidade_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          principal?: boolean
+          unidade_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_unidades_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -486,6 +585,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_pertence_unidade: {
+        Args: { _unidade_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "equipe_te" | "editor" | "usuario"
@@ -500,6 +603,7 @@ export type Database = {
         | "multiselect"
         | "checkbox"
       profile_status: "pendente" | "ativo" | "bloqueado"
+      unidade_status: "ativa" | "inativa"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -640,6 +744,7 @@ export const Constants = {
         "checkbox",
       ],
       profile_status: ["pendente", "ativo", "bloqueado"],
+      unidade_status: ["ativa", "inativa"],
     },
   },
 } as const
