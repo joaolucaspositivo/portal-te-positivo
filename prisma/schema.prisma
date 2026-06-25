@@ -1,4 +1,4 @@
-// Schema Prisma — substitui Supabase. Roda em Postgres puro.
+// Schema Prisma do Portal TE. Roda em Postgres puro.
 // Aplicar: npx prisma migrate dev
 
 generator client {
@@ -29,7 +29,7 @@ enum UnidadeStatus {
 }
 
 // ============================================================
-// Auth (substitui auth.users do Supabase)
+// Auth local
 // ============================================================
 
 model User {
