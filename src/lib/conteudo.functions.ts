@@ -130,7 +130,7 @@ const FerramentaSchema = z.object({
 
 export const saveFerramentaAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => FerramentaSchema.parse(data))
+  .validator((data: unknown) => FerramentaSchema.parse(data))
   .handler(async ({ data, context }) => {
     assertEditor(context as any);
 
@@ -164,7 +164,7 @@ export const saveFerramentaAdmin = createServerFn({ method: "POST" })
 
 export const deleteFerramentaAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertEditor(context as any);
 
@@ -225,7 +225,7 @@ const ComunicadoSchema = z.object({
 
 export const saveComunicadoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => ComunicadoSchema.parse(data))
+  .validator((data: unknown) => ComunicadoSchema.parse(data))
   .handler(async ({ data, context }) => {
     assertEditor(context as any);
 
@@ -259,7 +259,7 @@ export const saveComunicadoAdmin = createServerFn({ method: "POST" })
 
 export const deleteComunicadoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertEditor(context as any);
 
@@ -360,7 +360,7 @@ const ContatoSchema = z.object({
 
 export const saveContatoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => ContatoSchema.parse(data))
+  .validator((data: unknown) => ContatoSchema.parse(data))
   .handler(async ({ data, context }) => {
     assertEditor(context as any);
 
@@ -407,7 +407,7 @@ export const saveContatoAdmin = createServerFn({ method: "POST" })
 
 export const deleteContatoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertEditor(context as any);
 

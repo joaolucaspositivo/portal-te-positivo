@@ -9,7 +9,7 @@ const SignUpSchema = z.object({
 });
 
 export const signUp = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => SignUpSchema.parse(data))
+  .validator((data: unknown) => SignUpSchema.parse(data))
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
     const { hashPassword, signAccessToken, issueRefreshToken } = await import("./auth.server");
@@ -50,7 +50,7 @@ const SignInSchema = z.object({
 });
 
 export const signIn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => SignInSchema.parse(data))
+  .validator((data: unknown) => SignInSchema.parse(data))
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
     const { verifyPassword, signAccessToken, issueRefreshToken } = await import("./auth.server");
@@ -72,7 +72,7 @@ export const signIn = createServerFn({ method: "POST" })
 const RefreshSchema = z.object({ refreshToken: z.string().min(1) });
 
 export const refreshSession = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => RefreshSchema.parse(data))
+  .validator((data: unknown) => RefreshSchema.parse(data))
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
     const { rotateRefreshToken, signAccessToken } = await import("./auth.server");
@@ -96,7 +96,7 @@ export const refreshSession = createServerFn({ method: "POST" })
   });
 
 export const signOut = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ refreshToken: z.string().optional() }).parse(data))
+  .validator((data: unknown) => z.object({ refreshToken: z.string().optional() }).parse(data))
   .handler(async ({ data }) => {
     if (data.refreshToken) {
       const { revokeRefreshToken } = await import("./auth.server");

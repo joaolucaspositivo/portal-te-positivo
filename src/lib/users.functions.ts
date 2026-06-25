@@ -79,7 +79,7 @@ const StatusSchema = z.object({
 
 export const setUserStatus = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => StatusSchema.parse(data))
+  .validator((data: unknown) => StatusSchema.parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -106,7 +106,7 @@ const RolesSchema = z.object({
 
 export const setUserRoles = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => RolesSchema.parse(data))
+  .validator((data: unknown) => RolesSchema.parse(data))
   .handler(async ({ data, context }) => {
     const ctx = context as any;
 
@@ -148,7 +148,7 @@ const ProfileSchema = z.object({
 
 export const adminUpdateProfile = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => ProfileSchema.parse(data))
+  .validator((data: unknown) => ProfileSchema.parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -182,7 +182,7 @@ const ResetSchema = z.object({
 
 export const sendPasswordReset = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => ResetSchema.parse(data))
+  .validator((data: unknown) => ResetSchema.parse(data))
   .handler(async ({ context }) => {
     assertAdmin(context as any);
 
@@ -197,7 +197,7 @@ const DeleteSchema = z.object({
 
 export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => DeleteSchema.parse(data))
+  .validator((data: unknown) => DeleteSchema.parse(data))
   .handler(async ({ data, context }) => {
     const ctx = context as any;
 

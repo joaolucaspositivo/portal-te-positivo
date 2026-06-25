@@ -77,7 +77,7 @@ export const listTiposSolicitacaoAdmin = createServerFn({ method: "GET" })
 
 export const getTipoSolicitacaoAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -94,7 +94,7 @@ export const getTipoSolicitacaoAdmin = createServerFn({ method: "GET" })
 
 export const saveTipoSolicitacaoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => TipoSchema.parse(data))
+  .validator((data: unknown) => TipoSchema.parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -126,7 +126,7 @@ export const saveTipoSolicitacaoAdmin = createServerFn({ method: "POST" })
 
 export const deleteTipoSolicitacaoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -143,7 +143,7 @@ export const deleteTipoSolicitacaoAdmin = createServerFn({ method: "POST" })
 
 export const listCamposTipoAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ tipoId: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ tipoId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -182,7 +182,7 @@ const CampoSchema = z.object({
 
 export const saveCampoTipoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => CampoSchema.parse(data))
+  .validator((data: unknown) => CampoSchema.parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -217,7 +217,7 @@ export const saveCampoTipoAdmin = createServerFn({ method: "POST" })
 
 export const deleteCampoTipoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -234,7 +234,7 @@ export const deleteCampoTipoAdmin = createServerFn({ method: "POST" })
 
 export const reorderCamposTipoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         firstId: z.string().uuid(),

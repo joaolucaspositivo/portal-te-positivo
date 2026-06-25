@@ -144,7 +144,7 @@ export const listUnidades = createServerFn({ method: "GET" })
 
 export const getUnidade = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -161,7 +161,7 @@ export const getUnidade = createServerFn({ method: "GET" })
 
 export const createUnidade = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => UnidadeInput.parse(data))
+  .validator((data: unknown) => UnidadeInput.parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -176,7 +176,7 @@ export const createUnidade = createServerFn({ method: "POST" })
 
 export const updateUnidade = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     UnidadeInput.partial().extend({ id: z.string().uuid() }).parse(data),
   )
   .handler(async ({ data, context }) => {
@@ -198,7 +198,7 @@ export const updateUnidade = createServerFn({ method: "POST" })
 
 export const setUnidadeStatus = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       id: z.string().uuid(),
       status: z.enum(["ativa", "inativa"]),
@@ -223,7 +223,7 @@ export const setUnidadeStatus = createServerFn({ method: "POST" })
 
 export const deleteUnidade = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -259,7 +259,7 @@ export const deleteUnidade = createServerFn({ method: "POST" })
 
 export const listUsuariosDaUnidade = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ unidadeId: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ unidadeId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -327,7 +327,7 @@ export const listMinhasUnidades = createServerFn({ method: "GET" })
 
 export const listUnidadesDoUsuario = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ userId: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
@@ -354,7 +354,7 @@ export const listUnidadesDoUsuario = createServerFn({ method: "GET" })
 
 export const setUserUnidades = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       userId: z.string().uuid(),
       unidadeIds: z.array(z.string().uuid()),
@@ -396,7 +396,7 @@ export const setUserUnidades = createServerFn({ method: "POST" })
 
 export const vincularUsuario = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       unidadeId: z.string().uuid(),
       userId: z.string().uuid(),
@@ -455,7 +455,7 @@ export const vincularUsuario = createServerFn({ method: "POST" })
 
 export const desvincularUsuario = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       unidadeId: z.string().uuid(),
       userId: z.string().uuid(),
@@ -520,7 +520,7 @@ export const desvincularUsuario = createServerFn({ method: "POST" })
 
 export const definirUnidadePrincipal = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       unidadeId: z.string().uuid(),
       userId: z.string().uuid(),

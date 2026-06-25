@@ -19,7 +19,7 @@ const UpdateMyProfileSchema = z.object({
 
 export const updateMyProfile = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => UpdateMyProfileSchema.parse(data))
+  .validator((data: unknown) => UpdateMyProfileSchema.parse(data))
   .handler(async ({ data, context }) => {
     const ctx = context as any;
     const { prisma } = await import("./db.server");

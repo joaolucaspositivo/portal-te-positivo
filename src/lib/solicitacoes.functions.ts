@@ -114,7 +114,7 @@ export const listSolicitacaoTiposPublic = createServerFn({ method: "GET" }).hand
 });
 
 export const getSolicitacaoTipoPublic = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
+  .validator((data: unknown) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
 
@@ -129,7 +129,7 @@ export const getSolicitacaoTipoPublic = createServerFn({ method: "GET" })
   });
 
 export const listCamposSolicitacaoPublic = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ tipoId: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ tipoId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
 
@@ -160,7 +160,7 @@ const CreateSolicitacaoSchema = z.object({
 });
 
 export const createSolicitacaoPublic = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => CreateSolicitacaoSchema.parse(data))
+  .validator((data: unknown) => CreateSolicitacaoSchema.parse(data))
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
 
@@ -221,7 +221,7 @@ export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
 
 export const getSolicitacaoAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertEquipeTE(context as any);
 
@@ -278,7 +278,7 @@ const UpdateSolicitacaoSchema = z.object({
 
 export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => UpdateSolicitacaoSchema.parse(data))
+  .validator((data: unknown) => UpdateSolicitacaoSchema.parse(data))
   .handler(async ({ data, context }) => {
     assertEquipeTE(context as any);
 
@@ -301,7 +301,7 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
 
 export const deleteSolicitacaoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     assertEquipeTE(context as any);
 
