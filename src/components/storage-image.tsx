@@ -1,36 +1,39 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+function resolveImageSrc(path?: string | null) {
+  if (!path) return null;
 
-const DEFAULT_BUCKET = "portal-media";
+  if (
+    path.startsWith("http://") ||
+    path.startsWith("https://") ||
+    path.startsWith("/") ||
+    path.startsWith("data:")
+  ) {
+    return path;
+  }
 
-export function useSignedUrl(path?: string | null, bucket: string = DEFAULT_BUCKET) {
-  return useQuery({
-    enabled: !!path,
-    queryKey: ["signed-url", bucket, path],
-    staleTime: 1000 * 60 * 30,
-    queryFn: async () => {
-      if (!path) return null;
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(path, 60 * 60); // 1h
-      if (error) throw error;
-      return data.signedUrl;
-    },
-  });
+  return `/${path.replace(/^\/+/, "")}`;
+}
+
+export function useSignedUrl(path?: string | null) {
+  return {
+    data: resolveImageSrc(path),
+    isLoading: false,
+    error: null,
+  };
 }
 
 export function StorageImage({
   path,
   alt,
   className,
-  bucket,
 }: {
   path?: string | null;
   alt: string;
   className?: string;
   bucket?: string;
 }) {
-  const { data: url } = useSignedUrl(path, bucket);
-  if (!path || !url) return null;
-  return <img src={url} alt={alt} className={className} loading="lazy" />;
+  const src = resolveImageSrc(path);
+
+  if (!src) return null;
+
+  return <img src={src} alt={alt} className={className} loading="lazy" />;
 }
