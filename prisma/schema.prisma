@@ -41,10 +41,13 @@ model User {
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  profile         Profile?
-  roles           UserRole[]
-  refreshTokens   RefreshToken[]
-  unidades        UsuarioUnidade[]
+  profile       Profile?
+  roles         UserRole[]
+  refreshTokens RefreshToken[]
+  unidades      UsuarioUnidade[]
+
+  solicitacoesCriadas     Solicitacao[] @relation("SolicitanteSolicitacoes")
+  solicitacoesResponsavel Solicitacao[] @relation("ResponsavelSolicitacoes")
 
   @@map("users")
 }
@@ -64,12 +67,12 @@ model RefreshToken {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  tokenHash String   @unique @map("token_hash")
-  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
   usedAt    DateTime? @map("used_at") @db.Timestamptz
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([userId])
   @@map("password_reset_tokens")
@@ -92,16 +95,16 @@ model UserRole {
 // ============================================================
 
 model Profile {
-  id            String        @id @db.Uuid
-  nomeCompleto  String?       @map("nome_completo")
-  cargo         String?
-  unidade       String?
-  telefone      String?
-  avatarUrl     String?       @map("avatar_url")
-  bio           String?
-  status        ProfileStatus @default(pendente)
-  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  id           String        @id @db.Uuid
+  nomeCompleto String?       @map("nome_completo")
+  cargo        String?
+  unidade      String?
+  telefone     String?
+  avatarUrl    String?       @map("avatar_url")
+  bio          String?
+  status       ProfileStatus @default(pendente)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
@@ -155,17 +158,18 @@ model UsuarioUnidade {
 // ============================================================
 
 model SolicitacaoTipo {
-  id          String   @id @default(uuid()) @db.Uuid
-  slug        String   @unique
-  nome        String
-  descricao   String?
-  icone       String?
-  cor         String?
-  ativo       Boolean  @default(true)
-  ordem       Int      @default(0)
-  prazoDias   Int?     @map("prazo_dias")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id             String   @id @default(uuid()) @db.Uuid
+  slug           String   @unique
+  nome           String
+  descricao      String?
+  icone          String?
+  cor            String?
+  ativo          Boolean  @default(true)
+  ordem          Int      @default(0)
+  prazoDias      Int?     @map("prazo_dias")
+  permiteAnonimo Boolean  @default(true) @map("permite_anonimo")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   campos       SolicitacaoCampo[]
   solicitacoes Solicitacao[]
@@ -195,37 +199,44 @@ model SolicitacaoCampo {
 }
 
 model Solicitacao {
-  id                     String   @id @default(uuid()) @db.Uuid
-  tipoId                 String?  @map("tipo_id") @db.Uuid
-  unidadeId              String?  @map("unidade_id") @db.Uuid
-  nomeSolicitante        String   @map("nome_solicitante")
-  emailSolicitante       String   @map("email_solicitante")
-  unidade                String
-  segmentoArea           String?  @map("segmento_area")
-  cargoFuncao            String?  @map("cargo_funcao")
-  tipoSolicitacao        String   @map("tipo_solicitacao")
-  titulo                 String
-  descricao              String
-  publicoImpactado       String?  @map("publico_impactado")
-  unidadesImpactadas     String?  @map("unidades_impactadas")
-  prazoDesejado          DateTime? @map("prazo_desejado") @db.Date
-  urgencia               String   @default("Média")
-  linkReferencia         String?  @map("link_referencia")
-  observacoesAdicionais  String?  @map("observacoes_adicionais")
-  dadosExtras            Json?    @map("dados_extras")
-  anexosUrls             Json?    @map("anexos_urls")
-  status                 String   @default("Recebida")
-  responsavelTe          String?  @map("responsavel_te")
-  observacoesInternas    String?  @map("observacoes_internas")
-  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id            String  @id @default(uuid()) @db.Uuid
+  tipoId        String? @map("tipo_id") @db.Uuid
+  unidadeId     String? @map("unidade_id") @db.Uuid
+  solicitanteId String? @map("solicitante_id") @db.Uuid
+  responsavelId String? @map("responsavel_id") @db.Uuid
 
-  tipo     SolicitacaoTipo? @relation(fields: [tipoId], references: [id])
-  unidadeRef Unidade?       @relation(fields: [unidadeId], references: [id])
+  nomeSolicitante       String    @map("nome_solicitante")
+  emailSolicitante      String    @map("email_solicitante")
+  unidade               String
+  segmentoArea          String?   @map("segmento_area")
+  cargoFuncao           String?   @map("cargo_funcao")
+  tipoSolicitacao       String    @map("tipo_solicitacao")
+  titulo                String
+  descricao             String
+  publicoImpactado      String?   @map("publico_impactado")
+  unidadesImpactadas    String?   @map("unidades_impactadas")
+  prazoDesejado         DateTime? @map("prazo_desejado") @db.Date
+  urgencia              String    @default("Média")
+  linkReferencia        String?   @map("link_referencia")
+  observacoesAdicionais String?   @map("observacoes_adicionais")
+  dadosExtras           Json?     @map("dados_extras")
+  anexosUrls            Json?     @map("anexos_urls")
+  status                String    @default("Recebida")
+  responsavelTe         String?   @map("responsavel_te")
+  observacoesInternas   String?   @map("observacoes_internas")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tipo        SolicitacaoTipo? @relation(fields: [tipoId], references: [id])
+  unidadeRef  Unidade?         @relation(fields: [unidadeId], references: [id])
+  solicitante User?            @relation("SolicitanteSolicitacoes", fields: [solicitanteId], references: [id])
+  responsavel User?            @relation("ResponsavelSolicitacoes", fields: [responsavelId], references: [id])
 
   @@index([status])
   @@index([tipoId])
   @@index([unidadeId])
+  @@index([solicitanteId])
+  @@index([responsavelId])
   @@map("solicitacoes")
 }
 
@@ -234,35 +245,35 @@ model Solicitacao {
 // ============================================================
 
 model Ferramenta {
-  id            String   @id @default(uuid()) @db.Uuid
-  nome          String
-  descricao     String?
-  categoria     String?
-  publicoAlvo   String?  @map("publico_alvo")
-  segmento      String?
-  linkAcesso    String?  @map("link_acesso")
-  responsavel   String?
-  imagemUrl     String?  @map("imagem_url")
-  status        String   @default("Ativa")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id          String   @id @default(uuid()) @db.Uuid
+  nome        String
+  descricao   String?
+  categoria   String?
+  publicoAlvo String?  @map("publico_alvo")
+  segmento    String?
+  linkAcesso  String?  @map("link_acesso")
+  responsavel String?
+  imagemUrl   String?  @map("imagem_url")
+  status      String   @default("Ativa")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("ferramentas")
 }
 
 model Comunicado {
-  id              String   @id @default(uuid()) @db.Uuid
-  titulo          String
-  resumo          String?
-  conteudo        String
-  categoria       String?
-  autor           String?
-  imagemUrl       String?  @map("imagem_url")
-  dataPublicacao  DateTime @default(now()) @map("data_publicacao") @db.Date
-  destaque        Boolean  @default(false)
-  publicado       Boolean  @default(true)
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id             String   @id @default(uuid()) @db.Uuid
+  titulo         String
+  resumo         String?
+  conteudo       String
+  categoria      String?
+  autor          String?
+  imagemUrl      String?  @map("imagem_url")
+  dataPublicacao DateTime @default(now()) @map("data_publicacao") @db.Date
+  destaque       Boolean  @default(false)
+  publicado      Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@index([publicado])
   @@map("comunicados")
