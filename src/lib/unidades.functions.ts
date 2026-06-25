@@ -1,15 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuth } from "@/lib/auth-middleware.local";
 import { z } from "zod";
 
-async function assertAdmin(ctx: { supabase: any; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", {
-    _user_id: ctx.userId,
-    _role: "admin",
-  });
-
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden");
+function assertAdmin(ctx: { roles?: string[] }) {
+  if (!ctx.roles?.includes("admin")) {
+    throw new Error("Forbidden");
+  }
 }
 
 const UnidadeInput = z.object({
@@ -29,102 +25,179 @@ const UnidadeInput = z.object({
   responsavel_cargo: z.string().trim().max(160).nullable().optional(),
 });
 
-export const listUnidades = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
+function toUnidadeData(data: any) {
+  return {
+    nome: data.nome,
+    sigla: data.sigla,
+    status: data.status,
+    cep: data.cep ?? null,
+    logradouro: data.logradouro ?? null,
+    numero: data.numero ?? null,
+    complemento: data.complemento ?? null,
+    bairro: data.bairro ?? null,
+    cidade: data.cidade ?? null,
+    estado: data.estado ?? null,
+    telefone: data.telefone ?? null,
+    email: data.email === "" ? null : data.email ?? null,
+    responsavelNome: data.responsavel_nome ?? null,
+    responsavelCargo: data.responsavel_cargo ?? null,
+  };
+}
 
-    const { data, error } = await context.supabase
-      .from("unidades")
-      .select("*")
-      .order("nome");
+function toUnidadeUpdateData(data: any) {
+  const payload: any = {};
 
-    if (error) throw new Error(error.message);
+  for (const key of [
+    "nome",
+    "sigla",
+    "status",
+    "cep",
+    "logradouro",
+    "numero",
+    "complemento",
+    "bairro",
+    "cidade",
+    "estado",
+    "telefone",
+    "email",
+    "responsavel_nome",
+    "responsavel_cargo",
+  ]) {
+    if (!(key in data)) continue;
 
-    const ids = (data ?? []).map((u: any) => u.id);
-    if (ids.length === 0) {
-      return (data ?? []).map((u: any) => ({ ...u, usuarios_count: 0 }));
+    if (key === "responsavel_nome") {
+      payload.responsavelNome = data[key] ?? null;
+    } else if (key === "responsavel_cargo") {
+      payload.responsavelCargo = data[key] ?? null;
+    } else if (key === "email") {
+      payload.email = data[key] === "" ? null : data[key] ?? null;
+    } else {
+      payload[key] = data[key] ?? null;
     }
+  }
 
-    const { data: vinculos } = await context.supabase
-      .from("usuario_unidades")
-      .select("unidade_id");
+  return payload;
+}
 
-    const counts = new Map<string, number>();
+function toUnidadeRow(u: any, usuariosCount = 0) {
+  if (!u) return null;
 
-    (vinculos ?? []).forEach((v: any) => {
-      counts.set(v.unidade_id, (counts.get(v.unidade_id) ?? 0) + 1);
+  return {
+    id: u.id,
+    nome: u.nome,
+    sigla: u.sigla,
+    status: u.status,
+    cep: u.cep,
+    logradouro: u.logradouro,
+    numero: u.numero,
+    complemento: u.complemento,
+    bairro: u.bairro,
+    cidade: u.cidade,
+    estado: u.estado,
+    telefone: u.telefone,
+    email: u.email,
+    responsavel_nome: u.responsavelNome,
+    responsavel_cargo: u.responsavelCargo,
+    created_at: u.createdAt,
+    updated_at: u.updatedAt,
+    usuarios_count: usuariosCount,
+  };
+}
+
+function toProfileRow(profile: any | null) {
+  if (!profile) return null;
+
+  return {
+    id: profile.id,
+    nome_completo: profile.nomeCompleto ?? null,
+    cargo: profile.cargo ?? null,
+    unidade: profile.unidade ?? null,
+    telefone: profile.telefone ?? null,
+    avatar_url: profile.avatarUrl ?? null,
+    bio: profile.bio ?? null,
+    status: profile.status ?? "pendente",
+    created_at: profile.createdAt ?? null,
+    updated_at: profile.updatedAt ?? null,
+  };
+}
+
+export const listUnidades = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .handler(async ({ context }) => {
+    assertAdmin(context as any);
+
+    const { prisma } = await import("./db.server");
+
+    const unidades = await prisma.unidade.findMany({
+      orderBy: { nome: "asc" },
+      include: {
+        _count: {
+          select: {
+            usuarios: true,
+          },
+        },
+      },
     });
 
-    return (data ?? []).map((u: any) => ({
-      ...u,
-      usuarios_count: counts.get(u.id) ?? 0,
-    }));
+    return unidades.map((u) => toUnidadeRow(u, u._count.usuarios));
   });
 
 export const getUnidade = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { data: unidade, error } = await context.supabase
-      .from("unidades")
-      .select("*")
-      .eq("id", data.id)
-      .maybeSingle();
+    const { prisma } = await import("./db.server");
 
-    if (error) throw new Error(error.message);
+    const unidade = await prisma.unidade.findUnique({
+      where: {
+        id: data.id,
+      },
+    });
 
-    return unidade;
+    return toUnidadeRow(unidade);
   });
 
 export const createUnidade = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => UnidadeInput.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const payload = {
-      ...data,
-      email: data.email === "" ? null : data.email,
-    };
+    const { prisma } = await import("./db.server");
 
-    const { data: row, error } = await context.supabase
-      .from("unidades")
-      .insert(payload)
-      .select("*")
-      .single();
+    const row = await prisma.unidade.create({
+      data: toUnidadeData(data),
+    });
 
-    if (error) throw new Error(error.message);
-
-    return row;
+    return toUnidadeRow(row);
   });
 
 export const updateUnidade = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) =>
     UnidadeInput.partial().extend({ id: z.string().uuid() }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
+
+    const { prisma } = await import("./db.server");
 
     const { id, ...rest } = data as any;
 
-    if (rest.email === "") rest.email = null;
-
-    const { error } = await context.supabase
-      .from("unidades")
-      .update(rest)
-      .eq("id", id);
-
-    if (error) throw new Error(error.message);
+    await prisma.unidade.update({
+      where: {
+        id,
+      },
+      data: toUnidadeUpdateData(rest),
+    });
 
     return { ok: true };
   });
 
 export const setUnidadeStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) =>
     z.object({
       id: z.string().uuid(),
@@ -132,134 +205,155 @@ export const setUnidadeStatus = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { error } = await context.supabase
-      .from("unidades")
-      .update({ status: data.status })
-      .eq("id", data.id);
+    const { prisma } = await import("./db.server");
 
-    if (error) throw new Error(error.message);
+    await prisma.unidade.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        status: data.status,
+      },
+    });
 
     return { ok: true };
   });
 
 export const deleteUnidade = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const [{ count: vinc }, { count: solic }] = await Promise.all([
-      context.supabase
-        .from("usuario_unidades")
-        .select("user_id", { count: "exact", head: true })
-        .eq("unidade_id", data.id),
-      context.supabase
-        .from("solicitacoes")
-        .select("id", { count: "exact", head: true })
-        .eq("unidade_id", data.id),
+    const { prisma } = await import("./db.server");
+
+    const [vinculosCount, solicitacoesCount] = await Promise.all([
+      prisma.usuarioUnidade.count({
+        where: {
+          unidadeId: data.id,
+        },
+      }),
+      prisma.solicitacao.count({
+        where: {
+          unidadeId: data.id,
+        },
+      }),
     ]);
 
-    if ((vinc ?? 0) > 0 || (solic ?? 0) > 0) {
+    if (vinculosCount > 0 || solicitacoesCount > 0) {
       throw new Error(
         "Esta unidade possui usuários vinculados ou solicitações. Desative-a em vez de excluir.",
       );
     }
 
-    const { error } = await context.supabase
-      .from("unidades")
-      .delete()
-      .eq("id", data.id);
-
-    if (error) throw new Error(error.message);
+    await prisma.unidade.delete({
+      where: {
+        id: data.id,
+      },
+    });
 
     return { ok: true };
   });
 
 export const listUsuariosDaUnidade = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => z.object({ unidadeId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    const { data: vinculos, error } = await supabaseAdmin
-      .from("usuario_unidades")
-      .select("user_id, principal, created_at")
-      .eq("unidade_id", data.unidadeId);
-
-    if (error) throw new Error(error.message);
-
-    const ids = (vinculos ?? []).map((v: any) => v.user_id);
-
-    if (ids.length === 0) return [];
-
-    const { data: profiles } = await supabaseAdmin
-      .from("profiles")
-      .select("*")
-      .in("id", ids);
-
-    const { data: users } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
+    const vinculos = await prisma.usuarioUnidade.findMany({
+      where: {
+        unidadeId: data.unidadeId,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      include: {
+        user: {
+          include: {
+            profile: true,
+          },
+        },
+      },
     });
 
-    const emailMap = new Map<string, string>(
-      (users?.users ?? []).map((u: any) => [u.id, u.email ?? ""]),
-    );
-
-    const pMap = new Map<string, any>((profiles ?? []).map((p: any) => [p.id, p]));
-
-    return (vinculos ?? []).map((v: any) => ({
-      user_id: v.user_id,
+    return vinculos.map((v) => ({
+      user_id: v.userId,
       principal: v.principal,
-      email: emailMap.get(v.user_id) ?? "",
-      profile: pMap.get(v.user_id) ?? null,
+      created_at: v.createdAt,
+      email: v.user.email,
+      profile: toProfileRow(v.user.profile),
     }));
   });
 
 export const listMinhasUnidades = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("usuario_unidades")
-      .select("unidade_id, principal, unidades(id, nome, sigla, status)")
-      .eq("user_id", context.userId);
+    const ctx = context as any;
+    const { prisma } = await import("./db.server");
 
-    if (error) throw new Error(error.message);
+    const vinculos = await prisma.usuarioUnidade.findMany({
+      where: {
+        userId: ctx.userId,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      include: {
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true,
+            status: true,
+          },
+        },
+      },
+    });
 
-    return (data ?? [])
-      .filter((v: any) => v.unidades && v.unidades.status === "ativa")
-      .map((v: any) => ({
-        unidade_id: v.unidade_id,
+    return vinculos
+      .filter((v) => v.unidade.status === "ativa")
+      .map((v) => ({
+        unidade_id: v.unidadeId,
         principal: v.principal,
-        nome: v.unidades.nome,
-        sigla: v.unidades.sigla,
+        nome: v.unidade.nome,
+        sigla: v.unidade.sigla,
       }));
   });
 
 export const listUnidadesDoUsuario = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    const { data: vinculos, error } = await supabaseAdmin
-      .from("usuario_unidades")
-      .select("unidade_id, principal")
-      .eq("user_id", data.userId);
+    const vinculos = await prisma.usuarioUnidade.findMany({
+      where: {
+        userId: data.userId,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      select: {
+        unidadeId: true,
+        principal: true,
+      },
+    });
 
-    if (error) throw new Error(error.message);
-
-    return vinculos ?? [];
+    return vinculos.map((v) => ({
+      unidade_id: v.unidadeId,
+      principal: v.principal,
+    }));
   });
 
 export const setUserUnidades = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) =>
     z.object({
       userId: z.string().uuid(),
@@ -268,7 +362,9 @@ export const setUserUnidades = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
+
+    const { prisma } = await import("./db.server");
 
     const unidadeIds = Array.from(new Set(data.unidadeIds));
 
@@ -277,34 +373,29 @@ export const setUserUnidades = createServerFn({ method: "POST" })
         ? data.principalId
         : unidadeIds[0] ?? null;
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await prisma.$transaction(async (tx) => {
+      await tx.usuarioUnidade.deleteMany({
+        where: {
+          userId: data.userId,
+        },
+      });
 
-    const { error: delErr } = await supabaseAdmin
-      .from("usuario_unidades")
-      .delete()
-      .eq("user_id", data.userId);
+      if (unidadeIds.length === 0) return;
 
-    if (delErr) throw new Error(delErr.message);
-
-    if (unidadeIds.length === 0) return { ok: true };
-
-    const rows = unidadeIds.map((unidade_id) => ({
-      user_id: data.userId,
-      unidade_id,
-      principal: principalId === unidade_id,
-    }));
-
-    const { error: insErr } = await supabaseAdmin
-      .from("usuario_unidades")
-      .insert(rows);
-
-    if (insErr) throw new Error(insErr.message);
+      await tx.usuarioUnidade.createMany({
+        data: unidadeIds.map((unidadeId) => ({
+          userId: data.userId,
+          unidadeId,
+          principal: principalId === unidadeId,
+        })),
+      });
+    });
 
     return { ok: true };
   });
 
 export const vincularUsuario = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) =>
     z.object({
       unidadeId: z.string().uuid(),
@@ -313,47 +404,57 @@ export const vincularUsuario = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    const { data: existentes, error: existentesErr } = await supabaseAdmin
-      .from("usuario_unidades")
-      .select("unidade_id, principal")
-      .eq("user_id", data.userId);
+    await prisma.$transaction(async (tx) => {
+      const existentes = await tx.usuarioUnidade.findMany({
+        where: {
+          userId: data.userId,
+        },
+        select: {
+          principal: true,
+        },
+      });
 
-    if (existentesErr) throw new Error(existentesErr.message);
+      const hasPrincipal = existentes.some((v) => v.principal);
+      const principal = data.principal ?? !hasPrincipal;
 
-    const hasPrincipal = (existentes ?? []).some((v: any) => v.principal);
-    const principal = data.principal ?? !hasPrincipal;
+      if (principal) {
+        await tx.usuarioUnidade.updateMany({
+          where: {
+            userId: data.userId,
+          },
+          data: {
+            principal: false,
+          },
+        });
+      }
 
-    if (principal) {
-      const { error: clearErr } = await supabaseAdmin
-        .from("usuario_unidades")
-        .update({ principal: false })
-        .eq("user_id", data.userId);
-
-      if (clearErr) throw new Error(clearErr.message);
-    }
-
-    const { error } = await supabaseAdmin
-      .from("usuario_unidades")
-      .upsert(
-        {
-          user_id: data.userId,
-          unidade_id: data.unidadeId,
+      await tx.usuarioUnidade.upsert({
+        where: {
+          userId_unidadeId: {
+            userId: data.userId,
+            unidadeId: data.unidadeId,
+          },
+        },
+        create: {
+          userId: data.userId,
+          unidadeId: data.unidadeId,
           principal,
         },
-        { onConflict: "user_id,unidade_id" },
-      );
-
-    if (error) throw new Error(error.message);
+        update: {
+          principal,
+        },
+      });
+    });
 
     return { ok: true };
   });
 
 export const desvincularUsuario = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) =>
     z.object({
       unidadeId: z.string().uuid(),
@@ -361,57 +462,64 @@ export const desvincularUsuario = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    const { data: atual, error: atualErr } = await supabaseAdmin
-      .from("usuario_unidades")
-      .select("principal")
-      .eq("user_id", data.userId)
-      .eq("unidade_id", data.unidadeId)
-      .maybeSingle();
+    await prisma.$transaction(async (tx) => {
+      const atual = await tx.usuarioUnidade.findUnique({
+        where: {
+          userId_unidadeId: {
+            userId: data.userId,
+            unidadeId: data.unidadeId,
+          },
+        },
+      });
 
-    if (atualErr) throw new Error(atualErr.message);
+      if (!atual) return;
 
-    const wasPrincipal = atual?.principal === true;
+      const wasPrincipal = atual.principal === true;
 
-    const { error } = await supabaseAdmin
-      .from("usuario_unidades")
-      .delete()
-      .eq("user_id", data.userId)
-      .eq("unidade_id", data.unidadeId);
+      await tx.usuarioUnidade.delete({
+        where: {
+          userId_unidadeId: {
+            userId: data.userId,
+            unidadeId: data.unidadeId,
+          },
+        },
+      });
 
-    if (error) throw new Error(error.message);
+      if (!wasPrincipal) return;
 
-    if (wasPrincipal) {
-      const { data: restante, error: restanteErr } = await supabaseAdmin
-        .from("usuario_unidades")
-        .select("unidade_id")
-        .eq("user_id", data.userId)
-        .order("created_at", { ascending: true })
-        .limit(1);
+      const restante = await tx.usuarioUnidade.findFirst({
+        where: {
+          userId: data.userId,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
 
-      if (restanteErr) throw new Error(restanteErr.message);
+      if (!restante) return;
 
-      const novaPrincipal = restante?.[0]?.unidade_id;
-
-      if (novaPrincipal) {
-        const { error: principalErr } = await supabaseAdmin
-          .from("usuario_unidades")
-          .update({ principal: true })
-          .eq("user_id", data.userId)
-          .eq("unidade_id", novaPrincipal);
-
-        if (principalErr) throw new Error(principalErr.message);
-      }
-    }
+      await tx.usuarioUnidade.update({
+        where: {
+          userId_unidadeId: {
+            userId: restante.userId,
+            unidadeId: restante.unidadeId,
+          },
+        },
+        data: {
+          principal: true,
+        },
+      });
+    });
 
     return { ok: true };
   });
 
 export const definirUnidadePrincipal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) =>
     z.object({
       unidadeId: z.string().uuid(),
@@ -419,22 +527,31 @@ export const definirUnidadePrincipal = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    await supabaseAdmin
-      .from("usuario_unidades")
-      .update({ principal: false })
-      .eq("user_id", data.userId);
-
-    const { error } = await supabaseAdmin
-      .from("usuario_unidades")
-      .update({ principal: true })
-      .eq("user_id", data.userId)
-      .eq("unidade_id", data.unidadeId);
-
-    if (error) throw new Error(error.message);
+    await prisma.$transaction([
+      prisma.usuarioUnidade.updateMany({
+        where: {
+          userId: data.userId,
+        },
+        data: {
+          principal: false,
+        },
+      }),
+      prisma.usuarioUnidade.update({
+        where: {
+          userId_unidadeId: {
+            userId: data.userId,
+            unidadeId: data.unidadeId,
+          },
+        },
+        data: {
+          principal: true,
+        },
+      }),
+    ]);
 
     return { ok: true };
   });

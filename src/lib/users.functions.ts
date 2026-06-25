@@ -1,85 +1,75 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuth } from "@/lib/auth-middleware.local";
 import { z } from "zod";
 
-async function assertAdmin(ctx: { supabase: any; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", {
-    _user_id: ctx.userId,
-    _role: "admin",
-  });
+function assertAdmin(ctx: { roles?: string[] }) {
+  if (!ctx.roles?.includes("admin")) {
+    throw new Error("Forbidden");
+  }
+}
 
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden");
+function toProfileRow(profile: any | null) {
+  if (!profile) return null;
+
+  return {
+    id: profile.id,
+    nome_completo: profile.nomeCompleto ?? null,
+    cargo: profile.cargo ?? null,
+    unidade: profile.unidade ?? null,
+    telefone: profile.telefone ?? null,
+    avatar_url: profile.avatarUrl ?? null,
+    bio: profile.bio ?? null,
+    status: profile.status ?? "pendente",
+    created_at: profile.createdAt ?? null,
+    updated_at: profile.updatedAt ?? null,
+  };
 }
 
 export const listUsers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 200,
+    const users = await prisma.user.findMany({
+      orderBy: { email: "asc" },
+      include: {
+        profile: true,
+        roles: true,
+        unidades: {
+          include: {
+            unidade: {
+              select: {
+                id: true,
+                nome: true,
+                sigla: true,
+                status: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
     });
 
-    if (error) throw new Error(error.message);
-
-    const ids = list.users.map((u) => u.id);
-
-    if (ids.length === 0) return [];
-
-    const [{ data: profiles }, { data: roles }, { data: vinculos }] = await Promise.all([
-      supabaseAdmin.from("profiles").select("*").in("id", ids),
-      supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids),
-      supabaseAdmin
-        .from("usuario_unidades")
-        .select("user_id, principal, unidades(id, nome, sigla, status)")
-        .in("user_id", ids),
-    ]);
-
-    const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
-
-    const rMap = new Map<string, string[]>();
-
-    (roles ?? []).forEach((r: any) => {
-      const arr = rMap.get(r.user_id) ?? [];
-      arr.push(r.role);
-      rMap.set(r.user_id, arr);
-    });
-
-    const unidadesMap = new Map<string, any[]>();
-
-    (vinculos ?? []).forEach((v: any) => {
-      const unidade = Array.isArray(v.unidades) ? v.unidades[0] : v.unidades;
-
-      if (!unidade) return;
-
-      const arr = unidadesMap.get(v.user_id) ?? [];
-
-      arr.push({
-        id: unidade.id,
-        nome: unidade.nome,
-        sigla: unidade.sigla,
-        status: unidade.status,
+    return users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      created_at: u.createdAt,
+      last_sign_in_at: null,
+      profile: toProfileRow(u.profile),
+      roles: u.roles.map((r) => r.role),
+      unidades: u.unidades.map((v) => ({
+        id: v.unidade.id,
+        nome: v.unidade.nome,
+        sigla: v.unidade.sigla,
+        status: v.unidade.status,
         principal: v.principal,
-      });
-
-      unidadesMap.set(v.user_id, arr);
-    });
-
-    return list.users
-      .map((u) => ({
-        id: u.id,
-        email: u.email ?? "",
-        created_at: u.created_at,
-        last_sign_in_at: u.last_sign_in_at ?? null,
-        profile: pMap.get(u.id) ?? null,
-        roles: rMap.get(u.id) ?? [],
-        unidades: unidadesMap.get(u.id) ?? [],
-      }))
-      .sort((a, b) => (a.email ?? "").localeCompare(b.email ?? ""));
+      })),
+    }));
   });
 
 const StatusSchema = z.object({
@@ -88,19 +78,23 @@ const StatusSchema = z.object({
 });
 
 export const setUserStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => StatusSchema.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update({ status: data.status })
-      .eq("id", data.userId);
-
-    if (error) throw new Error(error.message);
+    await prisma.profile.upsert({
+      where: { id: data.userId },
+      create: {
+        id: data.userId,
+        status: data.status,
+      },
+      update: {
+        status: data.status,
+      },
+    });
 
     return { ok: true };
   });
@@ -111,34 +105,34 @@ const RolesSchema = z.object({
 });
 
 export const setUserRoles = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => RolesSchema.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    const ctx = context as any;
 
-    if (data.userId === context.userId && !data.roles.includes("admin")) {
+    assertAdmin(ctx);
+
+    if (data.userId === ctx.userId && !data.roles.includes("admin")) {
       throw new Error("Você não pode remover seu próprio papel de admin.");
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    const { error: delErr } = await supabaseAdmin
-      .from("user_roles")
-      .delete()
-      .eq("user_id", data.userId);
+    const uniqueRoles = Array.from(new Set(data.roles));
 
-    if (delErr) throw new Error(delErr.message);
-
-    const rows = Array.from(new Set(data.roles)).map((role) => ({
-      user_id: data.userId,
-      role,
-    }));
-
-    const { error: insErr } = await supabaseAdmin
-      .from("user_roles")
-      .insert(rows);
-
-    if (insErr) throw new Error(insErr.message);
+    await prisma.$transaction([
+      prisma.userRole.deleteMany({
+        where: {
+          userId: data.userId,
+        },
+      }),
+      prisma.userRole.createMany({
+        data: uniqueRoles.map((role) => ({
+          userId: data.userId,
+          role,
+        })),
+      }),
+    ]);
 
     return { ok: true };
   });
@@ -153,21 +147,31 @@ const ProfileSchema = z.object({
 });
 
 export const adminUpdateProfile = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => ProfileSchema.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    assertAdmin(context as any);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    const { userId, ...rest } = data;
-
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update(rest)
-      .eq("id", userId);
-
-    if (error) throw new Error(error.message);
+    await prisma.profile.upsert({
+      where: { id: data.userId },
+      create: {
+        id: data.userId,
+        nomeCompleto: data.nome_completo ?? null,
+        cargo: data.cargo ?? null,
+        unidade: data.unidade ?? null,
+        telefone: data.telefone ?? null,
+        bio: data.bio ?? null,
+      },
+      update: {
+        nomeCompleto: data.nome_completo ?? null,
+        cargo: data.cargo ?? null,
+        unidade: data.unidade ?? null,
+        telefone: data.telefone ?? null,
+        bio: data.bio ?? null,
+      },
+    });
 
     return { ok: true };
   });
@@ -177,18 +181,14 @@ const ResetSchema = z.object({
 });
 
 export const sendPasswordReset = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => ResetSchema.parse(data))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+  .handler(async ({ context }) => {
+    assertAdmin(context as any);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email);
-
-    if (error) throw new Error(error.message);
-
-    return { ok: true };
+    throw new Error(
+      "Reset de senha ainda não foi migrado para o auth local. Esta função será implementada na próxima etapa de e-mail/SMTP.",
+    );
   });
 
 const DeleteSchema = z.object({
@@ -196,20 +196,24 @@ const DeleteSchema = z.object({
 });
 
 export const deleteUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((data: unknown) => DeleteSchema.parse(data))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    const ctx = context as any;
 
-    if (data.userId === context.userId) {
+    assertAdmin(ctx);
+
+    if (data.userId === ctx.userId) {
       throw new Error("Você não pode excluir a si mesmo.");
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { prisma } = await import("./db.server");
 
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-
-    if (error) throw new Error(error.message);
+    await prisma.user.delete({
+      where: {
+        id: data.userId,
+      },
+    });
 
     return { ok: true };
   });
