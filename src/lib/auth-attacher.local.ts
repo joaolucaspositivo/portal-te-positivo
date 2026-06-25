@@ -1,5 +1,5 @@
 // functionMiddleware cliente: anexa o access token JWT a toda chamada de server fn.
-// Substitui o attachSupabaseAuth gerado.
+// Anexa autenticação local às server functions.
 import { createMiddleware } from "@tanstack/react-start";
 
 const ACCESS_TOKEN_KEY = "portal-te.accessToken";

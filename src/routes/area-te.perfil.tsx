@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/use-auth";
-import { supabase } from "@/integrations/supabase/client";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { UserAvatar } from "@/components/user-avatar";
 import { UNIDADES } from "@/lib/portal-constants";
+import { updateMyProfile } from "@/lib/profile.functions";
 
 export const Route = createFileRoute("/area-te/perfil")({
   component: PerfilPage,
@@ -14,6 +15,8 @@ export const Route = createFileRoute("/area-te/perfil")({
 
 function PerfilPage() {
   const { user, profile, refresh, loading } = useAuth();
+  const updateMyProfileFn = useServerFn(updateMyProfile);
+
   const [form, setForm] = useState({
     nome_completo: "",
     cargo: "",
@@ -39,8 +42,10 @@ function PerfilPage() {
   const save = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sem sessão.");
-      const { error } = await supabase.from("profiles").update(form).eq("id", user.id);
-      if (error) throw error;
+
+      await updateMyProfileFn({
+        data: form,
+      });
     },
     onSuccess: () => {
       toast.success("Perfil atualizado.");
@@ -68,7 +73,6 @@ function PerfilPage() {
           <div className="flex-1">
             <div className="text-sm font-medium mb-2">Foto de perfil</div>
             <ImageUploadField
-              bucket="portal-avatars"
               folder={user?.id ?? "anon"}
               value={form.avatar_url}
               onChange={(p) => setForm((f) => ({ ...f, avatar_url: p }))}
@@ -85,6 +89,7 @@ function PerfilPage() {
               className="px-3 py-2 rounded-md border bg-background text-sm"
             />
           </label>
+
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium">Cargo / função</span>
             <input
@@ -93,6 +98,7 @@ function PerfilPage() {
               className="px-3 py-2 rounded-md border bg-background text-sm"
             />
           </label>
+
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium">Unidade</span>
             <select
@@ -106,6 +112,7 @@ function PerfilPage() {
               ))}
             </select>
           </label>
+
           <label className="flex flex-col gap-1 sm:col-span-2">
             <span className="text-sm font-medium">Telefone</span>
             <input
@@ -114,6 +121,7 @@ function PerfilPage() {
               className="px-3 py-2 rounded-md border bg-background text-sm"
             />
           </label>
+
           <label className="flex flex-col gap-1 sm:col-span-2">
             <span className="text-sm font-medium">Bio</span>
             <textarea

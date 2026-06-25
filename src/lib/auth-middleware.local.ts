@@ -1,4 +1,4 @@
-// Substitui requireSupabaseAuth. Use em server functions que exigem login.
+// Middleware local para server functions que exigem login.
 // Lê Authorization: Bearer <jwt> e injeta { userId, email, roles } no context.
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";

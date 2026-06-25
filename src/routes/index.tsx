@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listComunicadosPublic, listFerramentasPublic } from "@/lib/conteudo.functions";
 import { StorageImage } from "@/components/storage-image";
 
 export const Route = createFileRoute("/")({
@@ -44,28 +45,22 @@ const teRoles = [
 ] as const;
 
 function Index() {
-  const { data: comunicados } = useQuery({
+  const listComunicadosFn = useServerFn(listComunicadosPublic);
+  const listFerramentasFn = useServerFn(listFerramentasPublic);
+
+  const { data: comunicados = [] } = useQuery({
     queryKey: ["home-comunicados"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("comunicados")
-        .select("*")
-        .eq("publicado", true)
-        .order("data_publicacao", { ascending: false })
-        .limit(3);
-      return data ?? [];
+      const items = await listComunicadosFn();
+      return items.slice(0, 3);
     },
   });
-  const { data: ferramentas } = useQuery({
+
+  const { data: ferramentas = [] } = useQuery({
     queryKey: ["home-ferramentas"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("ferramentas")
-        .select("*")
-        .eq("status", "Ativa")
-        .order("nome")
-        .limit(4);
-      return data ?? [];
+      const items = await listFerramentasFn();
+      return items.filter((f: any) => f.status === "Ativa").slice(0, 4);
     },
   });
 
@@ -79,30 +74,30 @@ function Index() {
           <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-secondary/20 blur-3xl" />
           <div className="container mx-auto px-4 py-16 md:py-24 relative">
             <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-background/10 text-xs font-medium mb-5 uppercase tracking-wider">
-                  Portal TE · Colégio Positivo
-                </div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-                  Tecnologia Educacional, num só lugar.
-                </h1>
-                <p className="mt-4 text-base md:text-lg text-background/80 max-w-xl">
-                  Ferramentas, comunicados, contatos e solicitações da TE — para
-                  professores, coordenações e unidades.
-                </p>
-                <div className="mt-7 flex flex-wrap gap-3">
-                  <Link
-                    to="/solicitacoes"
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-primary text-primary-foreground font-semibold shadow-lg hover:opacity-90 transition"
-                  >
-                    <Send className="h-4 w-4" /> Abrir solicitação
-                  </Link>
-                  <Link
-                    to="/ferramentas"
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-background/10 border border-background/20 text-background font-semibold hover:bg-background/20 transition"
-                  >
-                    Ver ferramentas <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-background/10 text-xs font-medium mb-5 uppercase tracking-wider">
+                Portal TE · Colégio Positivo
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+                Tecnologia Educacional, num só lugar.
+              </h1>
+              <p className="mt-4 text-base md:text-lg text-background/80 max-w-xl">
+                Ferramentas, comunicados, contatos e solicitações da TE — para
+                professores, coordenações e unidades.
+              </p>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <Link
+                  to="/solicitacoes"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-primary text-primary-foreground font-semibold shadow-lg hover:opacity-90 transition"
+                >
+                  <Send className="h-4 w-4" /> Abrir solicitação
+                </Link>
+                <Link
+                  to="/ferramentas"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-background/10 border border-background/20 text-background font-semibold hover:bg-background/20 transition"
+                >
+                  Ver ferramentas <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
           </div>
         </section>

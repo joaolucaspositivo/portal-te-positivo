@@ -1,4 +1,4 @@
-// Server functions de autenticação (substituem supabase.auth.*).
+// Server functions de autenticação local.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
