@@ -48,6 +48,7 @@ model User {
 
   solicitacoesCriadas     Solicitacao[] @relation("SolicitanteSolicitacoes")
   solicitacoesResponsavel Solicitacao[] @relation("ResponsavelSolicitacoes")
+  contatos                Contato[]
 
   @@map("users")
 }
@@ -281,6 +282,7 @@ model Comunicado {
 
 model Contato {
   id               String   @id @default(uuid()) @db.Uuid
+  userId           String?  @map("user_id") @db.Uuid
   nome             String
   funcao           String?
   unidade          String?
@@ -291,5 +293,9 @@ model Contato {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([ativo])
+  @@index([userId])
   @@map("contatos")
 }
