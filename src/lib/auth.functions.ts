@@ -69,6 +69,17 @@ export const signIn = createServerFn({ method: "POST" })
     return { accessToken, refreshToken, user: { id: user.id, email: user.email, roles } };
   });
 
+
+const RequestPasswordResetSchema = z.object({
+  email: z.string().email().toLowerCase().trim(),
+});
+
+const ResetPasswordSchema = z.object({
+  token: z.string().min(20),
+  password: z.string().min(8).max(200),
+});
+
+
 const RefreshSchema = z.object({ refreshToken: z.string().min(1) });
 
 export const refreshSession = createServerFn({ method: "POST" })
@@ -102,6 +113,29 @@ export const signOut = createServerFn({ method: "POST" })
       const { revokeRefreshToken } = await import("./auth.server");
       await revokeRefreshToken(data.refreshToken);
     }
+    return { ok: true };
+  });
+
+export const requestPasswordReset = createServerFn({ method: "POST" })
+  .validator((data: unknown) => RequestPasswordResetSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { createPasswordResetForEmail } = await import("./password-reset.server");
+
+    await createPasswordResetForEmail(data.email);
+
+    return { ok: true };
+  });
+
+export const resetPassword = createServerFn({ method: "POST" })
+  .validator((data: unknown) => ResetPasswordSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { resetPasswordWithToken } = await import("./password-reset.server");
+
+    await resetPasswordWithToken({
+      token: data.token,
+      password: data.password,
+    });
+
     return { ok: true };
   });
 

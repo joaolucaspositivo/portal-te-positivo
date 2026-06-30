@@ -183,12 +183,14 @@ const ResetSchema = z.object({
 export const sendPasswordReset = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .validator((data: unknown) => ResetSchema.parse(data))
-  .handler(async ({ context }) => {
+  .handler(async ({ data, context }) => {
     assertAdmin(context as any);
 
-    throw new Error(
-      "Reset de senha ainda não foi migrado para o auth local. Esta função será implementada na próxima etapa de e-mail/SMTP.",
-    );
+    const { createPasswordResetForEmail } = await import("./password-reset.server");
+
+    await createPasswordResetForEmail(data.email);
+
+    return { ok: true };
   });
 
 const DeleteSchema = z.object({
