@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SobreRouteImport } from './routes/sobre'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as FerramentasRouteImport } from './routes/ferramentas'
 import { Route as ContatosRouteImport } from './routes/contatos'
 import { Route as ComunicadosRouteImport } from './routes/comunicados'
@@ -34,6 +35,11 @@ import { Route as AreaTeSolicitacoesIdRouteImport } from './routes/area-te.solic
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
   path: '/sobre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FerramentasRoute = FerramentasRouteImport.update({
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/comunicados'
     | '/contatos'
     | '/ferramentas'
+    | '/reset-password'
     | '/sobre'
     | '/area-te/comunicados'
     | '/area-te/contatos'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/comunicados'
     | '/contatos'
     | '/ferramentas'
+    | '/reset-password'
     | '/sobre'
     | '/area-te/comunicados'
     | '/area-te/contatos'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/comunicados'
     | '/contatos'
     | '/ferramentas'
+    | '/reset-password'
     | '/sobre'
     | '/area-te/comunicados'
     | '/area-te/contatos'
@@ -285,6 +297,7 @@ export interface RootRouteChildren {
   ComunicadosRoute: typeof ComunicadosRoute
   ContatosRoute: typeof ContatosRoute
   FerramentasRoute: typeof FerramentasRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SobreRoute: typeof SobreRoute
   SolicitacoesSlugRoute: typeof SolicitacoesSlugRoute
   SolicitacoesIndexRoute: typeof SolicitacoesIndexRoute
@@ -297,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/sobre'
       fullPath: '/sobre'
       preLoaderRoute: typeof SobreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ferramentas': {
@@ -513,6 +533,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComunicadosRoute: ComunicadosRoute,
   ContatosRoute: ContatosRoute,
   FerramentasRoute: FerramentasRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SobreRoute: SobreRoute,
   SolicitacoesSlugRoute: SolicitacoesSlugRoute,
   SolicitacoesIndexRoute: SolicitacoesIndexRoute,
