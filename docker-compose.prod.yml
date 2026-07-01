@@ -35,7 +35,7 @@ services:
       PORT: 8080
       HOST: 0.0.0.0
     ports:
-      - "8081:8080"
+      - "8080:8080"
     volumes:
       - portal_uploads_prod:/app/uploads
     networks:

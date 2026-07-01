@@ -52,6 +52,7 @@ RUN apt-get update -y \
 RUN groupadd --system appgroup && useradd --system --gid appgroup --create-home appuser
 
 COPY package.json package-lock.json ./
+COPY production-server.mjs ./
 COPY prisma ./prisma
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
