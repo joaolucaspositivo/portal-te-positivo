@@ -13,6 +13,9 @@ export const signUp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
     const { hashPassword, signAccessToken, issueRefreshToken } = await import("./auth.server");
+    const { validatePasswordPolicy } = await import("./auth-policy.server");
+
+    validatePasswordPolicy(data.password);
 
     const existing = await prisma.user.findUnique({ where: { email: data.email } });
     if (existing) throw new Error("E-mail já cadastrado.");
@@ -25,7 +28,7 @@ export const signUp = createServerFn({ method: "POST" })
         profile: { create: { nomeCompleto: data.nome, status: "pendente" } },
         roles: { create: { role: "usuario" } },
       },
-      include: { roles: true },
+      include: { roles: true, profile: true },
     });
 
     // Promove o primeiro admin (substitui o trigger handle_new_user)
@@ -38,10 +41,7 @@ export const signUp = createServerFn({ method: "POST" })
       await prisma.profile.update({ where: { id: user.id }, data: { status: "ativo" } });
     }
 
-    const roles = user.roles.map((r) => r.role);
-    const accessToken = signAccessToken({ sub: user.id, email: user.email, roles });
-    const refreshToken = await issueRefreshToken(user.id);
-    return { accessToken, refreshToken, user: { id: user.id, email: user.email, roles } };
+    return { ok: true };
   });
 
 const SignInSchema = z.object({
@@ -54,21 +54,26 @@ export const signIn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
     const { verifyPassword, signAccessToken, issueRefreshToken } = await import("./auth.server");
+    const { assertProfileCanAccess } = await import("./auth-policy.server");
 
     const user = await prisma.user.findUnique({
       where: { email: data.email },
-      include: { roles: true },
+      include: { roles: true, profile: true },
     });
+
     if (!user || !user.passwordHash) throw new Error("E-mail ou senha inválidos.");
+
     const ok = await verifyPassword(data.password, user.passwordHash);
     if (!ok) throw new Error("E-mail ou senha inválidos.");
+
+    assertProfileCanAccess(user.profile?.status);
 
     const roles = user.roles.map((r) => r.role);
     const accessToken = signAccessToken({ sub: user.id, email: user.email, roles });
     const refreshToken = await issueRefreshToken(user.id);
+
     return { accessToken, refreshToken, user: { id: user.id, email: user.email, roles } };
   });
-
 
 const RequestPasswordResetSchema = z.object({
   email: z.string().email().toLowerCase().trim(),
@@ -79,7 +84,6 @@ const ResetPasswordSchema = z.object({
   password: z.string().min(8).max(200),
 });
 
-
 const RefreshSchema = z.object({ refreshToken: z.string().min(1) });
 
 export const refreshSession = createServerFn({ method: "POST" })
@@ -87,18 +91,23 @@ export const refreshSession = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
     const { rotateRefreshToken, signAccessToken } = await import("./auth.server");
+    const { assertProfileCanAccess } = await import("./auth-policy.server");
 
     const rotated = await rotateRefreshToken(data.refreshToken);
     if (!rotated) throw new Error("Sessão expirada. Faça login novamente.");
 
     const user = await prisma.user.findUnique({
       where: { id: rotated.userId },
-      include: { roles: true },
+      include: { roles: true, profile: true },
     });
+
     if (!user) throw new Error("Usuário não encontrado.");
+
+    assertProfileCanAccess(user.profile?.status);
 
     const roles = user.roles.map((r) => r.role);
     const accessToken = signAccessToken({ sub: user.id, email: user.email, roles });
+
     return {
       accessToken,
       refreshToken: rotated.newToken,
@@ -113,6 +122,7 @@ export const signOut = createServerFn({ method: "POST" })
       const { revokeRefreshToken } = await import("./auth.server");
       await revokeRefreshToken(data.refreshToken);
     }
+
     return { ok: true };
   });
 
@@ -129,7 +139,10 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
 export const resetPassword = createServerFn({ method: "POST" })
   .validator((data: unknown) => ResetPasswordSchema.parse(data))
   .handler(async ({ data }) => {
+    const { validatePasswordPolicy } = await import("./auth-policy.server");
     const { resetPasswordWithToken } = await import("./password-reset.server");
+
+    validatePasswordPolicy(data.password);
 
     await resetPasswordWithToken({
       token: data.token,
@@ -139,24 +152,31 @@ export const resetPassword = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const getCurrentUser = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { getRequestHeader } = await import("@tanstack/react-start/server");
-    const authHeader = getRequestHeader("authorization");
-    if (!authHeader?.startsWith("Bearer ")) return null;
-    const token = authHeader.slice("Bearer ".length);
-    try {
-      const { verifyAccessToken, loadUserWithRoles } = await import("./auth.server");
-      const payload = verifyAccessToken(token);
-      const user = await loadUserWithRoles(payload.sub);
-      if (!user) return null;
-      return {
-        id: user.id,
-        email: user.email,
-        roles: user.roles.map((r) => r.role),
-        profile: user.profile,
-      };
-    } catch {
-      return null;
-    }
-  });
+export const getCurrentUser = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRequestHeader } = await import("@tanstack/react-start/server");
+  const authHeader = getRequestHeader("authorization");
+
+  if (!authHeader?.startsWith("Bearer ")) return null;
+
+  const token = authHeader.slice("Bearer ".length);
+
+  try {
+    const { verifyAccessToken, loadUserWithRoles } = await import("./auth.server");
+    const { canProfileAccess } = await import("./auth-policy.server");
+
+    const payload = verifyAccessToken(token);
+    const user = await loadUserWithRoles(payload.sub);
+
+    if (!user) return null;
+    if (!canProfileAccess(user.profile?.status)) return null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      roles: user.roles.map((r) => r.role),
+      profile: user.profile,
+    };
+  } catch {
+    return null;
+  }
+});

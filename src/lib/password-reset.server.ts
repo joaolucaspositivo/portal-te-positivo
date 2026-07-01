@@ -92,48 +92,45 @@ export async function createPasswordResetForEmail(email: string) {
   return { ok: true };
 }
 
-export async function resetPasswordWithToken({
-  token,
-  password,
-}: {
+export async function resetPasswordWithToken(input: {
   token: string;
   password: string;
-}) {
-  const tokenHash = hashToken(token);
+}): Promise<void> {
+  const tokenHash = hashToken(input.token);
 
-  const resetToken = await prisma.passwordResetToken.findUnique({
-    where: {
-      tokenHash,
-    },
+  const row = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash },
   });
 
-  if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+  if (!row) {
     throw new Error("Link de redefinição inválido ou expirado.");
   }
 
+  if (row.usedAt) {
+    throw new Error("Link de redefinição já utilizado.");
+  }
+
+  if (row.expiresAt < new Date()) {
+    throw new Error("Link de redefinição expirado.");
+  }
+
+  const { validatePasswordPolicy } = await import("./auth-policy.server");
+  validatePasswordPolicy(input.password);
+
   const { hashPassword, revokeAllUserTokens } = await import("./auth.server");
-  const passwordHash = await hashPassword(password);
+  const passwordHash = await hashPassword(input.password);
 
   await prisma.$transaction([
     prisma.user.update({
-      where: {
-        id: resetToken.userId,
-      },
-      data: {
-        passwordHash,
-      },
+      where: { id: row.userId },
+      data: { passwordHash },
     }),
     prisma.passwordResetToken.update({
-      where: {
-        tokenHash,
-      },
-      data: {
-        usedAt: new Date(),
-      },
+      where: { id: row.id },
+      data: { usedAt: new Date() },
     }),
   ]);
 
-  await revokeAllUserTokens(resetToken.userId);
+  await revokeAllUserTokens(row.userId);
 
-  return { ok: true };
 }

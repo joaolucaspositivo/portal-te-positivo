@@ -28,6 +28,9 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const passwordHelp =
+    "Use pelo menos 8 caracteres, com letra maiúscula, letra minúscula e número.";
+
   useEffect(() => {
     let mounted = true;
 
@@ -153,6 +156,9 @@ function AuthPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="px-3 py-2 rounded-md border bg-background"
                 />
+                {mode === "signup" && (
+                  <span className="text-xs text-muted-foreground">{passwordHelp}</span>
+                )}
               </label>
             )}
 
