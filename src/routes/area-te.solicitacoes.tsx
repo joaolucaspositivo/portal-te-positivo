@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { TIPOS_SOLICITACAO, UNIDADES, statusColor, urgencyColor } from "@/lib/portal-constants";
+import { TIPOS_SOLICITACAO, statusColor, urgencyColor } from "@/lib/portal-constants";
 import { listEquipeTeOptions, listSolicitacoesAdmin } from "@/lib/solicitacoes.functions";
 import {
   isSolicitacaoAberta,
@@ -59,9 +59,9 @@ function List() {
   }, [data]);
 
   const unidadeOptions = useMemo(() => {
-    const values = data.map((s: any) => s.unidade).filter(Boolean);
-    return Array.from(new Set([...UNIDADES, ...values])).sort();
-  }, [data]);
+  const values = data.map((s: any) => s.unidade).filter(Boolean);
+  return Array.from(new Set(values)).sort();
+}, [data]);
 
   const filtered = data.filter((s: any) => {
     if (q) {
