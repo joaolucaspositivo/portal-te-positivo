@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
-import { STATUS_SOLICITACAO, statusColor, urgencyColor } from "@/lib/portal-constants";
+import { statusColor, urgencyColor } from "@/lib/portal-constants";
+import { SOLICITACAO_STATUS, SOLICITACAO_URGENCIAS } from "@/lib/solicitacoes.constants";
 import {
   deleteSolicitacaoAdmin,
   getSolicitacaoAdmin,
@@ -42,6 +43,7 @@ function SolicDetail() {
   });
 
   const [status, setStatus] = useState("");
+  const [urgencia, setUrgencia] = useState("");
   const [resp, setResp] = useState("");
   const [obs, setObs] = useState("");
   const [responsavelId, setResponsavelId] = useState<string>("");
@@ -49,6 +51,7 @@ function SolicDetail() {
   useEffect(() => {
     if (data) {
       setStatus(data.status ?? "");
+      setUrgencia(data.urgencia ?? "");
       setResp(data.responsavel_te ?? "");
       setObs(data.observacoes_internas ?? "");
       setResponsavelId(data.responsavel_id ?? "");
@@ -61,6 +64,7 @@ function SolicDetail() {
         data: {
           id,
           status,
+          urgencia,
           responsavel_te: resp,
           observacoes_internas: obs,
           responsavel_id: responsavelId || null,
@@ -216,6 +220,14 @@ function SolicDetail() {
           <div className="rounded-xl border bg-card p-6">
             <h2 className="font-semibold mb-4">Gestão interna</h2>
 
+            {data.responsavel && (
+              <div className="mb-4 rounded-md bg-muted p-3 text-sm">
+                <div className="text-xs text-muted-foreground">Responsável atual</div>
+                <div className="font-medium">{data.responsavel.nome_completo}</div>
+                <div className="text-xs text-muted-foreground">{data.responsavel.email}</div>
+              </div>
+            )}
+
             <label className="block mb-3">
               <span className="text-sm font-medium">Status</span>
               <select
@@ -223,8 +235,21 @@ function SolicDetail() {
                 onChange={(e) => setStatus(e.target.value)}
                 className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
               >
-                {STATUS_SOLICITACAO.map((s) => (
+                {SOLICITACAO_STATUS.map((s) => (
                   <option key={s}>{s}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block mb-3">
+              <span className="text-sm font-medium">Urgência</span>
+              <select
+                value={urgencia}
+                onChange={(e) => setUrgencia(e.target.value)}
+                className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+              >
+                {SOLICITACAO_URGENCIAS.map((u) => (
+                  <option key={u}>{u}</option>
                 ))}
               </select>
             </label>
@@ -238,7 +263,7 @@ function SolicDetail() {
                   const selected = equipe.find((p: any) => p.id === selectedId);
 
                   setResponsavelId(selectedId);
-                  setResp(selected?.nome_completo ?? "");
+                  setResp(selected?.nome_completo || selected?.email || "");
                 }}
                 className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
               >

@@ -2,6 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { requireAuth } from "@/lib/auth-middleware.local";
 import { z } from "zod";
+import {
+  getUrgenciaPeso,
+  normalizeSolicitacaoStatus,
+  normalizeSolicitacaoUrgencia,
+  SOLICITACAO_STATUS,
+  SOLICITACAO_URGENCIAS,
+} from "@/lib/solicitacoes.constants";
 
 function assertEquipeTE(ctx: { roles?: string[] }) {
   const roles = ctx.roles ?? [];
@@ -20,7 +27,13 @@ async function getOptionalUserId() {
 
   try {
     const { verifyAccessToken } = await import("./auth.server");
+    const { canProfileAccess } = await import("./auth-policy.server");
+    const { loadUserWithRoles } = await import("./auth.server");
+
     const payload = verifyAccessToken(token);
+    const user = await loadUserWithRoles(payload.sub);
+
+    if (!user || !canProfileAccess(user.profile?.status)) return null;
 
     return payload.sub;
   } catch {
@@ -60,6 +73,16 @@ function toCampoRow(campo: any) {
   };
 }
 
+function toResponsavelRow(user: any) {
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    email: user.email,
+    nome_completo: user.profile?.nomeCompleto ?? user.email,
+  };
+}
+
 function toSolicitacaoRow(s: any) {
   return {
     id: s.id,
@@ -79,14 +102,16 @@ function toSolicitacaoRow(s: any) {
     publico_impactado: s.publicoImpactado,
     unidades_impactadas: s.unidadesImpactadas,
     prazo_desejado: s.prazoDesejado,
-    urgencia: s.urgencia,
+    urgencia: normalizeSolicitacaoUrgencia(s.urgencia),
+    urgencia_peso: getUrgenciaPeso(s.urgencia),
     link_referencia: s.linkReferencia,
     observacoes_adicionais: s.observacoesAdicionais,
     respostas: s.dadosExtras,
     dados_extras: s.dadosExtras,
     anexos_urls: s.anexosUrls,
-    status: s.status,
+    status: normalizeSolicitacaoStatus(s.status),
     responsavel_te: s.responsavelTe,
+    responsavel: toResponsavelRow(s.responsavel),
     observacoes_internas: s.observacoesInternas,
     created_at: s.createdAt,
     updated_at: s.updatedAt,
@@ -194,29 +219,97 @@ export const createSolicitacaoPublic = createServerFn({ method: "POST" })
         tipoSolicitacao: tipo.nome,
         titulo: data.titulo,
         descricao: data.descricao,
-        urgencia: data.urgencia,
+        urgencia: normalizeSolicitacaoUrgencia(data.urgencia),
         dadosExtras: data.respostas ?? {},
         status: "Recebida",
+      },
+      include: {
+        responsavel: {
+          include: {
+            profile: true,
+          },
+        },
       },
     });
 
     return toSolicitacaoRow(created);
   });
 
+const ListSolicitacoesAdminSchema = z
+  .object({
+    status: z.string().optional().nullable(),
+    urgencia: z.string().optional().nullable(),
+    responsavel_id: z.string().uuid().optional().nullable(),
+    apenas_abertas: z.boolean().optional(),
+  })
+  .optional();
+
 export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .handler(async ({ context }) => {
+  .validator((data: unknown) => ListSolicitacoesAdminSchema.parse(data))
+  .handler(async ({ data, context }) => {
     assertEquipeTE(context as any);
 
     const { prisma } = await import("./db.server");
 
+    const filters = data ?? {};
+
+    const where: any = {};
+
+    if (filters.status) {
+      where.status = normalizeSolicitacaoStatus(filters.status);
+    }
+
+    if (filters.urgencia) {
+      where.urgencia = normalizeSolicitacaoUrgencia(filters.urgencia);
+    }
+
+    if (filters.responsavel_id) {
+      where.responsavelId = filters.responsavel_id;
+    }
+
+    if (filters.apenas_abertas) {
+      where.status = {
+        in: ["Recebida", "Em análise", "Aguardando validação", "Em andamento"],
+      };
+    }
+
     const solicitacoes = await prisma.solicitacao.findMany({
-      orderBy: {
-        createdAt: "desc",
+      where,
+      include: {
+        responsavel: {
+          include: {
+            profile: true,
+          },
+        },
       },
+      orderBy: [
+        {
+          createdAt: "desc",
+        },
+      ],
     });
 
-    return solicitacoes.map(toSolicitacaoRow);
+    return solicitacoes
+      .map(toSolicitacaoRow)
+      .sort((a, b) => {
+        if (a.status !== b.status) {
+          const aAberta = ["Recebida", "Em análise", "Aguardando validação", "Em andamento"].includes(
+            a.status,
+          );
+          const bAberta = ["Recebida", "Em análise", "Aguardando validação", "Em andamento"].includes(
+            b.status,
+          );
+
+          if (aAberta !== bAberta) return aAberta ? -1 : 1;
+        }
+
+        if (a.urgencia_peso !== b.urgencia_peso) {
+          return b.urgencia_peso - a.urgencia_peso;
+        }
+
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
   });
 
 export const getSolicitacaoAdmin = createServerFn({ method: "GET" })
@@ -230,6 +323,13 @@ export const getSolicitacaoAdmin = createServerFn({ method: "GET" })
     const solicitacao = await prisma.solicitacao.findUnique({
       where: {
         id: data.id,
+      },
+      include: {
+        responsavel: {
+          include: {
+            profile: true,
+          },
+        },
       },
     });
 
@@ -245,6 +345,9 @@ export const listEquipeTeOptions = createServerFn({ method: "GET" })
 
     const users = await prisma.user.findMany({
       where: {
+        profile: {
+          status: "ativo",
+        },
         roles: {
           some: {
             role: {
@@ -270,7 +373,8 @@ export const listEquipeTeOptions = createServerFn({ method: "GET" })
 
 const UpdateSolicitacaoSchema = z.object({
   id: z.string().uuid(),
-  status: z.string().trim().min(1).max(80),
+  status: z.enum(SOLICITACAO_STATUS),
+  urgencia: z.enum(SOLICITACAO_URGENCIAS).optional(),
   responsavel_te: z.string().trim().max(160).optional().nullable(),
   observacoes_internas: z.string().trim().max(6000).optional().nullable(),
   responsavel_id: z.string().uuid().nullable().optional(),
@@ -284,15 +388,49 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
 
     const { prisma } = await import("./db.server");
 
+    const responsavel = data.responsavel_id
+      ? await prisma.user.findFirst({
+          where: {
+            id: data.responsavel_id,
+            profile: {
+              status: "ativo",
+            },
+            roles: {
+              some: {
+                role: {
+                  in: ["admin", "equipe_te"],
+                },
+              },
+            },
+          },
+          include: {
+            profile: true,
+          },
+        })
+      : null;
+
+    if (data.responsavel_id && !responsavel) {
+      throw new Error("Responsável selecionado não está ativo ou não pertence à equipe TE.");
+    }
+
     const updated = await prisma.solicitacao.update({
       where: {
         id: data.id,
       },
       data: {
-        status: data.status,
-        responsavelTe: data.responsavel_te ?? null,
+        status: normalizeSolicitacaoStatus(data.status),
+        urgencia: data.urgencia ? normalizeSolicitacaoUrgencia(data.urgencia) : undefined,
+        responsavelTe:
+          responsavel?.profile?.nomeCompleto ?? responsavel?.email ?? data.responsavel_te ?? null,
         observacoesInternas: data.observacoes_internas ?? null,
         responsavelId: data.responsavel_id ?? null,
+      },
+      include: {
+        responsavel: {
+          include: {
+            profile: true,
+          },
+        },
       },
     });
 
