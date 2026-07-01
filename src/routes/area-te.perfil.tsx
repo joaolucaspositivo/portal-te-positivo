@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/use-auth";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { UserAvatar } from "@/components/user-avatar";
-import { UNIDADES } from "@/lib/portal-constants";
 import { updateMyProfile } from "@/lib/profile.functions";
+import { listUnidadesPublicas } from "@/lib/unidades.functions";
 
 export const Route = createFileRoute("/area-te/perfil")({
   component: PerfilPage,
@@ -16,6 +16,13 @@ export const Route = createFileRoute("/area-te/perfil")({
 function PerfilPage() {
   const { user, profile, refresh, loading } = useAuth();
   const updateMyProfileFn = useServerFn(updateMyProfile);
+
+  const listUnidadesPublicasFn = useServerFn(listUnidadesPublicas);
+
+  const { data: unidades = [] } = useQuery({
+    queryKey: ["unidades-publicas"],
+    queryFn: () => listUnidadesPublicasFn(),
+  });
 
   const [form, setForm] = useState({
     nome_completo: "",
@@ -105,12 +112,21 @@ function PerfilPage() {
               value={form.unidade}
               onChange={(e) => setForm({ ...form, unidade: e.target.value })}
               className="px-3 py-2 rounded-md border bg-background text-sm"
+              disabled={unidades.length === 0}
             >
               <option value="">—</option>
-              {UNIDADES.map((u) => (
-                <option key={u}>{u}</option>
+              {unidades.map((u: any) => (
+                <option key={u.id} value={u.nome}>
+                  {u.sigla ? `${u.nome} (${u.sigla})` : u.nome}
+                </option>
               ))}
             </select>
+
+            {unidades.length === 0 && (
+              <span className="text-xs text-muted-foreground">
+                Nenhuma unidade ativa cadastrada.
+              </span>
+            )}
           </label>
 
           <label className="flex flex-col gap-1 sm:col-span-2">

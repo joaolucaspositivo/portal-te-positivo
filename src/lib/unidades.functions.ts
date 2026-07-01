@@ -104,6 +104,7 @@ function toUnidadeRow(u: any, usuariosCount = 0) {
   };
 }
 
+
 function toProfileRow(profile: any | null) {
   if (!profile) return null;
 
@@ -120,6 +121,26 @@ function toProfileRow(profile: any | null) {
     updated_at: profile.updatedAt ?? null,
   };
 }
+
+export const listUnidadesPublicas = createServerFn({ method: "GET" }).handler(async () => {
+  const { prisma } = await import("./db.server");
+
+  const unidades = await prisma.unidade.findMany({
+    where: {
+      status: "ativa",
+    },
+    orderBy: {
+      nome: "asc",
+    },
+  });
+
+  return unidades.map((u) => ({
+    id: u.id,
+    nome: u.nome,
+    sigla: u.sigla,
+    status: u.status,
+  }));
+});
 
 export const listUnidades = createServerFn({ method: "GET" })
   .middleware([requireAuth])

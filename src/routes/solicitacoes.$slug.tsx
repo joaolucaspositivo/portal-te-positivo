@@ -6,10 +6,10 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { UNIDADES, URGENCIAS } from "@/lib/portal-constants";
+import { URGENCIAS } from "@/lib/portal-constants";
 import { DynamicFormFields, type DynamicField } from "@/components/dynamic-form";
 import { useAuth } from "@/lib/use-auth";
-import { listMinhasUnidades } from "@/lib/unidades.functions";
+import { listMinhasUnidades, listUnidadesPublicas } from "@/lib/unidades.functions";
 import {
   createSolicitacaoPublic,
   getSolicitacaoTipoPublic,
@@ -39,6 +39,7 @@ function SolicSlug() {
   const { user, profile } = useAuth();
 
   const minhasUnidadesFn = useServerFn(listMinhasUnidades);
+  const unidadesPublicasFn = useServerFn(listUnidadesPublicas);
   const getTipoFn = useServerFn(getSolicitacaoTipoPublic);
   const listCamposFn = useServerFn(listCamposSolicitacaoPublic);
   const createSolicitacaoFn = useServerFn(createSolicitacaoPublic);
@@ -47,6 +48,11 @@ function SolicSlug() {
     enabled: !!user,
     queryKey: ["minhas-unidades", user?.id],
     queryFn: () => minhasUnidadesFn(),
+  });
+
+  const { data: unidadesPublicas = [] } = useQuery({
+    queryKey: ["unidades-publicas"],
+    queryFn: () => unidadesPublicasFn(),
   });
 
   const { data: tipo, isLoading: tipoLoading } = useQuery({
@@ -85,6 +91,19 @@ function SolicSlug() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const unidadesDisponiveis =
+    minhasUnidades.length > 0
+      ? minhasUnidades.map((u: any) => ({
+        id: u.unidade_id,
+        nome: u.nome,
+        sigla: u.sigla,
+      }))
+      : unidadesPublicas.map((u: any) => ({
+        id: u.id,
+        nome: u.nome,
+        sigla: u.sigla,
+      }));
+
   useEffect(() => {
     if (user && profile) {
       setBase((b) => ({
@@ -108,6 +127,18 @@ function SolicSlug() {
       }));
     }
   }, [minhasUnidades]);
+
+  useEffect(() => {
+    if (base.unidade_id || unidadesDisponiveis.length === 0) return;
+
+    const primeira = unidadesDisponiveis[0];
+
+    setBase((b) => ({
+      ...b,
+      unidade_id: primeira.id,
+      unidade: primeira.nome,
+    }));
+  }, [base.unidade_id, unidadesDisponiveis]);
 
   if (tipoLoading) {
     return (
@@ -256,40 +287,33 @@ function SolicSlug() {
           </FieldLabel>
 
           <FieldLabel label="Unidade *">
-            {minhasUnidades.length > 0 ? (
-              <select
-                required
-                value={base.unidade_id ?? ""}
-                onChange={(e) => {
-                  const u = minhasUnidades.find((x: any) => x.unidade_id === e.target.value);
+            <select
+              required
+              value={base.unidade_id ?? ""}
+              onChange={(e) => {
+                const selected = unidadesDisponiveis.find((x: any) => x.id === e.target.value);
 
-                  setBase({
-                    ...base,
-                    unidade_id: e.target.value,
-                    unidade: u?.nome ?? "",
-                  });
-                }}
-                className={inp}
-              >
-                <option value="">Selecione…</option>
-                {minhasUnidades.map((u: any) => (
-                  <option key={u.unidade_id} value={u.unidade_id}>
-                    {u.nome}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <select
-                required
-                value={base.unidade}
-                onChange={(e) => setBase({ ...base, unidade: e.target.value })}
-                className={inp}
-              >
-                <option value="">Selecione…</option>
-                {UNIDADES.map((u) => (
-                  <option key={u}>{u}</option>
-                ))}
-              </select>
+                setBase({
+                  ...base,
+                  unidade_id: selected?.id ?? null,
+                  unidade: selected?.nome ?? "",
+                });
+              }}
+              className={inp}
+              disabled={unidadesDisponiveis.length === 0}
+            >
+              <option value="">Selecione…</option>
+              {unidadesDisponiveis.map((u: any) => (
+                <option key={u.id} value={u.id}>
+                  {u.sigla ? `${u.nome} (${u.sigla})` : u.nome}
+                </option>
+              ))}
+            </select>
+
+            {unidadesDisponiveis.length === 0 && (
+              <span className="text-xs text-muted-foreground">
+                Nenhuma unidade ativa cadastrada.
+              </span>
             )}
           </FieldLabel>
 

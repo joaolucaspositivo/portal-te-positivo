@@ -206,15 +206,33 @@ export const createSolicitacaoPublic = createServerFn({ method: "POST" })
       throw new Error("É necessário entrar para abrir este tipo de solicitação.");
     }
 
+    const unidadeSelecionada = data.unidade_id
+      ? await prisma.unidade.findFirst({
+        where: {
+          id: data.unidade_id,
+          status: "ativa",
+        },
+      })
+      : await prisma.unidade.findFirst({
+        where: {
+          nome: data.unidade,
+          status: "ativa",
+        },
+      });
+
+    if (!unidadeSelecionada) {
+      throw new Error("Selecione uma unidade válida.");
+    }
+
     const created = await prisma.solicitacao.create({
       data: {
         tipoId: tipo.id,
-        unidadeId: data.unidade_id ?? null,
+        unidadeId: unidadeSelecionada.id,
         solicitanteId: userId,
 
         nomeSolicitante: data.nome_solicitante,
         emailSolicitante: data.email_solicitante,
-        unidade: data.unidade,
+        unidade: unidadeSelecionada.nome,
         cargoFuncao: data.cargo_funcao ?? null,
         tipoSolicitacao: tipo.nome,
         titulo: data.titulo,
@@ -390,23 +408,23 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
 
     const responsavel = data.responsavel_id
       ? await prisma.user.findFirst({
-          where: {
-            id: data.responsavel_id,
-            profile: {
-              status: "ativo",
-            },
-            roles: {
-              some: {
-                role: {
-                  in: ["admin", "equipe_te"],
-                },
+        where: {
+          id: data.responsavel_id,
+          profile: {
+            status: "ativo",
+          },
+          roles: {
+            some: {
+              role: {
+                in: ["admin", "equipe_te"],
               },
             },
           },
-          include: {
-            profile: true,
-          },
-        })
+        },
+        include: {
+          profile: true,
+        },
+      })
       : null;
 
     if (data.responsavel_id && !responsavel) {
