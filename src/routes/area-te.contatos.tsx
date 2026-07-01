@@ -5,7 +5,8 @@ import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminFormShell, Field, inpCls } from "@/components/admin-form-shell";
-import { UNIDADES, TIPOS_CONTATO } from "@/lib/portal-constants";
+import { TIPOS_CONTATO } from "@/lib/portal-constants";
+import { listUnidadesPublicas } from "@/lib/unidades.functions";
 import {
   deleteContatoAdmin,
   listContatosAdmin,
@@ -37,6 +38,7 @@ function AdminContatos() {
 
   const listContatosFn = useServerFn(listContatosAdmin);
   const listProfilesFn = useServerFn(listProfileOptionsAdmin);
+  const listUnidadesFn = useServerFn(listUnidadesPublicas);
   const saveContatoFn = useServerFn(saveContatoAdmin);
   const deleteContatoFn = useServerFn(deleteContatoAdmin);
 
@@ -48,6 +50,11 @@ function AdminContatos() {
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles-options"],
     queryFn: () => listProfilesFn(),
+  });
+
+  const { data: unidades = [] } = useQuery({
+    queryKey: ["unidades-publicas"],
+    queryFn: () => listUnidadesFn(),
   });
 
   const save = useMutation({
@@ -183,18 +190,25 @@ function AdminContatos() {
               />
             </Field>
 
-            <Field label="Unidade">
-              <select
-                value={edit.unidade ?? ""}
-                onChange={(e) => setEdit({ ...edit, unidade: e.target.value })}
-                className={inpCls}
-              >
-                <option value="">—</option>
-                {UNIDADES.map((u) => (
-                  <option key={u}>{u}</option>
-                ))}
-              </select>
-            </Field>
+            <select
+              value={edit.unidade ?? ""}
+              onChange={(e) => setEdit({ ...edit, unidade: e.target.value })}
+              className={inpCls}
+              disabled={unidades.length === 0}
+            >
+              <option value="">—</option>
+              {unidades.map((u: any) => (
+                <option key={u.id} value={u.nome}>
+                  {u.sigla ? `${u.nome} (${u.sigla})` : u.nome}
+                </option>
+              ))}
+            </select>
+
+            {unidades.length === 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Nenhuma unidade ativa cadastrada.
+              </p>
+            )}
 
             <Field label="E-mail">
               <input

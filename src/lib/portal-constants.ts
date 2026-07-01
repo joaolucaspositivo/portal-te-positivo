@@ -1,14 +1,3 @@
-export const UNIDADES = [
-  "Ângelo Sampaio",
-  "Água Verde",
-  "Jardim Ambiental",
-  "Boa Vista",
-  "Júnior Boa Vista",
-  "Internacional",
-  "Master",
-  "Outra",
-];
-
 export const TIPOS_SOLICITACAO = [
   "Novo projeto",
   "Melhoria de processo",

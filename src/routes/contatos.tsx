@@ -5,10 +5,11 @@ import { useState } from "react";
 import { Mail, Phone, Search, Lock } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { UNIDADES, TIPOS_CONTATO } from "@/lib/portal-constants";
+import { TIPOS_CONTATO } from "@/lib/portal-constants";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/use-auth";
 import { listContatosPublic } from "@/lib/conteudo.functions";
+import { listUnidadesPublicas } from "@/lib/unidades.functions";
 
 export const Route = createFileRoute("/contatos")({
   head: () => ({
@@ -30,9 +31,16 @@ function Contatos() {
 
   const listContatosFn = useServerFn(listContatosPublic);
 
+  const listUnidadesFn = useServerFn(listUnidadesPublicas);
+
   const { data: items = [] } = useQuery({
     queryKey: ["contatos-public", isAuthed],
     queryFn: () => listContatosFn(),
+  });
+
+  const { data: unidades = [] } = useQuery({
+    queryKey: ["unidades-publicas"],
+    queryFn: () => listUnidadesFn(),
   });
 
   const filtered = items.filter((c: any) => {
@@ -74,8 +82,10 @@ function Contatos() {
               className="px-3 py-2 rounded-md border bg-background"
             >
               <option value="">Todas unidades</option>
-              {UNIDADES.map((u) => (
-                <option key={u}>{u}</option>
+              {unidades.map((u: any) => (
+                <option key={u.id} value={u.nome}>
+                  {u.sigla ? `${u.nome} (${u.sigla})` : u.nome}
+                </option>
               ))}
             </select>
 
