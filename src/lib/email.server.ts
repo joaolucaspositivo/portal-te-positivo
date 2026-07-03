@@ -8,11 +8,16 @@ type SendMailInput = {
 };
 
 function getSmtpConfig() {
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT ?? 587);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM;
+  const host = process.env.SMTP_HOST?.trim();
+  const port = Number(process.env.SMTP_PORT?.trim() || 587);
+  const user = process.env.SMTP_USER?.trim();
+  const rawPass = process.env.SMTP_PASS ?? "";
+  const from = process.env.SMTP_FROM?.trim();
+
+  const pass =
+    host?.includes("gmail.com") || host?.includes("googlemail.com")
+      ? rawPass.replace(/\s+/g, "")
+      : rawPass.trim();
 
   if (!host || !user || !pass || !from) {
     throw new Error("SMTP_HOST, SMTP_USER, SMTP_PASS e SMTP_FROM precisam estar definidos no .env");
@@ -22,6 +27,7 @@ function getSmtpConfig() {
     host,
     port,
     secure: port === 465,
+    requireTLS: port === 587,
     auth: {
       user,
       pass,
@@ -50,6 +56,7 @@ export async function sendMail({ to, subject, html, text }: SendMailInput) {
     host: config.host,
     port: config.port,
     secure: config.secure,
+    requireTLS: config.requireTLS,
     auth: config.auth,
   });
 
@@ -104,11 +111,10 @@ export function baseEmailTemplate({
           ${title}
         </h1>
 
-        ${
-          intro
-            ? `<p style="color:#374151;font-size:15px;line-height:1.5;margin:0 0 16px;">${intro}</p>`
-            : ""
-        }
+        ${intro
+      ? `<p style="color:#374151;font-size:15px;line-height:1.5;margin:0 0 16px;">${intro}</p>`
+      : ""
+    }
 
         <div style="color:#374151;font-size:15px;line-height:1.5;">
           ${content}
