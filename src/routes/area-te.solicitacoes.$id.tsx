@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
+import { UserAvatar } from "@/components/user-avatar";
 import {
   badgeColorFromConfig,
   badgeStyleFromConfig,
@@ -185,7 +186,12 @@ function SolicDetail() {
 
   const historicoList = Array.isArray(historico) ? historico : [];
 
-  const acompanhamentos = historicoList.filter((h: any) => h.tipo === "comentario");
+  const acompanhamentos = historicoList
+    .filter((h: any) => h.tipo === "comentario")
+    .sort(
+      (a: any, b: any) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
 
   const eventos = historicoList.filter((h: any) => h.tipo !== "comentario");
 
@@ -236,362 +242,387 @@ function SolicDetail() {
   };
 
   return (
-  <div className="space-y-6">
-    <Link
-      to="/area-te/solicitacoes"
-      className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-    >
-      <ArrowLeft className="h-4 w-4" /> Voltar para solicitações
-    </Link>
+    <div className="space-y-6">
+      <Link
+        to="/area-te/solicitacoes"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> Voltar para solicitações
+      </Link>
 
-    <div className="rounded-xl border bg-card p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-2">
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Solicitação
+      <div className="rounded-xl border bg-card p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-2">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Solicitação
+            </div>
+
+            <h1 className="text-2xl font-bold leading-tight">{data.titulo}</h1>
+
+            <p className="text-sm text-muted-foreground">
+              Aberta em {formatDateTime(data.created_at)} por{" "}
+              <span className="font-medium text-foreground">{data.nome_solicitante}</span>
+            </p>
           </div>
 
-          <h1 className="text-2xl font-bold leading-tight">{data.titulo}</h1>
+          <div className="flex flex-wrap gap-2">
+            <span
+              className={`px-2.5 py-1 rounded-full text-xs font-medium ${badgeColorFromConfig(
+                statusColorMap.get(data.status) as string | null,
+              )}`}
+              style={badgeStyleFromConfig(statusColorMap.get(data.status) as string | null)}
+            >
+              {data.status}
+            </span>
 
-          <p className="text-sm text-muted-foreground">
-            Aberta em {formatDateTime(data.created_at)} por{" "}
-            <span className="font-medium text-foreground">{data.nome_solicitante}</span>
-          </p>
-        </div>
+            <span
+              className={`px-2.5 py-1 rounded-full text-xs font-medium ${badgeColorFromConfig(
+                prioridadeColorMap.get(data.urgencia) as string | null,
+              )}`}
+              style={badgeStyleFromConfig(prioridadeColorMap.get(data.urgencia) as string | null)}
+            >
+              {data.urgencia}
+            </span>
 
-        <div className="flex flex-wrap gap-2">
-          <span
-            className={`px-2.5 py-1 rounded-full text-xs font-medium ${badgeColorFromConfig(
-              statusColorMap.get(data.status) as string | null,
-            )}`}
-            style={badgeStyleFromConfig(statusColorMap.get(data.status) as string | null)}
-          >
-            {data.status}
-          </span>
+            <span className="px-2.5 py-1 rounded-full border bg-background text-xs font-medium">
+              {data.tipo_solicitacao}
+            </span>
 
-          <span
-            className={`px-2.5 py-1 rounded-full text-xs font-medium ${badgeColorFromConfig(
-              prioridadeColorMap.get(data.urgencia) as string | null,
-            )}`}
-            style={badgeStyleFromConfig(prioridadeColorMap.get(data.urgencia) as string | null)}
-          >
-            {data.urgencia}
-          </span>
-
-          <span className="px-2.5 py-1 rounded-full border bg-background text-xs font-medium">
-            {data.tipo_solicitacao}
-          </span>
-
-          <span className="px-2.5 py-1 rounded-full border bg-background text-xs font-medium">
-            {data.unidade}
-          </span>
+            <span className="px-2.5 py-1 rounded-full border bg-background text-xs font-medium">
+              {data.unidade}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-      <main className="space-y-6">
-        <section className="rounded-xl border bg-card p-6">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Acompanhamento</h2>
-            <p className="text-sm text-muted-foreground">
-              Registre atualizações internas da solicitação em formato de conversa.
-            </p>
-          </div>
-
-          <div className="mb-6 space-y-3">
-            <textarea
-              rows={4}
-              value={comentario}
-              onChange={(e) => setComentario(e.target.value)}
-              placeholder="Adicionar acompanhamento interno..."
-              className="w-full px-3 py-2 rounded-md border bg-background text-sm"
-            />
-
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => addComentario.mutate()}
-                disabled={addComentario.isPending || !comentario.trim()}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium disabled:opacity-50"
-              >
-                {addComentario.isPending ? "Registrando..." : "Adicionar acompanhamento"}
-              </button>
-            </div>
-          </div>
-
-          {acompanhamentos.length === 0 ? (
-            <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
-              <p className="text-sm font-medium">Nenhum acompanhamento registrado.</p>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <main className="space-y-6">
+          <section className="flex min-h-[620px] flex-col rounded-xl border bg-card">
+            <div className="border-b p-5">
+              <h2 className="text-lg font-semibold">Chat da solicitação</h2>
               <p className="text-sm text-muted-foreground">
-                Use o campo acima para registrar a evolução interna desta solicitação.
+                Registre acompanhamentos internos em formato de conversa.
               </p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {acompanhamentos.map((h: any) => (
-                <article key={h.id} className="rounded-xl border bg-background p-4">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <div className="text-sm font-semibold">
-                        {h.autor_nome ?? "Tecnologia Educacional"}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDateTime(h.created_at)}
-                      </div>
-                    </div>
 
-                    <span className="rounded-full border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                      Acompanhamento interno
-                    </span>
-                  </div>
-
-                  {h.descricao && (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                      {h.descricao}
+            <div className="flex-1 overflow-y-auto bg-muted/20 p-5">
+              {acompanhamentos.length === 0 ? (
+                <div className="flex h-full min-h-[320px] items-center justify-center rounded-lg border border-dashed bg-background/60 p-6 text-center">
+                  <div>
+                    <p className="text-sm font-medium">Nenhuma mensagem registrada.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Use o campo abaixo para iniciar o acompanhamento interno da solicitação.
                     </p>
-                  )}
-                </article>
-              ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {acompanhamentos.map((h: any) => {
+                    const authorName = h.autor_nome ?? "Tecnologia Educacional";
+
+                    return (
+                      <article key={h.id} className="flex items-start gap-3">
+                        <UserAvatar
+                          path={h.autor_avatar_url}
+                          name={authorName}
+                          size={38}
+                        />
+
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1 flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-semibold">{authorName}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDateTime(h.created_at)}
+                            </span>
+                          </div>
+
+                          <div className="max-w-[820px] rounded-2xl rounded-tl-sm border bg-background px-4 py-3 shadow-sm">
+                            {h.descricao && (
+                              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                                {h.descricao}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </section>
 
-        <section className="rounded-xl border bg-card p-6">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Timeline do chamado</h2>
-            <p className="text-sm text-muted-foreground">
-              Eventos automáticos registrados durante o ciclo da solicitação.
-            </p>
-          </div>
+            <div className="border-t bg-card p-4">
+              <div className="space-y-3">
+                <textarea
+                  rows={3}
+                  value={comentario}
+                  onChange={(e) => setComentario(e.target.value)}
+                  placeholder="Digite uma mensagem de acompanhamento interno..."
+                  className="w-full resize-none rounded-md border bg-background px-3 py-2 text-sm"
+                />
 
-          {eventos.length === 0 ? (
-            <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
-              <p className="text-sm font-medium">Nenhum evento registrado.</p>
-              <p className="text-sm text-muted-foreground">
-                Alterações de status, urgência e responsável aparecerão aqui.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {eventos.map((h: any) => {
-                const style = historicoStyle(h.tipo);
-
-                return (
-                  <article
-                    key={h.id}
-                    className={`rounded-lg border border-l-4 p-4 ${style.className}`}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => addComentario.mutate()}
+                    disabled={addComentario.isPending || !comentario.trim()}
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground disabled:opacity-50"
                   >
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold">{h.titulo}</div>
-
-                      <span className="shrink-0 rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
-                        {style.label}
-                      </span>
-                    </div>
-
-                    {h.descricao && (
-                      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                        {h.descricao}
-                      </p>
-                    )}
-
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      {formatDateTime(h.created_at)}
-                      {h.autor_nome ? ` · ${h.autor_nome}` : ""}
-                    </div>
-                  </article>
-                );
-              })}
+                    {addComentario.isPending ? "Enviando..." : "Enviar mensagem"}
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-        </section>
-      </main>
+          </section>
+        </main>
 
-      <aside className="space-y-6">
-        <section className="rounded-xl border bg-card p-6">
-          <h2 className="font-semibold mb-4">Gestão interna</h2>
+        <aside className="space-y-6">
+          <section className="rounded-xl border bg-card p-6">
+            <h2 className="font-semibold mb-4">Gestão interna</h2>
 
-          {data.responsavel && (
-            <div className="mb-4 rounded-md bg-muted p-3 text-sm">
-              <div className="text-xs text-muted-foreground">Responsável atual</div>
-              <div className="font-medium">{data.responsavel.nome_completo}</div>
-              <div className="text-xs text-muted-foreground">{data.responsavel.email}</div>
-            </div>
-          )}
 
-          <label className="block mb-3">
-            <span className="text-sm font-medium">Status</span>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
-            >
-              {statusOptions.map((s: any) => (
-                <option key={s.id} value={s.nome}>
-                  {s.nome}
-                </option>
-              ))}
-            </select>
-          </label>
+            {data.responsavel && (
+              <div className="mb-4 rounded-lg bg-muted p-4 text-center text-sm">
+                <div className="mb-3 text-xs font-medium text-muted-foreground">
+                  Responsável atual
+                </div>
 
-          <label className="block mb-3">
-            <span className="text-sm font-medium">Urgência</span>
-            <select
-              value={urgencia}
-              onChange={(e) => setUrgencia(e.target.value)}
-              className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
-            >
-              {prioridadeOptions.map((u: any) => (
-                <option key={u.id} value={u.nome}>
-                  {u.nome}
-                </option>
-              ))}
-            </select>
-          </label>
+                <div className="flex flex-col items-center">
+                  <UserAvatar
+                    path={data.responsavel.avatar_url}
+                    name={data.responsavel.nome_completo}
+                    size={64}
+                    className="mb-3"
+                  />
 
-          <label className="block mb-3">
-            <span className="text-sm font-medium">Responsável</span>
-            <select
-              value={responsavelId}
-              onChange={(e) => {
-                const selectedId = e.target.value;
-                const selected = equipe.find((p: any) => p.id === selectedId);
+                  <div className="font-semibold">{data.responsavel.nome_completo}</div>
+                  <div className="text-xs text-muted-foreground">{data.responsavel.email}</div>
+                </div>
+              </div>
+            )}
 
-                setResponsavelId(selectedId);
-                setResp(selected?.nome_completo || selected?.email || "");
-              }}
-              className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
-            >
-              <option value="">— Não atribuído</option>
-              {equipe.map((p: any) => (
-                <option key={p.id} value={p.id}>
-                  {p.nome_completo || p.email || p.id}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {!responsavelId && (
             <label className="block mb-3">
-              <span className="text-sm font-medium">Responsável legado</span>
-              <input
-                value={resp}
-                onChange={(e) => setResp(e.target.value)}
+              <span className="text-sm font-medium">Status</span>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+              >
+                {statusOptions.map((s: any) => (
+                  <option key={s.id} value={s.nome}>
+                    {s.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block mb-3">
+              <span className="text-sm font-medium">Urgência</span>
+              <select
+                value={urgencia}
+                onChange={(e) => setUrgencia(e.target.value)}
+                className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+              >
+                {prioridadeOptions.map((u: any) => (
+                  <option key={u.id} value={u.nome}>
+                    {u.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block mb-3">
+              <span className="text-sm font-medium">Responsável</span>
+              <select
+                value={responsavelId}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  const selected = equipe.find((p: any) => p.id === selectedId);
+
+                  setResponsavelId(selectedId);
+                  setResp(selected?.nome_completo || selected?.email || "");
+                }}
+                className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+              >
+                <option value="">— Não atribuído</option>
+                {equipe.map((p: any) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome_completo || p.email || p.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {!responsavelId && (
+              <label className="block mb-3">
+                <span className="text-sm font-medium">Responsável legado</span>
+                <input
+                  value={resp}
+                  onChange={(e) => setResp(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+                />
+              </label>
+            )}
+
+            <label className="block mb-4">
+              <span className="text-sm font-medium">Observações internas</span>
+              <textarea
+                rows={5}
+                value={obs}
+                onChange={(e) => setObs(e.target.value)}
                 className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
               />
             </label>
-          )}
 
-          <label className="block mb-4">
-            <span className="text-sm font-medium">Observações internas</span>
-            <textarea
-              rows={5}
-              value={obs}
-              onChange={(e) => setObs(e.target.value)}
-              className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
-            />
-          </label>
+            <button
+              onClick={() => save.mutate()}
+              disabled={save.isPending}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
+              {save.isPending ? "Salvando..." : "Salvar alterações"}
+            </button>
 
-          <button
-            onClick={() => save.mutate()}
-            disabled={save.isPending}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" />
-            {save.isPending ? "Salvando..." : "Salvar alterações"}
-          </button>
+            <button
+              onClick={() => {
+                if (!confirm("Excluir esta solicitação?")) return;
+                remove.mutate();
+              }}
+              disabled={remove.isPending}
+              className="w-full mt-3 text-sm text-destructive hover:underline disabled:opacity-50"
+            >
+              Excluir solicitação
+            </button>
+          </section>
 
-          <button
-            onClick={() => {
-              if (!confirm("Excluir esta solicitação?")) return;
-              remove.mutate();
-            }}
-            disabled={remove.isPending}
-            className="w-full mt-3 text-sm text-destructive hover:underline disabled:opacity-50"
-          >
-            Excluir solicitação
-          </button>
-        </section>
+          <section className="rounded-xl border bg-card p-6">
+            <h2 className="font-semibold mb-4">Solicitante</h2>
 
-        <section className="rounded-xl border bg-card p-6">
-          <h2 className="font-semibold mb-4">Solicitante</h2>
+            <div className="space-y-3 text-sm">
+              <F l="Nome" v={data.nome_solicitante} />
+              <F l="E-mail" v={data.email_solicitante} />
+              <F l="Unidade" v={data.unidade} />
+              <F l="Segmento / Área" v={data.segmento_area} />
+              <F l="Cargo / Função" v={data.cargo_funcao} />
+            </div>
+          </section>
 
-          <div className="space-y-3 text-sm">
-            <F l="Nome" v={data.nome_solicitante} />
-            <F l="E-mail" v={data.email_solicitante} />
-            <F l="Unidade" v={data.unidade} />
-            <F l="Segmento / Área" v={data.segmento_area} />
-            <F l="Cargo / Função" v={data.cargo_funcao} />
-          </div>
-        </section>
+          <section className="rounded-xl border bg-card p-6">
+            <h2 className="font-semibold mb-4">Detalhes da solicitação</h2>
 
-        <section className="rounded-xl border bg-card p-6">
-          <h2 className="font-semibold mb-4">Detalhes da solicitação</h2>
+            <div className="space-y-3 text-sm">
+              <F l="Tipo" v={data.tipo_solicitacao} />
+              <F l="Urgência" v={data.urgencia} />
+              <F l="Público impactado" v={data.publico_impactado} />
+              <F l="Unidades impactadas" v={data.unidades_impactadas} />
 
-          <div className="space-y-3 text-sm">
-            <F l="Tipo" v={data.tipo_solicitacao} />
-            <F l="Urgência" v={data.urgencia} />
-            <F l="Público impactado" v={data.publico_impactado} />
-            <F l="Unidades impactadas" v={data.unidades_impactadas} />
+              <F
+                l="Prazo desejado"
+                v={
+                  data.prazo_desejado
+                    ? new Date(data.prazo_desejado).toLocaleDateString("pt-BR")
+                    : null
+                }
+              />
 
-            <F
-              l="Prazo desejado"
-              v={
-                data.prazo_desejado
-                  ? new Date(data.prazo_desejado).toLocaleDateString("pt-BR")
-                  : null
-              }
-            />
+              <F
+                l="Link"
+                v={
+                  data.link_referencia ? (
+                    <a
+                      href={data.link_referencia}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary hover:underline break-all"
+                    >
+                      {data.link_referencia}
+                    </a>
+                  ) : null
+                }
+              />
+            </div>
+          </section>
 
-            <F
-              l="Link"
-              v={
-                data.link_referencia ? (
-                  <a
-                    href={data.link_referencia}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary hover:underline break-all"
-                  >
-                    {data.link_referencia}
-                  </a>
-                ) : null
-              }
-            />
-          </div>
-        </section>
+          <section className="rounded-xl border bg-card p-6">
+            <h2 className="font-semibold mb-4">Descrição</h2>
 
-        <section className="rounded-xl border bg-card p-6">
-          <h2 className="font-semibold mb-4">Descrição</h2>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              {data.descricao}
+            </p>
 
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">
-            {data.descricao}
-          </p>
-
-          {data.observacoes_adicionais && (
-            <div className="mt-4 border-t pt-4">
-              <div className="text-xs font-medium text-muted-foreground mb-1">
-                Observações adicionais
+            {data.observacoes_adicionais && (
+              <div className="mt-4 border-t pt-4">
+                <div className="text-xs font-medium text-muted-foreground mb-1">
+                  Observações adicionais
+                </div>
+                <p className="whitespace-pre-wrap text-sm">
+                  {data.observacoes_adicionais}
+                </p>
               </div>
-              <p className="whitespace-pre-wrap text-sm">
-                {data.observacoes_adicionais}
+            )}
+          </section>
+
+          <section className="rounded-xl border bg-card p-6">
+            <div className="mb-4">
+              <h2 className="font-semibold">Timeline do chamado</h2>
+              <p className="text-sm text-muted-foreground">
+                Eventos automáticos do ciclo da solicitação.
               </p>
             </div>
-          )}
-        </section>
 
-        {data.respostas && Object.keys(data.respostas).length > 0 && (
-          <section className="rounded-xl border bg-card p-6">
-            <h2 className="font-semibold mb-4">Respostas específicas</h2>
+            {eventos.length === 0 ? (
+              <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-center">
+                <p className="text-sm font-medium">Nenhum evento registrado.</p>
+                <p className="text-xs text-muted-foreground">
+                  Alterações de status, urgência e responsável aparecerão aqui.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {eventos.map((h: any) => {
+                  const style = historicoStyle(h.tipo);
 
-            <pre className="text-xs bg-muted rounded-md p-3 overflow-x-auto">
-              {JSON.stringify(data.respostas, null, 2)}
-            </pre>
+                  return (
+                    <article
+                      key={h.id}
+                      className={`rounded-lg border border-l-4 p-3 ${style.className}`}
+                    >
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <div className="text-sm font-semibold">{h.titulo}</div>
+
+                        <span className="shrink-0 rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
+                          {style.label}
+                        </span>
+                      </div>
+
+                      {h.descricao && (
+                        <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                          {h.descricao}
+                        </p>
+                      )}
+
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        {formatDateTime(h.created_at)}
+                        {h.autor_nome ? ` · ${h.autor_nome}` : ""}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
-        )}
-      </aside>
+
+          {data.respostas && Object.keys(data.respostas).length > 0 && (
+            <section className="rounded-xl border bg-card p-6">
+              <h2 className="font-semibold mb-4">Respostas específicas</h2>
+
+              <pre className="text-xs bg-muted rounded-md p-3 overflow-x-auto">
+                {JSON.stringify(data.respostas, null, 2)}
+              </pre>
+            </section>
+          )}
+        </aside>
+      </div>
     </div>
-  </div>
-);
+  );
 }

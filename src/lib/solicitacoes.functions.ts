@@ -176,6 +176,7 @@ function toResponsavelRow(user: any) {
     id: user.id,
     email: user.email,
     nome_completo: user.profile?.nomeCompleto ?? user.email,
+    avatar_url: user.profile?.avatarUrl ?? null,
   };
 }
 
@@ -227,6 +228,7 @@ function toHistoricoRow(h: any) {
     autor_id: h.autorId,
     autor_nome: h.autor?.profile?.nomeCompleto ?? h.autor?.email ?? null,
     autor_email: h.autor?.email ?? null,
+    autor_avatar_url: h.autor?.profile?.avatarUrl ?? null,
     tipo: h.tipo,
     titulo: h.titulo,
     descricao: h.descricao,
