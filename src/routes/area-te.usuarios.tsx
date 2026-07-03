@@ -371,6 +371,9 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       qc.invalidateQueries({ queryKey: ["admin-unidades"] });
       qc.invalidateQueries({ queryKey: ["admin-user-unidades", user.id] });
+      qc.invalidateQueries({ queryKey: ["profiles-options"] });
+      qc.invalidateQueries({ queryKey: ["admin-contatos"] });
+      qc.invalidateQueries({ queryKey: ["contatos-public"] });
       onClose();
     },
     onError: (e: any) => toast.error(e.message ?? "Erro."),
@@ -443,20 +446,6 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
             className={inpCls}
           />
         </Field>
-
-        <label className="flex items-center gap-2 text-sm col-span-2">
-          <input
-            type="checkbox"
-            checked={!!edit.exibir_contato}
-            onChange={(e) =>
-              setEdit({
-                ...edit,
-                exibir_contato: e.target.checked,
-              })
-            }
-          />
-          Exibir este usuário na página de contatos
-        </label>
 
         <Field label="Bio" full>
           <textarea

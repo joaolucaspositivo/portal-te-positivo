@@ -20,6 +20,7 @@ function toProfileRow(profile: any | null) {
     avatar_url: profile.avatarUrl ?? null,
     bio: profile.bio ?? null,
     status: profile.status ?? "pendente",
+    exibir_contato: profile.exibirContato ?? false,
     created_at: profile.createdAt ?? null,
     updated_at: profile.updatedAt ?? null,
   };
@@ -144,6 +145,7 @@ const ProfileSchema = z.object({
   unidade: z.string().trim().max(160).optional().nullable(),
   telefone: z.string().trim().max(40).optional().nullable(),
   bio: z.string().trim().max(1000).optional().nullable(),
+  exibir_contato: z.boolean().optional().default(false),
 });
 
 export const adminUpdateProfile = createServerFn({ method: "POST" })
@@ -163,6 +165,7 @@ export const adminUpdateProfile = createServerFn({ method: "POST" })
         unidade: data.unidade ?? null,
         telefone: data.telefone ?? null,
         bio: data.bio ?? null,
+        exibirContato: data.exibir_contato ?? false,
       },
       update: {
         nomeCompleto: data.nome_completo ?? null,
@@ -170,6 +173,7 @@ export const adminUpdateProfile = createServerFn({ method: "POST" })
         unidade: data.unidade ?? null,
         telefone: data.telefone ?? null,
         bio: data.bio ?? null,
+        exibirContato: data.exibir_contato ?? false,
       },
     });
 
