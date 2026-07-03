@@ -2,6 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { statusColor, urgencyColor } from "@/lib/portal-constants";
+import {
+  listPrioridadesSolicitacaoPublic,
+  listStatusSolicitacaoPublic,
+} from "@/lib/configuracoes.functions";
 import { listSolicitacoesAdmin } from "@/lib/solicitacoes.functions";
 
 export const Route = createFileRoute("/area-te/")({
@@ -29,14 +33,44 @@ function Stat({
 
 function Dashboard() {
   const listSolicitacoesFn = useServerFn(listSolicitacoesAdmin);
+  const listStatusFn = useServerFn(listStatusSolicitacaoPublic);
+  const listPrioridadesFn = useServerFn(listPrioridadesSolicitacaoPublic);
 
   const { data: solicitacoes = [] } = useQuery({
     queryKey: ["admin-solic"],
     queryFn: () => listSolicitacoesFn(),
   });
 
-  const count = (s: string) => solicitacoes.filter((x: any) => x.status === s).length;
-  const critical = solicitacoes.filter((x: any) => x.urgencia === "Crítica").length;
+  const { data: statusOptions = [] } = useQuery({
+    queryKey: ["status-solicitacao"],
+    queryFn: () => listStatusFn(),
+  });
+
+  const { data: prioridadeOptions = [] } = useQuery({
+    queryKey: ["prioridades-solicitacao"],
+    queryFn: () => listPrioridadesFn(),
+  });
+
+  const statusAbertos = new Set(
+    statusOptions.filter((s: any) => !!s.aberta).map((s: any) => s.nome),
+  );
+
+  const prioridadeMaisAlta = prioridadeOptions.reduce((best: any | null, atual: any) => {
+    if (!best) return atual;
+
+    return Number(atual.peso ?? 0) > Number(best.peso ?? 0) ? atual : best;
+  }, null);
+
+  const countStatus = (status: string) =>
+    solicitacoes.filter((x: any) => x.status === status).length;
+
+  const abertas = solicitacoes.filter((x: any) => statusAbertos.has(x.status)).length;
+
+  const altaPrioridade = prioridadeMaisAlta
+    ? solicitacoes.filter((x: any) => x.urgencia === prioridadeMaisAlta.nome).length
+    : 0;
+
+  const statusCards = statusOptions.slice(0, 3);
 
   return (
     <div>
@@ -45,11 +79,17 @@ function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
         <Stat label="Total" value={solicitacoes.length} />
-        <Stat label="Recebidas" value={count("Recebida")} />
-        <Stat label="Em análise" value={count("Em análise")} />
-        <Stat label="Em execução" value={count("Em execução")} />
-        <Stat label="Concluídas" value={count("Concluída")} />
-        <Stat label="Críticas" value={critical} tone="destructive" />
+        <Stat label="Abertas" value={abertas} />
+
+        {statusCards.map((s: any) => (
+          <Stat key={s.id} label={s.nome} value={countStatus(s.nome)} />
+        ))}
+
+        <Stat
+          label={prioridadeMaisAlta?.nome ?? "Maior prioridade"}
+          value={altaPrioridade}
+          tone="destructive"
+        />
       </div>
 
       <div className="rounded-xl border bg-card overflow-hidden">

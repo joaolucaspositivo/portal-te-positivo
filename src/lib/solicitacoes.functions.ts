@@ -299,15 +299,23 @@ export const createSolicitacaoPublic = createServerFn({ method: "POST" })
       prisma,
       "prioridade_solicitacao",
       data.urgencia,
-      "Média",
+      "",
     );
 
     const statusInicial = await getConfigOpcaoNome(
       prisma,
       "status_solicitacao",
       null,
-      "Recebida",
+      "",
     );
+
+    if (!urgencia) {
+      throw new Error("Nenhuma prioridade padrão configurada.");
+    }
+
+    if (!statusInicial) {
+      throw new Error("Nenhum status inicial padrão configurado.");
+    }
 
     const created = await prisma.solicitacao.create({
       data: {
@@ -376,8 +384,12 @@ export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
     if (filters.apenas_abertas) {
       const statusAbertos = await getStatusAbertos(prisma);
 
+      if (statusAbertos.length === 0) {
+        return [];
+      }
+
       where.status = {
-        in: statusAbertos.length > 0 ? statusAbertos : ["Recebida"],
+        in: statusAbertos,
       };
     }
 
@@ -400,13 +412,24 @@ export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
     const statusAbertos = await getStatusAbertos(prisma);
     const statusAbertosSet = new Set(statusAbertos);
 
-    return solicitacoes
-      .map((s) => toSolicitacaoRow(s, { prioridadePesoMap }))
-      .map(toSolicitacaoRow)
-      .sort((a, b) => {
-        const aAberta = statusAbertosSet.has(a.status);
-        const bAberta = statusAbertosSet.has(b.status);
-      });
+    const rows = solicitacoes.map((s) => toSolicitacaoRow(s, { prioridadePesoMap }));
+
+    return rows.sort((a, b) => {
+      const aAberta = statusAbertosSet.has(a.status);
+      const bAberta = statusAbertosSet.has(b.status);
+
+      if (aAberta !== bAberta) {
+        return aAberta ? -1 : 1;
+      }
+
+      const pesoDiff = (b.urgencia_peso ?? 0) - (a.urgencia_peso ?? 0);
+
+      if (pesoDiff !== 0) {
+        return pesoDiff;
+      }
+
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   });
 
 export const getSolicitacaoAdmin = createServerFn({ method: "GET" })
@@ -448,7 +471,7 @@ export const listEquipeTeOptions = createServerFn({ method: "GET" })
         roles: {
           some: {
             role: {
-              in: ["admin", "equipe_te"],
+              in: ["admin", "equipe_te", "editor"],
             },
           },
         },
@@ -495,7 +518,7 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
           roles: {
             some: {
               role: {
-                in: ["admin", "equipe_te"],
+                in: ["admin", "equipe_te", "editor"],
               },
             },
           },
@@ -507,22 +530,26 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
       : null;
 
     if (data.responsavel_id && !responsavel) {
-      throw new Error("Responsável selecionado não está ativo ou não pertence à equipe TE.");
+      throw new Error("Responsável selecionado não está ativo ou não possui papel permitido.");
     }
 
     const status = await getConfigOpcaoNome(
       prisma,
       "status_solicitacao",
       data.status,
-      "Recebida",
+      "",
     );
+
+    if (!status) {
+      throw new Error("Status inválido ou não configurado.");
+    }
 
     const urgencia = data.urgencia
       ? await getConfigOpcaoNome(
         prisma,
         "prioridade_solicitacao",
         data.urgencia,
-        "Média",
+        "",
       )
       : null;
 

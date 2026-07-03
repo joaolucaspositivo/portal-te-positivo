@@ -13,6 +13,7 @@ import {
   listPrioridadesSolicitacaoPublic,
   listStatusSolicitacaoPublic,
 } from "@/lib/configuracoes.functions";
+import { listUnidadesPublicas } from "@/lib/unidades.functions";
 
 
 export const Route = createFileRoute("/area-te/solicitacoes")({
@@ -42,6 +43,8 @@ function List() {
   const listTiposFn = useServerFn(listSolicitacaoTiposPublic);
   const listStatusFn = useServerFn(listStatusSolicitacaoPublic);
   const listPrioridadesFn = useServerFn(listPrioridadesSolicitacaoPublic);
+
+  const listUnidadesFn = useServerFn(listUnidadesPublicas);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["admin-solicitacoes", status, urg, responsavelId, apenasAbertas],
@@ -76,6 +79,8 @@ function List() {
     queryFn: () => listPrioridadesFn(),
   });
 
+
+
   const tipoOptions = useMemo(() => {
     const cadastrados = tiposSolicitacao.map((t: any) => t.nome).filter(Boolean);
     const usados = data.map((s: any) => s.tipo_solicitacao).filter(Boolean);
@@ -84,9 +89,11 @@ function List() {
   }, [data, tiposSolicitacao]);
 
   const unidadeOptions = useMemo(() => {
-    const values = data.map((s: any) => s.unidade).filter(Boolean);
-    return Array.from(new Set(values)).sort();
-  }, [data]);
+    const cadastradas = unidadesCadastradas.map((u: any) => u.nome).filter(Boolean);
+    const usadas = data.map((s: any) => s.unidade).filter(Boolean);
+
+    return Array.from(new Set([...cadastradas, ...usadas])).sort();
+  }, [data, unidadesCadastradas]);
 
   const filtered = data.filter((s: any) => {
     if (q) {

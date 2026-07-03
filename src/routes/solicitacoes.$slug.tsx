@@ -155,7 +155,7 @@ function SolicSlug() {
 
     setBase((b) => ({
       ...b,
-      urgencia: padrao?.nome ?? "Média",
+      urgencia: padrao?.nome ?? "",
     }));
   }, [base.urgencia, prioridadeOptions]);
 
@@ -188,7 +188,8 @@ function SolicSlug() {
       !base.email_solicitante ||
       !base.unidade ||
       !base.titulo ||
-      !base.descricao
+      !base.descricao ||
+      !base.urgencia
     ) {
       toast.error("Preencha os campos obrigatórios.");
       return;
@@ -213,7 +214,7 @@ function SolicSlug() {
         data: {
           tipoId: tipo.id,
           ...base,
-          urgencia: base.urgencia || "Média",
+          urgencia: base.urgencia,
           respostas,
         },
       });
