@@ -179,6 +179,7 @@ function AdminContatos() {
                 value={edit.nome ?? ""}
                 onChange={(e) => setEdit({ ...edit, nome: e.target.value })}
                 className={inpCls}
+                disabled={!!edit.user_id}
               />
             </Field>
 
@@ -187,23 +188,25 @@ function AdminContatos() {
                 value={edit.funcao ?? ""}
                 onChange={(e) => setEdit({ ...edit, funcao: e.target.value })}
                 className={inpCls}
+                disabled={!!edit.user_id}
               />
             </Field>
 
-            <select
-              value={edit.unidade ?? ""}
-              onChange={(e) => setEdit({ ...edit, unidade: e.target.value })}
-              className={inpCls}
-              disabled={unidades.length === 0}
-            >
-              <option value="">—</option>
-              {unidades.map((u: any) => (
-                <option key={u.id} value={u.nome}>
-                  {u.sigla ? `${u.nome} (${u.sigla})` : u.nome}
-                </option>
-              ))}
-            </select>
-
+            <Field label="Unidade">
+              <select
+                value={edit.unidade ?? ""}
+                onChange={(e) => setEdit({ ...edit, unidade: e.target.value })}
+                className={inpCls}
+                disabled={!!edit.user_id || unidades.length === 0}
+              >
+                <option value="">—</option>
+                {unidades.map((u: any) => (
+                  <option key={u.id} value={u.nome}>
+                    {u.sigla ? `${u.nome} (${u.sigla})` : u.nome}
+                  </option>
+                ))}
+              </select>
+            </Field>
             {unidades.length === 0 && (
               <p className="text-xs text-muted-foreground mt-1">
                 Nenhuma unidade ativa cadastrada.
@@ -216,6 +219,7 @@ function AdminContatos() {
                 value={edit.email ?? ""}
                 onChange={(e) => setEdit({ ...edit, email: e.target.value })}
                 className={inpCls}
+                disabled={!!edit.user_id}
               />
             </Field>
 
@@ -224,6 +228,7 @@ function AdminContatos() {
                 value={edit.telefone_whatsapp ?? ""}
                 onChange={(e) => setEdit({ ...edit, telefone_whatsapp: e.target.value })}
                 className={inpCls}
+                disabled={!!edit.user_id}
               />
             </Field>
 
@@ -243,7 +248,27 @@ function AdminContatos() {
             <Field label="Vincular a um usuário do sistema" full>
               <select
                 value={edit.user_id ?? ""}
-                onChange={(e) => setEdit({ ...edit, user_id: e.target.value || null })}
+                onChange={(e) => {
+                  const profile = profiles.find((p: any) => p.id === e.target.value);
+
+                  if (!profile) {
+                    setEdit({
+                      ...edit,
+                      user_id: null,
+                    });
+                    return;
+                  }
+
+                  setEdit({
+                    ...edit,
+                    user_id: profile.id,
+                    nome: profile.nome_completo || profile.email || "",
+                    funcao: profile.cargo ?? "",
+                    unidade: profile.unidade ?? "",
+                    email: profile.email ?? "",
+                    telefone_whatsapp: profile.telefone ?? "",
+                  });
+                }}
                 className={inpCls}
               >
                 <option value="">— Nenhum (contato externo)</option>

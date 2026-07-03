@@ -77,18 +77,26 @@ function toComunicadoRow(c: any) {
 
 function toContatoRow(c: any, options?: { isAuthed?: boolean }) {
   const isAuthed = options?.isAuthed ?? true;
+  const profile = c.user?.profile;
+
+  const nome = profile?.nomeCompleto || c.nome;
+  const funcao = profile?.cargo || c.funcao;
+  const unidade = profile?.unidade || c.unidade;
+  const email = c.user?.email || c.email;
+  const telefone = profile?.telefone || c.telefoneWhatsapp;
 
   return {
     id: c.id,
     user_id: c.userId,
-    nome: c.nome,
-    funcao: c.funcao,
-    unidade: c.unidade,
-    email: isAuthed ? c.email : null,
-    telefone_whatsapp: isAuthed ? c.telefoneWhatsapp : null,
+    nome,
+    funcao,
+    unidade,
+    email: isAuthed ? email : null,
+    telefone_whatsapp: isAuthed ? telefone : null,
     tipo_contato: c.tipoContato,
     ativo: c.ativo,
-    avatar_url: c.user?.profile?.avatarUrl ?? null,
+    interno: !!c.userId,
+    avatar_url: profile?.avatarUrl ?? null,
     created_at: c.createdAt,
     updated_at: c.updatedAt,
   };
@@ -373,6 +381,19 @@ export const listContatosPublic = createServerFn({ method: "GET" }).handler(asyn
   const contatos = await prisma.contato.findMany({
     where: {
       ativo: true,
+      OR: [
+        {
+          userId: null,
+        },
+        {
+          user: {
+            profile: {
+              status: "ativo",
+              exibirContato: true,
+            },
+          },
+        },
+      ],
     },
     orderBy: {
       nome: "asc",
@@ -423,6 +444,9 @@ export const listProfileOptionsAdmin = createServerFn({ method: "GET" })
       where: {
         status: "ativo",
       },
+      include: {
+        user: true,
+      },
       orderBy: {
         nomeCompleto: "asc",
       },
@@ -433,6 +457,9 @@ export const listProfileOptionsAdmin = createServerFn({ method: "GET" })
       nome_completo: p.nomeCompleto,
       cargo: p.cargo,
       unidade: p.unidade,
+      telefone: p.telefone,
+      email: p.user?.email,
+      exibir_contato: p.exibirContato,
     }));
   });
 
@@ -456,13 +483,45 @@ export const saveContatoAdmin = createServerFn({ method: "POST" })
 
     const { prisma } = await import("./db.server");
 
-    const payload = {
-      userId: data.user_id ?? null,
+    let contatoBase = {
       nome: data.nome,
       funcao: emptyToNull(data.funcao),
       unidade: emptyToNull(data.unidade),
       email: emptyToNull(data.email),
       telefoneWhatsapp: emptyToNull(data.telefone_whatsapp),
+    };
+
+    if (data.user_id) {
+      const profile = await prisma.profile.findFirst({
+        where: {
+          id: data.user_id,
+          status: "ativo",
+        },
+        include: {
+          user: true,
+        },
+      });
+
+      if (!profile) {
+        throw new Error("Usuário inválido para contato.");
+      }
+
+      contatoBase = {
+        nome: profile.nomeCompleto || profile.user.email,
+        funcao: emptyToNull(profile.cargo),
+        unidade: emptyToNull(profile.unidade),
+        email: profile.user.email,
+        telefoneWhatsapp: emptyToNull(profile.telefone),
+      };
+    }
+
+    const payload = {
+      userId: data.user_id ?? null,
+      nome: contatoBase.nome,
+      funcao: contatoBase.funcao,
+      unidade: contatoBase.unidade,
+      email: contatoBase.email,
+      telefoneWhatsapp: contatoBase.telefoneWhatsapp,
       tipoContato: emptyToNull(data.tipo_contato),
       ativo: data.ativo,
     };

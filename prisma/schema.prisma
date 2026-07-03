@@ -72,6 +72,7 @@ model Profile {
   avatarUrl    String?       @map("avatar_url")
   bio          String?
   status       ProfileStatus @default(pendente)
+  exibirContato Boolean @default(false) @map("exibir_contato")
   createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
   user         User          @relation(fields: [id], references: [id], onDelete: Cascade)
@@ -261,7 +262,7 @@ model Contato {
   ativo            Boolean  @default(true)
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  userId           String?  @map("user_id") @db.Uuid
+  userId String? @unique @map("user_id") @db.Uuid
   user             User?    @relation(fields: [userId], references: [id])
 
   @@index([ativo])

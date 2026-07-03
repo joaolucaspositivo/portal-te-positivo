@@ -73,9 +73,8 @@ function AdminUsers() {
             .map((unidade: any) => `${unidade.nome} ${unidade.sigla}`)
             .join(" ");
 
-          const text = `${u.email} ${u.profile?.nome_completo ?? ""} ${
-            u.profile?.cargo ?? ""
-          } ${unidadesText}`.toLowerCase();
+          const text = `${u.email} ${u.profile?.nome_completo ?? ""} ${u.profile?.cargo ?? ""
+            } ${unidadesText}`.toLowerCase();
 
           if (!text.includes(q.toLowerCase())) return false;
         }
@@ -214,11 +213,10 @@ function AdminUsers() {
                             <span
                               key={unidade.id}
                               title={unidade.nome}
-                              className={`px-2 py-0.5 rounded text-xs ${
-                                unidade.principal
-                                  ? "bg-primary/10 text-primary"
-                                  : "bg-muted"
-                              }`}
+                              className={`px-2 py-0.5 rounded text-xs ${unidade.principal
+                                ? "bg-primary/10 text-primary"
+                                : "bg-muted"
+                                }`}
                             >
                               {unidade.sigla}
                               {unidade.principal ? " · principal" : ""}
@@ -293,6 +291,7 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
     unidade: user.profile?.unidade ?? "",
     telefone: user.profile?.telefone ?? "",
     bio: user.profile?.bio ?? "",
+    exibir_contato: user.profile?.exibir_contato ?? false,
   });
 
   const [roles, setRoles] = useState<string[]>(user.roles ?? []);
@@ -445,6 +444,20 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
           />
         </Field>
 
+        <label className="flex items-center gap-2 text-sm col-span-2">
+          <input
+            type="checkbox"
+            checked={!!edit.exibir_contato}
+            onChange={(e) =>
+              setEdit({
+                ...edit,
+                exibir_contato: e.target.checked,
+              })
+            }
+          />
+          Exibir este usuário na página de contatos
+        </label>
+
         <Field label="Bio" full>
           <textarea
             rows={3}
@@ -453,6 +466,20 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
             className={inpCls}
           />
         </Field>
+
+        <label className="flex items-center gap-2 text-sm col-span-2 rounded-md border bg-background px-3 py-2">
+          <input
+            type="checkbox"
+            checked={!!profile.exibir_contato}
+            onChange={(e) =>
+              setProfile({
+                ...profile,
+                exibir_contato: e.target.checked,
+              })
+            }
+          />
+          Exibir este usuário na página de contatos
+        </label>
 
         <div className="col-span-2 border-t pt-3 mt-1">
           <div className="text-sm font-medium mb-2">Papéis</div>
