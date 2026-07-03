@@ -11,6 +11,10 @@ import {
     saveConfiguracaoOpcaoAdmin,
 } from "@/lib/configuracoes.functions";
 import { HexColorPicker, HexColorInput } from "react-colorful";
+import {
+    getEmailStatusAdmin,
+    sendTestEmailAdmin,
+} from "@/lib/email.functions";
 
 export const Route = createFileRoute("/area-te/configuracoes")({
     component: ConfiguracoesPage,
@@ -163,6 +167,7 @@ function ConfiguracoesPage() {
             </div>
 
             <div className="space-y-8">
+                <EmailTestSection />
                 {grupos.map((g) => (
                     <ConfigSection
                         key={g.grupo}
@@ -567,4 +572,117 @@ function ConfigSection({
             </div>
         );
     }
+}
+
+function EmailTestSection() {
+  const getEmailStatusFn = useServerFn(getEmailStatusAdmin);
+  const sendTestEmailFn = useServerFn(sendTestEmailAdmin);
+
+  const [to, setTo] = useState("");
+  const [result, setResult] = useState<any>(null);
+
+  const { data: emailStatus, isLoading } = useQuery({
+    queryKey: ["email-status"],
+    queryFn: () => getEmailStatusFn(),
+  });
+
+  const send = useMutation({
+    mutationFn: async () => {
+      if (!to.trim()) {
+        throw new Error("Informe um e-mail para teste.");
+      }
+
+      return sendTestEmailFn({
+        data: {
+          to,
+        },
+      });
+    },
+    onSuccess: (data) => {
+      setResult(data);
+
+      if (data?.skipped) {
+        toast.warning(data.reason ?? "SMTP não configurado.");
+        return;
+      }
+
+      toast.success("E-mail de teste enviado.");
+    },
+    onError: (error: any) => {
+      toast.error(error?.message ?? "Erro ao enviar e-mail de teste.");
+    },
+  });
+
+  return (
+    <section className="rounded-xl border bg-card overflow-hidden">
+      <div className="p-5 border-b flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold">E-mail / SMTP</h2>
+          <p className="text-sm text-muted-foreground">
+            Valide a configuração de envio de e-mails já usada pela recuperação de senha.
+          </p>
+        </div>
+
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            emailStatus?.configured
+              ? "bg-green-100 text-green-800"
+              : "bg-amber-100 text-amber-800"
+          }`}
+        >
+          {isLoading
+            ? "Verificando..."
+            : emailStatus?.configured
+              ? "SMTP configurado"
+              : "SMTP pendente"}
+        </span>
+      </div>
+
+      <div className="p-5 space-y-4">
+        {emailStatus && (
+          <div className="grid gap-2 rounded-md bg-muted/50 p-3 text-sm text-muted-foreground md:grid-cols-3">
+            <div>
+              <strong className="text-foreground">Host:</strong>{" "}
+              {emailStatus.host ?? "Não configurado"}
+            </div>
+            <div>
+              <strong className="text-foreground">Porta:</strong>{" "}
+              {emailStatus.port}
+            </div>
+            <div>
+              <strong className="text-foreground">Remetente:</strong>{" "}
+              {emailStatus.from ?? "Não configurado"}
+            </div>
+          </div>
+        )}
+
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <input
+            type="email"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            placeholder="email@positivo.com.br"
+            className={inpCls}
+          />
+
+          <button
+            type="button"
+            onClick={() => send.mutate()}
+            disabled={send.isPending}
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium disabled:opacity-50"
+          >
+            {send.isPending ? "Enviando..." : "Enviar teste"}
+          </button>
+        </div>
+
+        {result && (
+          <div className="text-sm text-muted-foreground">
+            {result.skipped
+              ? "SMTP ainda não configurado. O envio foi ignorado com segurança."
+              : `E-mail enviado. ID: ${result.messageId}`}
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
