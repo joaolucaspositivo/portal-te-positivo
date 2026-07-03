@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Mail, Phone, Search, Lock } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { TIPOS_CONTATO } from "@/lib/portal-constants";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/use-auth";
 import { listContatosPublic } from "@/lib/conteudo.functions";
@@ -24,7 +23,6 @@ export const Route = createFileRoute("/contatos")({
 function Contatos() {
   const [q, setQ] = useState("");
   const [un, setUn] = useState("");
-  const [tp, setTp] = useState("");
 
   const { user } = useAuth();
   const isAuthed = !!user;
@@ -44,11 +42,19 @@ function Contatos() {
   });
 
   const filtered = items.filter((c: any) => {
-    if (q && !`${c.nome} ${c.funcao ?? ""}`.toLowerCase().includes(q.toLowerCase())) return false;
-    if (un && c.unidade !== un) return false;
-    if (tp && c.tipo_contato !== tp) return false;
-    return true;
-  });
+  if (
+    q &&
+    !`${c.nome} ${c.funcao ?? ""} ${c.unidade ?? ""}`
+      .toLowerCase()
+      .includes(q.toLowerCase())
+  ) {
+    return false;
+  }
+
+  if (un && c.unidade !== un) return false;
+
+  return true;
+});
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -65,7 +71,7 @@ function Contatos() {
         </section>
 
         <section className="container mx-auto px-4 py-8">
-          <div className="grid gap-3 sm:grid-cols-[1fr_200px_200px] mb-6">
+          <div className="grid gap-3 sm:grid-cols-[1fr_240px] mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
@@ -88,17 +94,6 @@ function Contatos() {
                 </option>
               ))}
             </select>
-
-            <select
-              value={tp}
-              onChange={(e) => setTp(e.target.value)}
-              className="px-3 py-2 rounded-md border bg-background"
-            >
-              <option value="">Todos tipos</option>
-              {TIPOS_CONTATO.map((u) => (
-                <option key={u}>{u}</option>
-              ))}
-            </select>
           </div>
 
           {filtered.length === 0 ? (
@@ -113,8 +108,7 @@ function Contatos() {
                     <UserAvatar path={c.avatar_url} name={c.nome} size={48} />
 
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs text-muted-foreground">{c.tipo_contato}</div>
-                      <div className="font-semibold truncate">{c.nome}</div>
+                     <div className="font-semibold truncate">{c.nome}</div>
                       {c.funcao && (
                         <div className="text-sm text-muted-foreground truncate">{c.funcao}</div>
                       )}

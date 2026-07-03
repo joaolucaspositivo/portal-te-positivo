@@ -102,6 +102,26 @@ function toContatoRow(c: any, options?: { isAuthed?: boolean }) {
   };
 }
 
+function toContatoProfileRow(profile: any, options?: { isAuthed?: boolean }) {
+  const isAuthed = options?.isAuthed ?? true;
+
+  return {
+    id: profile.id,
+    user_id: profile.id,
+    nome: profile.nomeCompleto || profile.user?.email || "Usuário",
+    funcao: profile.cargo,
+    unidade: profile.unidade,
+    email: isAuthed ? profile.user?.email ?? null : null,
+    telefone_whatsapp: isAuthed ? profile.telefone ?? null : null,
+    tipo_contato: "Equipe central TE",
+    ativo: profile.status === "ativo" && !!profile.exibirContato,
+    interno: true,
+    avatar_url: profile.avatarUrl ?? null,
+    created_at: profile.createdAt,
+    updated_at: profile.updatedAt,
+  };
+}
+
 export const listFerramentasPublic = createServerFn({ method: "GET" }).handler(async () => {
   const { prisma } = await import("./db.server");
 
@@ -378,36 +398,20 @@ export const listContatosPublic = createServerFn({ method: "GET" }).handler(asyn
   const userId = await getOptionalUserId();
   const isAuthed = !!userId;
 
-  const contatos = await prisma.contato.findMany({
+  const profiles = await prisma.profile.findMany({
     where: {
-      ativo: true,
-      OR: [
-        {
-          userId: null,
-        },
-        {
-          user: {
-            profile: {
-              status: "ativo",
-              exibirContato: true,
-            },
-          },
-        },
-      ],
-    },
-    orderBy: {
-      nome: "asc",
+      status: "ativo",
+      exibirContato: true,
     },
     include: {
-      user: {
-        include: {
-          profile: true,
-        },
-      },
+      user: true,
+    },
+    orderBy: {
+      nomeCompleto: "asc",
     },
   });
 
-  return contatos.map((c) => toContatoRow(c, { isAuthed }));
+  return profiles.map((profile) => toContatoProfileRow(profile, { isAuthed }));
 });
 
 export const listContatosAdmin = createServerFn({ method: "GET" })
@@ -417,22 +421,22 @@ export const listContatosAdmin = createServerFn({ method: "GET" })
 
     const { prisma } = await import("./db.server");
 
-    const contatos = await prisma.contato.findMany({
-      orderBy: {
-        nome: "asc",
+    const profiles = await prisma.profile.findMany({
+      where: {
+        status: "ativo",
+        exibirContato: true,
       },
       include: {
-        user: {
-          include: {
-            profile: true,
-          },
-        },
+        user: true,
+      },
+      orderBy: {
+        nomeCompleto: "asc",
       },
     });
 
-    return contatos.map((c) => toContatoRow(c, { isAuthed: true }));
+    return profiles.map((profile) => toContatoProfileRow(profile, { isAuthed: true }));
   });
-
+  
 export const listProfileOptionsAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
   .handler(async ({ context }) => {
