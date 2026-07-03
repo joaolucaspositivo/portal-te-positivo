@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { statusColor, urgencyColor } from "@/lib/portal-constants";
+import { badgeColorFromConfig } from "@/lib/portal-constants";
 import {
   listPrioridadesSolicitacaoPublic,
   listStatusSolicitacaoPublic,
@@ -50,6 +50,9 @@ function Dashboard() {
     queryKey: ["prioridades-solicitacao"],
     queryFn: () => listPrioridadesFn(),
   });
+
+  const statusColorMap = new Map(statusOptions.map((s: any) => [s.nome, s.cor]));
+  const prioridadeColorMap = new Map(prioridadeOptions.map((p: any) => [p.nome, p.cor]));
 
   const statusAbertos = new Set(
     statusOptions.filter((s: any) => !!s.aberta).map((s: any) => s.nome),
@@ -128,12 +131,20 @@ function Dashboard() {
                   <td className="p-3">{s.nome_solicitante}</td>
                   <td className="p-3">{s.unidade}</td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 rounded text-xs ${urgencyColor(s.urgencia)}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+                        prioridadeColorMap.get(s.urgencia) as string | null,
+                      )}`}
+                    >
                       {s.urgencia}
                     </span>
                   </td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 rounded text-xs ${statusColor(s.status)}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+                        statusColorMap.get(s.status) as string | null,
+                      )}`}
+                    >
                       {s.status}
                     </span>
                   </td>

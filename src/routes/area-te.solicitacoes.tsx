@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { statusColor, urgencyColor } from "@/lib/portal-constants";
+import { badgeColorFromConfig } from "@/lib/portal-constants";
 import {
   listEquipeTeOptions,
   listSolicitacaoTiposPublic,
@@ -131,6 +131,14 @@ function List() {
     return new Map(
       prioridadeOptions.map((p: any) => [p.nome, Number(p.peso ?? 0)]),
     );
+  }, [prioridadeOptions]);
+
+  const statusColorMap = useMemo(() => {
+    return new Map(statusOptions.map((s: any) => [s.nome, s.cor]));
+  }, [statusOptions]);
+
+  const prioridadeColorMap = useMemo(() => {
+    return new Map(prioridadeOptions.map((p: any) => [p.nome, p.cor]));
   }, [prioridadeOptions]);
 
   const summary = {
@@ -279,12 +287,20 @@ function List() {
                   </td>
                   <td className="p-3">{s.unidade}</td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 rounded text-xs ${urgencyColor(s.urgencia)}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+                        prioridadeColorMap.get(s.urgencia) as string | null,
+                      )}`}
+                    >
                       {s.urgencia}
                     </span>
                   </td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 rounded text-xs ${statusColor(s.status)}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+                        statusColorMap.get(s.status) as string | null,
+                      )}`}
+                    >
                       {s.status}
                     </span>
                   </td>

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
-import { statusColor, urgencyColor } from "@/lib/portal-constants";
+import { badgeColorFromConfig } from "@/lib/portal-constants";
 import {
   listPrioridadesSolicitacaoPublic,
   listStatusSolicitacaoPublic,
@@ -58,6 +58,9 @@ function SolicDetail() {
     queryKey: ["prioridades-solicitacao"],
     queryFn: () => listPrioridadesFn(),
   });
+
+  const statusColorMap = new Map(statusOptions.map((s: any) => [s.nome, s.cor]));
+  const prioridadeColorMap = new Map(prioridadeOptions.map((p: any) => [p.nome, p.cor]));
 
   const [status, setStatus] = useState("");
   const [urgencia, setUrgencia] = useState("");
@@ -149,11 +152,19 @@ function SolicDetail() {
       <div className="flex flex-wrap items-center gap-3 mb-1">
         <h1 className="text-2xl font-bold">{data.titulo}</h1>
 
-        <span className={`px-2 py-0.5 rounded text-xs ${statusColor(data.status)}`}>
+        <span
+          className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+            statusColorMap.get(data.status) as string | null,
+          )}`}
+        >
           {data.status}
         </span>
 
-        <span className={`px-2 py-0.5 rounded text-xs ${urgencyColor(data.urgencia)}`}>
+        <span
+          className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+            prioridadeColorMap.get(data.urgencia) as string | null,
+          )}`}
+        >
           {data.urgencia}
         </span>
       </div>
