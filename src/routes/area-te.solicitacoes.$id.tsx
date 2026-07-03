@@ -34,6 +34,7 @@ function SolicDetail() {
   const updateSolicitacaoFn = useServerFn(updateSolicitacaoAdmin);
   const deleteSolicitacaoFn = useServerFn(deleteSolicitacaoAdmin);
   const listHistoricoFn = useServerFn(listSolicitacaoHistoricoAdmin);
+  const addComentarioFn = useServerFn(addSolicitacaoComentarioAdmin);
 
   const listStatusFn = useServerFn(listStatusSolicitacaoPublic);
   const listPrioridadesFn = useServerFn(listPrioridadesSolicitacaoPublic);
@@ -83,6 +84,7 @@ function SolicDetail() {
   const [resp, setResp] = useState("");
   const [obs, setObs] = useState("");
   const [responsavelId, setResponsavelId] = useState<string>("");
+  const [comentario, setComentario] = useState("");
 
   useEffect(() => {
     if (data) {
@@ -115,6 +117,29 @@ function SolicDetail() {
     },
     onError: (error: any) => {
       toast.error(error?.message ?? "Erro ao salvar.");
+    },
+  });
+
+  const addComentario = useMutation({
+    mutationFn: async () => {
+      if (!comentario.trim()) {
+        throw new Error("Informe um comentário.");
+      }
+
+      await addComentarioFn({
+        data: {
+          id,
+          comentario,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Comentário registrado.");
+      setComentario("");
+      qc.invalidateQueries({ queryKey: ["solic-historico", id] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message ?? "Erro ao registrar comentário.");
     },
   });
 
@@ -369,6 +394,25 @@ function SolicDetail() {
 
           <div className="rounded-xl border bg-card p-6">
             <h2 className="font-semibold mb-4">Histórico</h2>
+
+            <div className="mb-5 space-y-2">
+              <textarea
+                rows={3}
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+                placeholder="Registrar comentário interno..."
+                className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+              />
+
+              <button
+                type="button"
+                onClick={() => addComentario.mutate()}
+                disabled={addComentario.isPending || !comentario.trim()}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border font-medium disabled:opacity-50"
+              >
+                {addComentario.isPending ? "Registrando..." : "Adicionar comentário"}
+              </button>
+            </div>
 
             {historico.length === 0 ? (
               <p className="text-sm text-muted-foreground">

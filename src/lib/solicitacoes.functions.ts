@@ -576,6 +576,11 @@ const UpdateSolicitacaoSchema = z.object({
   responsavel_id: z.string().uuid().nullable().optional(),
 });
 
+const AddSolicitacaoComentarioSchema = z.object({
+  id: z.string().uuid(),
+  comentario: z.string().trim().min(1).max(4000),
+});
+
 export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .validator((data: unknown) => UpdateSolicitacaoSchema.parse(data))
@@ -720,6 +725,41 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
     }
 
     return row;
+  });
+
+export const addSolicitacaoComentarioAdmin = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
+  .validator((data: unknown) => AddSolicitacaoComentarioSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const ctx = context as { userId?: string; roles?: string[] };
+    assertEquipeTE(ctx);
+
+    const { prisma } = await import("./db.server");
+
+    const solicitacao = await prisma.solicitacao.findUnique({
+      where: {
+        id: data.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!solicitacao) {
+      throw new Error("Solicitação não encontrada.");
+    }
+
+    await registrarHistoricoSolicitacao(prisma, {
+      solicitacaoId: data.id,
+      autorId: ctx.userId ?? null,
+      tipo: "comentario",
+      titulo: "Comentário interno",
+      descricao: data.comentario,
+    });
+
+    return {
+      ok: true,
+    };
   });
 
 export const listSolicitacaoHistoricoAdmin = createServerFn({ method: "GET" })

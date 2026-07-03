@@ -11,6 +11,7 @@ import {
   listCamposTipoAdmin,
   reorderCamposTipoAdmin,
   saveCampoTipoAdmin,
+  addSolicitacaoComentarioAdmin,
 } from "@/lib/solicitacao-tipos.functions";
 
 export const Route = createFileRoute("/area-te/tipos-solicitacao/$id")({
