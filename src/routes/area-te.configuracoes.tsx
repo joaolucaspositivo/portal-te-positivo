@@ -10,6 +10,7 @@ import {
     listConfiguracaoOpcoesAdmin,
     saveConfiguracaoOpcaoAdmin,
 } from "@/lib/configuracoes.functions";
+import { HexColorPicker, HexColorInput } from "react-colorful";
 
 export const Route = createFileRoute("/area-te/configuracoes")({
     component: ConfiguracoesPage,
@@ -65,6 +66,91 @@ function slugify(value: string) {
         .replace(/^-|-$/g, "")
         .slice(0, 80);
 }
+
+const DEFAULT_HEX_COLOR = "#f97316";
+
+function isHexColorValue(value?: string | null) {
+    return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value?.trim() ?? "");
+}
+
+function legacyColorToHex(value?: string | null) {
+    if (!value) return DEFAULT_HEX_COLOR;
+
+    if (isHexColorValue(value)) return value;
+
+    if (value.includes("blue")) return "#2563eb";
+    if (value.includes("indigo")) return "#4f46e5";
+    if (value.includes("purple")) return "#9333ea";
+    if (value.includes("green")) return "#16a34a";
+    if (value.includes("yellow")) return "#ca8a04";
+    if (value.includes("amber")) return "#d97706";
+    if (value.includes("orange")) return "#f97316";
+    if (value.includes("red") || value.includes("destructive")) return "#dc2626";
+    if (value.includes("gray") || value.includes("muted")) return "#64748b";
+
+    return DEFAULT_HEX_COLOR;
+}
+
+function badgePreviewStyle(color: string) {
+    return {
+        backgroundColor: `${color}22`,
+        color,
+        borderColor: `${color}66`,
+    };
+}
+
+const CORES_OPCAO = [
+    {
+        nome: "Padrão",
+        valor: "bg-muted text-muted-foreground",
+        amostra: "bg-muted border",
+    },
+    {
+        nome: "Azul",
+        valor: "bg-blue-100 text-blue-800",
+        amostra: "bg-blue-500",
+    },
+    {
+        nome: "Índigo",
+        valor: "bg-indigo-100 text-indigo-800",
+        amostra: "bg-indigo-500",
+    },
+    {
+        nome: "Roxo",
+        valor: "bg-purple-100 text-purple-800",
+        amostra: "bg-purple-500",
+    },
+    {
+        nome: "Verde",
+        valor: "bg-green-100 text-green-800",
+        amostra: "bg-green-500",
+    },
+    {
+        nome: "Amarelo",
+        valor: "bg-yellow-100 text-yellow-800",
+        amostra: "bg-yellow-400",
+    },
+    {
+        nome: "Âmbar",
+        valor: "bg-amber-100 text-amber-800",
+        amostra: "bg-amber-500",
+    },
+    {
+        nome: "Laranja",
+        valor: "bg-orange-100 text-orange-800",
+        amostra: "bg-orange-500",
+    },
+    {
+        nome: "Vermelho",
+        valor: "bg-red-100 text-red-800",
+        amostra: "bg-red-500",
+    },
+    {
+        nome: "Crítico",
+        valor: "bg-destructive text-destructive-foreground",
+        amostra: "bg-destructive",
+    },
+];
 
 function ConfiguracoesPage() {
     return (
@@ -341,17 +427,15 @@ function ConfigSection({
                             />
                         </Field>
 
-                        <Field label="Cor">
-                            <input
-                                value={edit.cor ?? ""}
-                                onChange={(e) =>
+                        <Field label="Cor" full>
+                            <ColorPickerField
+                                value={edit.cor}
+                                onChange={(cor) =>
                                     setEdit({
                                         ...edit,
-                                        cor: e.target.value,
+                                        cor,
                                     })
                                 }
-                                className={inpCls}
-                                placeholder="Ex.: bg-blue-100 text-blue-800"
                             />
                         </Field>
 
@@ -433,4 +517,54 @@ function ConfigSection({
             )}
         </section>
     );
+
+    function ColorPickerField({
+        value,
+        onChange,
+    }: {
+        value?: string | null;
+        onChange: (value: string) => void;
+    }) {
+        const color = legacyColorToHex(value);
+
+        return (
+            <div className="space-y-3">
+                <div className="rounded-lg border bg-background p-3">
+                    <HexColorPicker
+                        color={color}
+                        onChange={onChange}
+                        className="!w-full"
+                    />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                    <div
+                        className="h-10 w-10 rounded-md border"
+                        style={{ backgroundColor: color }}
+                        aria-label="Prévia da cor selecionada"
+                    />
+
+                    <HexColorInput
+                        color={color}
+                        onChange={(newColor) =>
+                            onChange(newColor.startsWith("#") ? newColor : `#${newColor}`)
+                        }
+                        prefixed
+                        className={inpCls}
+                    />
+
+                    <span
+                        className="rounded border px-2 py-1 text-xs font-medium"
+                        style={badgePreviewStyle(color)}
+                    >
+                        Prévia do badge
+                    </span>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                    Escolha a cor visualmente. O sistema salvará o valor em HEX.
+                </p>
+            </div>
+        );
+    }
 }

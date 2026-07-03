@@ -5,7 +5,11 @@ import { useState } from "react";
 import { Search, ExternalLink } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { CATEGORIAS_FERRAMENTA, STATUS_FERRAMENTA, statusColor } from "@/lib/portal-constants";
+import {
+  CATEGORIAS_FERRAMENTA,
+  STATUS_FERRAMENTA,
+  ferramentaStatusColor,
+} from "@/lib/portal-constants";
 import { StorageImage } from "@/components/storage-image";
 import { listFerramentasPublic } from "@/lib/conteudo.functions";
 
@@ -109,7 +113,7 @@ function Ferramentas() {
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <span className="text-xs text-muted-foreground">{f.categoria}</span>
                     <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded ${statusColor(f.status)}`}
+                      className={`text-xs font-medium px-2 py-0.5 rounded ${ferramentaStatusColor(f.status)}`}
                     >
                       {f.status}
                     </span>

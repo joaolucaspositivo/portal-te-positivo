@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { badgeColorFromConfig } from "@/lib/portal-constants";
+import {
+  badgeColorFromConfig,
+  badgeStyleFromConfig,
+} from "@/lib/portal-constants";
 import {
   listEquipeTeOptions,
   listSolicitacaoTiposPublic,
@@ -291,6 +294,7 @@ function List() {
                       className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
                         prioridadeColorMap.get(s.urgencia) as string | null,
                       )}`}
+                      style={badgeStyleFromConfig(prioridadeColorMap.get(s.urgencia) as string | null)}
                     >
                       {s.urgencia}
                     </span>
@@ -300,6 +304,7 @@ function List() {
                       className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
                         statusColorMap.get(s.status) as string | null,
                       )}`}
+                      style={badgeStyleFromConfig(statusColorMap.get(s.status) as string | null)}
                     >
                       {s.status}
                     </span>

@@ -5,7 +5,11 @@ import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminFormShell, Field, inpCls } from "@/components/admin-form-shell";
-import { CATEGORIAS_FERRAMENTA, STATUS_FERRAMENTA, statusColor } from "@/lib/portal-constants";
+import {
+  CATEGORIAS_FERRAMENTA,
+  STATUS_FERRAMENTA,
+  ferramentaStatusColor,
+} from "@/lib/portal-constants";
 import { ImageUploadField } from "@/components/image-upload-field";
 import {
   deleteFerramentaAdmin,
@@ -130,7 +134,7 @@ function AdminFerramentas() {
                   <td className="p-3 font-medium">{f.nome}</td>
                   <td className="p-3">{f.categoria}</td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 rounded text-xs ${statusColor(f.status)}`}>
+                    <span className={`px-2 py-0.5 rounded text-xs ${ferramentaStatusColor(f.status)}`}>
                       {f.status}
                     </span>
                   </td>
