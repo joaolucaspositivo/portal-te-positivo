@@ -183,6 +183,18 @@ function SolicDetail() {
       </div>
     ) : null;
 
+  const historicoList = Array.isArray(historico) ? historico : [];
+
+  const acompanhamentos = historicoList.filter((h: any) => h.tipo === "comentario");
+
+  const eventos = historicoList.filter((h: any) => h.tipo !== "comentario");
+
+  const formatDateTime = (value: any) => {
+    if (!value) return "";
+
+    return new Date(value).toLocaleString("pt-BR");
+  };
+
   const historicoStyle = (tipo: string | null | undefined) => {
     switch (tipo) {
       case "criacao":
@@ -224,269 +236,362 @@ function SolicDetail() {
   };
 
   return (
-    <div>
-      <Link
-        to="/area-te/solicitacoes"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
-      >
-        <ArrowLeft className="h-4 w-4" /> Voltar
-      </Link>
+  <div className="space-y-6">
+    <Link
+      to="/area-te/solicitacoes"
+      className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeft className="h-4 w-4" /> Voltar para solicitações
+    </Link>
 
-      <div className="flex flex-wrap items-center gap-3 mb-1">
-        <h1 className="text-2xl font-bold">{data.titulo}</h1>
-
-        <span
-          className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
-            statusColorMap.get(data.status) as string | null,
-          )}`}
-          style={badgeStyleFromConfig(statusColorMap.get(data.status) as string | null)}
-        >
-          {data.status}
-        </span>
-
-        <span
-          className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
-            prioridadeColorMap.get(data.urgencia) as string | null,
-          )}`}
-          style={badgeStyleFromConfig(prioridadeColorMap.get(data.urgencia) as string | null)}
-        >
-          {data.urgencia}
-        </span>
-      </div>
-
-      <p className="text-sm text-muted-foreground mb-6">
-        Aberta em {new Date(data.created_at).toLocaleString("pt-BR")} · {data.tipo_solicitacao}
-      </p>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-xl border bg-card p-6">
-            <h2 className="font-semibold mb-4">Solicitante</h2>
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <F l="Nome" v={data.nome_solicitante} />
-              <F l="E-mail" v={data.email_solicitante} />
-              <F l="Unidade" v={data.unidade} />
-              <F l="Segmento / Área" v={data.segmento_area} />
-              <F l="Cargo / Função" v={data.cargo_funcao} />
-            </div>
+    <div className="rounded-xl border bg-card p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-2">
+          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Solicitação
           </div>
 
-          <div className="rounded-xl border bg-card p-6">
-            <h2 className="font-semibold mb-4">Detalhes</h2>
+          <h1 className="text-2xl font-bold leading-tight">{data.titulo}</h1>
 
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <F l="Tipo" v={data.tipo_solicitacao} />
-              <F l="Urgência" v={data.urgencia} />
-              <F l="Público impactado" v={data.publico_impactado} />
-              <F l="Unidades impactadas" v={data.unidades_impactadas} />
-              <F
-                l="Prazo desejado"
-                v={
-                  data.prazo_desejado
-                    ? new Date(data.prazo_desejado).toLocaleDateString("pt-BR")
-                    : null
-                }
-              />
-              <F
-                l="Link"
-                v={
-                  data.link_referencia ? (
-                    <a
-                      href={data.link_referencia}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-primary hover:underline break-all"
-                    >
-                      {data.link_referencia}
-                    </a>
-                  ) : null
-                }
-              />
-            </div>
-
-            <div className="mt-4">
-              <div className="text-xs text-muted-foreground mb-1">Descrição</div>
-              <p className="whitespace-pre-wrap text-sm">{data.descricao}</p>
-            </div>
-
-            {data.observacoes_adicionais && (
-              <div className="mt-4">
-                <div className="text-xs text-muted-foreground mb-1">
-                  Observações adicionais
-                </div>
-                <p className="whitespace-pre-wrap text-sm">{data.observacoes_adicionais}</p>
-              </div>
-            )}
-
-            {data.respostas && Object.keys(data.respostas).length > 0 && (
-              <div className="mt-4">
-                <div className="text-xs text-muted-foreground mb-2">Respostas específicas</div>
-                <pre className="text-xs bg-muted rounded-md p-3 overflow-x-auto">
-                  {JSON.stringify(data.respostas, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Aberta em {formatDateTime(data.created_at)} por{" "}
+            <span className="font-medium text-foreground">{data.nome_solicitante}</span>
+          </p>
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-xl border bg-card p-6">
-            <h2 className="font-semibold mb-4">Gestão interna</h2>
+        <div className="flex flex-wrap gap-2">
+          <span
+            className={`px-2.5 py-1 rounded-full text-xs font-medium ${badgeColorFromConfig(
+              statusColorMap.get(data.status) as string | null,
+            )}`}
+            style={badgeStyleFromConfig(statusColorMap.get(data.status) as string | null)}
+          >
+            {data.status}
+          </span>
 
-            {data.responsavel && (
-              <div className="mb-4 rounded-md bg-muted p-3 text-sm">
-                <div className="text-xs text-muted-foreground">Responsável atual</div>
-                <div className="font-medium">{data.responsavel.nome_completo}</div>
-                <div className="text-xs text-muted-foreground">{data.responsavel.email}</div>
-              </div>
-            )}
+          <span
+            className={`px-2.5 py-1 rounded-full text-xs font-medium ${badgeColorFromConfig(
+              prioridadeColorMap.get(data.urgencia) as string | null,
+            )}`}
+            style={badgeStyleFromConfig(prioridadeColorMap.get(data.urgencia) as string | null)}
+          >
+            {data.urgencia}
+          </span>
 
-            <label className="block mb-3">
-              <span className="text-sm font-medium">Status</span>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+          <span className="px-2.5 py-1 rounded-full border bg-background text-xs font-medium">
+            {data.tipo_solicitacao}
+          </span>
+
+          <span className="px-2.5 py-1 rounded-full border bg-background text-xs font-medium">
+            {data.unidade}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <main className="space-y-6">
+        <section className="rounded-xl border bg-card p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Acompanhamento</h2>
+            <p className="text-sm text-muted-foreground">
+              Registre atualizações internas da solicitação em formato de conversa.
+            </p>
+          </div>
+
+          <div className="mb-6 space-y-3">
+            <textarea
+              rows={4}
+              value={comentario}
+              onChange={(e) => setComentario(e.target.value)}
+              placeholder="Adicionar acompanhamento interno..."
+              className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+            />
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => addComentario.mutate()}
+                disabled={addComentario.isPending || !comentario.trim()}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium disabled:opacity-50"
               >
-                {statusOptions.map((s: any) => (
-                  <option key={s.id} value={s.nome}>
-                    {s.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
+                {addComentario.isPending ? "Registrando..." : "Adicionar acompanhamento"}
+              </button>
+            </div>
+          </div>
 
+          {acompanhamentos.length === 0 ? (
+            <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
+              <p className="text-sm font-medium">Nenhum acompanhamento registrado.</p>
+              <p className="text-sm text-muted-foreground">
+                Use o campo acima para registrar a evolução interna desta solicitação.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {acompanhamentos.map((h: any) => (
+                <article key={h.id} className="rounded-xl border bg-background p-4">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-semibold">
+                        {h.autor_nome ?? "Tecnologia Educacional"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDateTime(h.created_at)}
+                      </div>
+                    </div>
+
+                    <span className="rounded-full border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                      Acompanhamento interno
+                    </span>
+                  </div>
+
+                  {h.descricao && (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                      {h.descricao}
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-xl border bg-card p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Timeline do chamado</h2>
+            <p className="text-sm text-muted-foreground">
+              Eventos automáticos registrados durante o ciclo da solicitação.
+            </p>
+          </div>
+
+          {eventos.length === 0 ? (
+            <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
+              <p className="text-sm font-medium">Nenhum evento registrado.</p>
+              <p className="text-sm text-muted-foreground">
+                Alterações de status, urgência e responsável aparecerão aqui.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {eventos.map((h: any) => {
+                const style = historicoStyle(h.tipo);
+
+                return (
+                  <article
+                    key={h.id}
+                    className={`rounded-lg border border-l-4 p-4 ${style.className}`}
+                  >
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <div className="text-sm font-semibold">{h.titulo}</div>
+
+                      <span className="shrink-0 rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
+                        {style.label}
+                      </span>
+                    </div>
+
+                    {h.descricao && (
+                      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                        {h.descricao}
+                      </p>
+                    )}
+
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {formatDateTime(h.created_at)}
+                      {h.autor_nome ? ` · ${h.autor_nome}` : ""}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </main>
+
+      <aside className="space-y-6">
+        <section className="rounded-xl border bg-card p-6">
+          <h2 className="font-semibold mb-4">Gestão interna</h2>
+
+          {data.responsavel && (
+            <div className="mb-4 rounded-md bg-muted p-3 text-sm">
+              <div className="text-xs text-muted-foreground">Responsável atual</div>
+              <div className="font-medium">{data.responsavel.nome_completo}</div>
+              <div className="text-xs text-muted-foreground">{data.responsavel.email}</div>
+            </div>
+          )}
+
+          <label className="block mb-3">
+            <span className="text-sm font-medium">Status</span>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+            >
+              {statusOptions.map((s: any) => (
+                <option key={s.id} value={s.nome}>
+                  {s.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block mb-3">
+            <span className="text-sm font-medium">Urgência</span>
+            <select
+              value={urgencia}
+              onChange={(e) => setUrgencia(e.target.value)}
+              className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+            >
+              {prioridadeOptions.map((u: any) => (
+                <option key={u.id} value={u.nome}>
+                  {u.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block mb-3">
+            <span className="text-sm font-medium">Responsável</span>
+            <select
+              value={responsavelId}
+              onChange={(e) => {
+                const selectedId = e.target.value;
+                const selected = equipe.find((p: any) => p.id === selectedId);
+
+                setResponsavelId(selectedId);
+                setResp(selected?.nome_completo || selected?.email || "");
+              }}
+              className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+            >
+              <option value="">— Não atribuído</option>
+              {equipe.map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome_completo || p.email || p.id}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {!responsavelId && (
             <label className="block mb-3">
-              <span className="text-sm font-medium">Urgência</span>
-              <select
-                value={urgencia}
-                onChange={(e) => setUrgencia(e.target.value)}
-                className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
-              >
-                {prioridadeOptions.map((u: any) => (
-                  <option key={u.id} value={u.nome}>
-                    {u.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block mb-3">
-              <span className="text-sm font-medium">Responsável (equipe TE)</span>
-              <select
-                value={responsavelId}
-                onChange={(e) => {
-                  const selectedId = e.target.value;
-                  const selected = equipe.find((p: any) => p.id === selectedId);
-
-                  setResponsavelId(selectedId);
-                  setResp(selected?.nome_completo || selected?.email || "");
-                }}
-                className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
-              >
-                <option value="">— Não atribuído</option>
-                {equipe.map((p: any) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nome_completo || p.email || p.id}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block mb-3">
-              <span className="text-sm font-medium">Responsável (texto livre — legado)</span>
+              <span className="text-sm font-medium">Responsável legado</span>
               <input
                 value={resp}
                 onChange={(e) => setResp(e.target.value)}
                 className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
               />
             </label>
+          )}
 
-            <label className="block mb-4">
-              <span className="text-sm font-medium">Observações internas</span>
-              <textarea
-                rows={5}
-                value={obs}
-                onChange={(e) => setObs(e.target.value)}
-                className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
-              />
-            </label>
+          <label className="block mb-4">
+            <span className="text-sm font-medium">Observações internas</span>
+            <textarea
+              rows={5}
+              value={obs}
+              onChange={(e) => setObs(e.target.value)}
+              className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
+            />
+          </label>
 
-            <button
-              onClick={() => save.mutate()}
-              disabled={save.isPending}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium disabled:opacity-50"
-            >
-              <Save className="h-4 w-4" />
-              {save.isPending ? "Salvando..." : "Salvar alterações"}
-            </button>
+          <button
+            onClick={() => save.mutate()}
+            disabled={save.isPending}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            {save.isPending ? "Salvando..." : "Salvar alterações"}
+          </button>
 
-            <button
-              onClick={() => {
-                if (!confirm("Excluir esta solicitação?")) return;
-                remove.mutate();
-              }}
-              disabled={remove.isPending}
-              className="w-full mt-2 text-sm text-destructive hover:underline disabled:opacity-50"
-            >
-              Excluir solicitação
-            </button>
+          <button
+            onClick={() => {
+              if (!confirm("Excluir esta solicitação?")) return;
+              remove.mutate();
+            }}
+            disabled={remove.isPending}
+            className="w-full mt-3 text-sm text-destructive hover:underline disabled:opacity-50"
+          >
+            Excluir solicitação
+          </button>
+        </section>
+
+        <section className="rounded-xl border bg-card p-6">
+          <h2 className="font-semibold mb-4">Solicitante</h2>
+
+          <div className="space-y-3 text-sm">
+            <F l="Nome" v={data.nome_solicitante} />
+            <F l="E-mail" v={data.email_solicitante} />
+            <F l="Unidade" v={data.unidade} />
+            <F l="Segmento / Área" v={data.segmento_area} />
+            <F l="Cargo / Função" v={data.cargo_funcao} />
           </div>
+        </section>
 
-          <div className="rounded-xl border bg-card p-6">
-            <h2 className="font-semibold mb-4">Histórico</h2>
+        <section className="rounded-xl border bg-card p-6">
+          <h2 className="font-semibold mb-4">Detalhes da solicitação</h2>
 
-            <div className="mb-5 space-y-2">
-              <textarea
-                rows={3}
-                value={comentario}
-                onChange={(e) => setComentario(e.target.value)}
-                placeholder="Registrar comentário interno..."
-                className="w-full px-3 py-2 rounded-md border bg-background text-sm"
-              />
+          <div className="space-y-3 text-sm">
+            <F l="Tipo" v={data.tipo_solicitacao} />
+            <F l="Urgência" v={data.urgencia} />
+            <F l="Público impactado" v={data.publico_impactado} />
+            <F l="Unidades impactadas" v={data.unidades_impactadas} />
 
-              <button
-                type="button"
-                onClick={() => addComentario.mutate()}
-                disabled={addComentario.isPending || !comentario.trim()}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border font-medium disabled:opacity-50"
-              >
-                {addComentario.isPending ? "Registrando..." : "Adicionar comentário"}
-              </button>
+            <F
+              l="Prazo desejado"
+              v={
+                data.prazo_desejado
+                  ? new Date(data.prazo_desejado).toLocaleDateString("pt-BR")
+                  : null
+              }
+            />
+
+            <F
+              l="Link"
+              v={
+                data.link_referencia ? (
+                  <a
+                    href={data.link_referencia}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline break-all"
+                  >
+                    {data.link_referencia}
+                  </a>
+                ) : null
+              }
+            />
+          </div>
+        </section>
+
+        <section className="rounded-xl border bg-card p-6">
+          <h2 className="font-semibold mb-4">Descrição</h2>
+
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+            {data.descricao}
+          </p>
+
+          {data.observacoes_adicionais && (
+            <div className="mt-4 border-t pt-4">
+              <div className="text-xs font-medium text-muted-foreground mb-1">
+                Observações adicionais
+              </div>
+              <p className="whitespace-pre-wrap text-sm">
+                {data.observacoes_adicionais}
+              </p>
             </div>
+          )}
+        </section>
 
-            {historico.map((h: any) => {
-              const style = historicoStyle(h.tipo);
+        {data.respostas && Object.keys(data.respostas).length > 0 && (
+          <section className="rounded-xl border bg-card p-6">
+            <h2 className="font-semibold mb-4">Respostas específicas</h2>
 
-              return (
-                <div
-                  key={h.id}
-                  className={`rounded-md border border-l-4 p-3 ${style.className}`}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <div className="text-sm font-medium">{h.titulo}</div>
-
-                    <span className="shrink-0 rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
-                      {style.label}
-                    </span>
-                  </div>
-
-                  {h.descricao && (
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                      {h.descricao}
-                    </p>
-                  )}
-
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {new Date(h.created_at).toLocaleString("pt-BR")}
-                    {h.autor_nome ? ` · ${h.autor_nome}` : ""}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+            <pre className="text-xs bg-muted rounded-md p-3 overflow-x-auto">
+              {JSON.stringify(data.respostas, null, 2)}
+            </pre>
+          </section>
+        )}
+      </aside>
     </div>
-  );
+  </div>
+);
 }
