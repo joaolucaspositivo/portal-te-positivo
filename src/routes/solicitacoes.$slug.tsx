@@ -6,7 +6,7 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { URGENCIAS } from "@/lib/portal-constants";
+import { listPrioridadesSolicitacaoPublic } from "@/lib/configuracoes.functions";
 import { DynamicFormFields, type DynamicField } from "@/components/dynamic-form";
 import { useAuth } from "@/lib/use-auth";
 import { listMinhasUnidades, listUnidadesPublicas } from "@/lib/unidades.functions";
@@ -44,6 +44,8 @@ function SolicSlug() {
   const listCamposFn = useServerFn(listCamposSolicitacaoPublic);
   const createSolicitacaoFn = useServerFn(createSolicitacaoPublic);
 
+  const listPrioridadesFn = useServerFn(listPrioridadesSolicitacaoPublic);
+
   const { data: minhasUnidades = [] } = useQuery({
     enabled: !!user,
     queryKey: ["minhas-unidades", user?.id],
@@ -76,6 +78,11 @@ function SolicSlug() {
       }),
   });
 
+  const { data: prioridadeOptions = [] } = useQuery({
+    queryKey: ["prioridades-solicitacao"],
+    queryFn: () => listPrioridadesFn(),
+  });
+
   const [base, setBase] = useState<Base>({
     nome_solicitante: "",
     email_solicitante: "",
@@ -84,7 +91,7 @@ function SolicSlug() {
     cargo_funcao: "",
     titulo: "",
     descricao: "",
-    urgencia: "Média",
+    urgencia: "",
   });
 
   const [respostas, setRespostas] = useState<Record<string, any>>({});
@@ -140,6 +147,18 @@ function SolicSlug() {
     }));
   }, [base.unidade_id, unidadesDisponiveis]);
 
+  useEffect(() => {
+    if (base.urgencia || prioridadeOptions.length === 0) return;
+
+    const padrao =
+      prioridadeOptions.find((p: any) => p.padrao) ?? prioridadeOptions[0];
+
+    setBase((b) => ({
+      ...b,
+      urgencia: padrao?.nome ?? "Média",
+    }));
+  }, [base.urgencia, prioridadeOptions]);
+
   if (tipoLoading) {
     return (
       <PageShell>
@@ -194,6 +213,7 @@ function SolicSlug() {
         data: {
           tipoId: tipo.id,
           ...base,
+          urgencia: base.urgencia || "Média",
           respostas,
         },
       });
@@ -352,8 +372,10 @@ function SolicSlug() {
               onChange={(e) => setBase({ ...base, urgencia: e.target.value })}
               className={inp}
             >
-              {URGENCIAS.map((u) => (
-                <option key={u}>{u}</option>
+              {prioridadeOptions.map((u: any) => (
+                <option key={u.id} value={u.nome}>
+                  {u.nome}
+                </option>
               ))}
             </select>
           </FieldLabel>

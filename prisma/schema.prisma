@@ -1,6 +1,3 @@
-// Schema Prisma do Portal TE. Roda em Postgres puro.
-// Aplicar: npx prisma migrate dev
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,6 +6,267 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id                      String           @id @default(uuid()) @db.Uuid
+  email                   String           @unique
+  passwordHash            String?          @map("password_hash")
+  googleId                String?          @unique @map("google_id")
+  emailVerifiedAt         DateTime?        @map("email_verified_at") @db.Timestamptz(6)
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  contatos                Contato[]
+  profile                 Profile?
+  refreshTokens           RefreshToken[]
+  solicitacoesResponsavel Solicitacao[]    @relation("ResponsavelSolicitacoes")
+  solicitacoesCriadas     Solicitacao[]    @relation("SolicitanteSolicitacoes")
+  roles                   UserRole[]
+  unidades                UsuarioUnidade[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  role      AppRole
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model Profile {
+  id           String        @id @db.Uuid
+  nomeCompleto String?       @map("nome_completo")
+  cargo        String?
+  unidade      String?
+  telefone     String?
+  avatarUrl    String?       @map("avatar_url")
+  bio          String?
+  status       ProfileStatus @default(pendente)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user         User          @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Unidade {
+  id               String           @id @default(uuid()) @db.Uuid
+  nome             String
+  sigla            String           @unique
+  status           UnidadeStatus    @default(ativa)
+  cep              String?
+  logradouro       String?
+  numero           String?
+  complemento      String?
+  bairro           String?
+  cidade           String?
+  estado           String?          @db.VarChar(2)
+  telefone         String?
+  email            String?
+  responsavelNome  String?          @map("responsavel_nome")
+  responsavelCargo String?          @map("responsavel_cargo")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  solicitacoes     Solicitacao[]
+  usuarios         UsuarioUnidade[]
+
+  @@map("unidades")
+}
+
+model UsuarioUnidade {
+  userId    String   @map("user_id") @db.Uuid
+  unidadeId String   @map("unidade_id") @db.Uuid
+  principal Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  unidade   Unidade  @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, unidadeId])
+  @@map("usuario_unidades")
+}
+
+model ConfiguracaoOpcao {
+  id        String            @id @default(uuid()) @db.Uuid
+  grupo     ConfiguracaoGrupo
+  slug      String
+  nome      String
+  descricao String?
+  cor       String?
+  ativo     Boolean           @default(true)
+  ordem     Int               @default(0)
+  padrao    Boolean           @default(false)
+  meta      Json?
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([grupo, slug])
+  @@index([grupo, ativo, ordem])
+  @@map("configuracao_opcoes")
+}
+
+model SolicitacaoTipo {
+  id             String             @id @default(uuid()) @db.Uuid
+  slug           String             @unique
+  nome           String
+  descricao      String?
+  icone          String?
+  cor            String?
+  ativo          Boolean            @default(true)
+  ordem          Int                @default(0)
+  prazoDias      Int?               @map("prazo_dias")
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  permiteAnonimo Boolean            @default(true) @map("permite_anonimo")
+  campos         SolicitacaoCampo[]
+  solicitacoes   Solicitacao[]
+
+  @@map("solicitacao_tipos")
+}
+
+model SolicitacaoCampo {
+  id          String          @id @default(uuid()) @db.Uuid
+  tipoId      String          @map("tipo_id") @db.Uuid
+  chave       String
+  rotulo      String
+  tipoCampo   String          @map("tipo_campo")
+  obrigatorio Boolean         @default(false)
+  opcoes      Json?
+  placeholder String?
+  ajuda       String?
+  ordem       Int             @default(0)
+  ativo       Boolean         @default(true)
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tipo        SolicitacaoTipo @relation(fields: [tipoId], references: [id], onDelete: Cascade)
+
+  @@unique([tipoId, chave])
+  @@map("solicitacao_campos")
+}
+
+model Solicitacao {
+  id                    String           @id @default(uuid()) @db.Uuid
+  tipoId                String?          @map("tipo_id") @db.Uuid
+  unidadeId             String?          @map("unidade_id") @db.Uuid
+  nomeSolicitante       String           @map("nome_solicitante")
+  emailSolicitante      String           @map("email_solicitante")
+  unidade               String
+  segmentoArea          String?          @map("segmento_area")
+  cargoFuncao           String?          @map("cargo_funcao")
+  tipoSolicitacao       String           @map("tipo_solicitacao")
+  titulo                String
+  descricao             String
+  publicoImpactado      String?          @map("publico_impactado")
+  unidadesImpactadas    String?          @map("unidades_impactadas")
+  prazoDesejado         DateTime?        @map("prazo_desejado") @db.Date
+  urgencia              String           @default("Média")
+  linkReferencia        String?          @map("link_referencia")
+  observacoesAdicionais String?          @map("observacoes_adicionais")
+  dadosExtras           Json?            @map("dados_extras")
+  anexosUrls            Json?            @map("anexos_urls")
+  status                String           @default("Recebida")
+  responsavelTe         String?          @map("responsavel_te")
+  observacoesInternas   String?          @map("observacoes_internas")
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  responsavelId         String?          @map("responsavel_id") @db.Uuid
+  solicitanteId         String?          @map("solicitante_id") @db.Uuid
+  responsavel           User?            @relation("ResponsavelSolicitacoes", fields: [responsavelId], references: [id])
+  solicitante           User?            @relation("SolicitanteSolicitacoes", fields: [solicitanteId], references: [id])
+  tipo                  SolicitacaoTipo? @relation(fields: [tipoId], references: [id])
+  unidadeRef            Unidade?         @relation(fields: [unidadeId], references: [id])
+
+  @@index([status])
+  @@index([tipoId])
+  @@index([unidadeId])
+  @@index([solicitanteId])
+  @@index([responsavelId])
+  @@map("solicitacoes")
+}
+
+model Ferramenta {
+  id          String   @id @default(uuid()) @db.Uuid
+  nome        String
+  descricao   String?
+  categoria   String?
+  publicoAlvo String?  @map("publico_alvo")
+  segmento    String?
+  linkAcesso  String?  @map("link_acesso")
+  responsavel String?
+  imagemUrl   String?  @map("imagem_url")
+  status      String   @default("Ativa")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("ferramentas")
+}
+
+model Comunicado {
+  id             String   @id @default(uuid()) @db.Uuid
+  titulo         String
+  resumo         String?
+  conteudo       String
+  categoria      String?
+  autor          String?
+  imagemUrl      String?  @map("imagem_url")
+  dataPublicacao DateTime @default(now()) @map("data_publicacao") @db.Date
+  destaque       Boolean  @default(false)
+  publicado      Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([publicado])
+  @@map("comunicados")
+}
+
+model Contato {
+  id               String   @id @default(uuid()) @db.Uuid
+  nome             String
+  funcao           String?
+  unidade          String?
+  email            String?
+  telefoneWhatsapp String?  @map("telefone_whatsapp")
+  tipoContato      String?  @map("tipo_contato")
+  ativo            Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  userId           String?  @map("user_id") @db.Uuid
+  user             User?    @relation(fields: [userId], references: [id])
+
+  @@index([ativo])
+  @@index([userId])
+  @@map("contatos")
+}
+
+
 
 enum AppRole {
   admin
@@ -28,274 +286,9 @@ enum UnidadeStatus {
   inativa
 }
 
-// ============================================================
-// Auth local
-// ============================================================
-
-model User {
-  id              String    @id @default(uuid()) @db.Uuid
-  email           String    @unique
-  passwordHash    String?   @map("password_hash") // null se só OAuth
-  googleId        String?   @unique @map("google_id")
-  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-
-  profile       Profile?
-  roles         UserRole[]
-  refreshTokens RefreshToken[]
-  unidades      UsuarioUnidade[]
-
-  solicitacoesCriadas     Solicitacao[] @relation("SolicitanteSolicitacoes")
-  solicitacoesResponsavel Solicitacao[] @relation("ResponsavelSolicitacoes")
-  contatos                Contato[]
-
-  @@map("users")
+enum ConfiguracaoGrupo {
+  categoria_comunicado
+  status_solicitacao
+  prioridade_solicitacao
 }
 
-model RefreshToken {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @map("user_id") @db.Uuid
-  tokenHash String    @unique @map("token_hash")
-  expiresAt DateTime  @map("expires_at") @db.Timestamptz
-  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("refresh_tokens")
-}
-
-model PasswordResetToken {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @map("user_id") @db.Uuid
-  tokenHash String    @unique @map("token_hash")
-  expiresAt DateTime  @map("expires_at") @db.Timestamptz
-  usedAt    DateTime? @map("used_at") @db.Timestamptz
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  @@index([userId])
-  @@map("password_reset_tokens")
-}
-
-model UserRole {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  role      AppRole
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, role])
-  @@map("user_roles")
-}
-
-// ============================================================
-// Profile
-// ============================================================
-
-model Profile {
-  id           String        @id @db.Uuid
-  nomeCompleto String?       @map("nome_completo")
-  cargo        String?
-  unidade      String?
-  telefone     String?
-  avatarUrl    String?       @map("avatar_url")
-  bio          String?
-  status       ProfileStatus @default(pendente)
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
-
-  user User @relation(fields: [id], references: [id], onDelete: Cascade)
-
-  @@map("profiles")
-}
-
-// ============================================================
-// Unidades
-// ============================================================
-
-model Unidade {
-  id               String        @id @default(uuid()) @db.Uuid
-  nome             String
-  sigla            String        @unique
-  status           UnidadeStatus @default(ativa)
-  cep              String?
-  logradouro       String?
-  numero           String?
-  complemento      String?
-  bairro           String?
-  cidade           String?
-  estado           String?       @db.VarChar(2)
-  telefone         String?
-  email            String?
-  responsavelNome  String?       @map("responsavel_nome")
-  responsavelCargo String?       @map("responsavel_cargo")
-  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz
-
-  usuarios     UsuarioUnidade[]
-  solicitacoes Solicitacao[]
-
-  @@map("unidades")
-}
-
-model UsuarioUnidade {
-  userId    String   @map("user_id") @db.Uuid
-  unidadeId String   @map("unidade_id") @db.Uuid
-  principal Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
-
-  @@id([userId, unidadeId])
-  @@map("usuario_unidades")
-}
-
-// ============================================================
-// Solicitações
-// ============================================================
-
-model SolicitacaoTipo {
-  id             String   @id @default(uuid()) @db.Uuid
-  slug           String   @unique
-  nome           String
-  descricao      String?
-  icone          String?
-  cor            String?
-  ativo          Boolean  @default(true)
-  ordem          Int      @default(0)
-  prazoDias      Int?     @map("prazo_dias")
-  permiteAnonimo Boolean  @default(true) @map("permite_anonimo")
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  campos       SolicitacaoCampo[]
-  solicitacoes Solicitacao[]
-
-  @@map("solicitacao_tipos")
-}
-
-model SolicitacaoCampo {
-  id          String   @id @default(uuid()) @db.Uuid
-  tipoId      String   @map("tipo_id") @db.Uuid
-  chave       String
-  rotulo      String
-  tipoCampo   String   @map("tipo_campo")
-  obrigatorio Boolean  @default(false)
-  opcoes      Json?
-  placeholder String?
-  ajuda       String?
-  ordem       Int      @default(0)
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  tipo SolicitacaoTipo @relation(fields: [tipoId], references: [id], onDelete: Cascade)
-
-  @@unique([tipoId, chave])
-  @@map("solicitacao_campos")
-}
-
-model Solicitacao {
-  id            String  @id @default(uuid()) @db.Uuid
-  tipoId        String? @map("tipo_id") @db.Uuid
-  unidadeId     String? @map("unidade_id") @db.Uuid
-  solicitanteId String? @map("solicitante_id") @db.Uuid
-  responsavelId String? @map("responsavel_id") @db.Uuid
-
-  nomeSolicitante       String    @map("nome_solicitante")
-  emailSolicitante      String    @map("email_solicitante")
-  unidade               String
-  segmentoArea          String?   @map("segmento_area")
-  cargoFuncao           String?   @map("cargo_funcao")
-  tipoSolicitacao       String    @map("tipo_solicitacao")
-  titulo                String
-  descricao             String
-  publicoImpactado      String?   @map("publico_impactado")
-  unidadesImpactadas    String?   @map("unidades_impactadas")
-  prazoDesejado         DateTime? @map("prazo_desejado") @db.Date
-  urgencia              String    @default("Média")
-  linkReferencia        String?   @map("link_referencia")
-  observacoesAdicionais String?   @map("observacoes_adicionais")
-  dadosExtras           Json?     @map("dados_extras")
-  anexosUrls            Json?     @map("anexos_urls")
-  status                String    @default("Recebida")
-  responsavelTe         String?   @map("responsavel_te")
-  observacoesInternas   String?   @map("observacoes_internas")
-  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-
-  tipo        SolicitacaoTipo? @relation(fields: [tipoId], references: [id])
-  unidadeRef  Unidade?         @relation(fields: [unidadeId], references: [id])
-  solicitante User?            @relation("SolicitanteSolicitacoes", fields: [solicitanteId], references: [id])
-  responsavel User?            @relation("ResponsavelSolicitacoes", fields: [responsavelId], references: [id])
-
-  @@index([status])
-  @@index([tipoId])
-  @@index([unidadeId])
-  @@index([solicitanteId])
-  @@index([responsavelId])
-  @@map("solicitacoes")
-}
-
-// ============================================================
-// Conteúdo público
-// ============================================================
-
-model Ferramenta {
-  id          String   @id @default(uuid()) @db.Uuid
-  nome        String
-  descricao   String?
-  categoria   String?
-  publicoAlvo String?  @map("publico_alvo")
-  segmento    String?
-  linkAcesso  String?  @map("link_acesso")
-  responsavel String?
-  imagemUrl   String?  @map("imagem_url")
-  status      String   @default("Ativa")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@map("ferramentas")
-}
-
-model Comunicado {
-  id             String   @id @default(uuid()) @db.Uuid
-  titulo         String
-  resumo         String?
-  conteudo       String
-  categoria      String?
-  autor          String?
-  imagemUrl      String?  @map("imagem_url")
-  dataPublicacao DateTime @default(now()) @map("data_publicacao") @db.Date
-  destaque       Boolean  @default(false)
-  publicado      Boolean  @default(true)
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@index([publicado])
-  @@map("comunicados")
-}
-
-model Contato {
-  id               String   @id @default(uuid()) @db.Uuid
-  userId           String?  @map("user_id") @db.Uuid
-  nome             String
-  funcao           String?
-  unidade          String?
-  email            String?
-  telefoneWhatsapp String?  @map("telefone_whatsapp")
-  tipoContato      String?  @map("tipo_contato")
-  ativo            Boolean  @default(true)
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([ativo])
-  @@index([userId])
-  @@map("contatos")
-}

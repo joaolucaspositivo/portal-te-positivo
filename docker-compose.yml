@@ -11,6 +11,28 @@ services:
       - "5433:5432"
     volumes:
       - portal_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U portal -d portal_te" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portal-te-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    ports:
+      - "8080:8080"
+    volumes:
+      - portal_uploads:/app/uploads
 
 volumes:
   portal_pgdata:
+  portal_uploads:

@@ -5,7 +5,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { statusColor, urgencyColor } from "@/lib/portal-constants";
-import { SOLICITACAO_STATUS, SOLICITACAO_URGENCIAS } from "@/lib/solicitacoes.constants";
+import {
+  listPrioridadesSolicitacaoPublic,
+  listStatusSolicitacaoPublic,
+} from "@/lib/configuracoes.functions";
 import {
   deleteSolicitacaoAdmin,
   getSolicitacaoAdmin,
@@ -27,6 +30,9 @@ function SolicDetail() {
   const updateSolicitacaoFn = useServerFn(updateSolicitacaoAdmin);
   const deleteSolicitacaoFn = useServerFn(deleteSolicitacaoAdmin);
 
+  const listStatusFn = useServerFn(listStatusSolicitacaoPublic);
+  const listPrioridadesFn = useServerFn(listPrioridadesSolicitacaoPublic);
+
   const { data, isLoading } = useQuery({
     queryKey: ["solic", id],
     queryFn: () =>
@@ -40,6 +46,17 @@ function SolicDetail() {
   const { data: equipe = [] } = useQuery({
     queryKey: ["equipe-te-options"],
     queryFn: () => listEquipeFn(),
+  });
+
+
+  const { data: statusOptions = [] } = useQuery({
+    queryKey: ["status-solicitacao"],
+    queryFn: () => listStatusFn(),
+  });
+
+  const { data: prioridadeOptions = [] } = useQuery({
+    queryKey: ["prioridades-solicitacao"],
+    queryFn: () => listPrioridadesFn(),
   });
 
   const [status, setStatus] = useState("");
@@ -235,8 +252,10 @@ function SolicDetail() {
                 onChange={(e) => setStatus(e.target.value)}
                 className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
               >
-                {SOLICITACAO_STATUS.map((s) => (
-                  <option key={s}>{s}</option>
+                {statusOptions.map((s: any) => (
+                  <option key={s.id} value={s.nome}>
+                    {s.nome}
+                  </option>
                 ))}
               </select>
             </label>
@@ -248,8 +267,10 @@ function SolicDetail() {
                 onChange={(e) => setUrgencia(e.target.value)}
                 className="mt-1 w-full px-3 py-2 rounded-md border bg-background text-sm"
               >
-                {SOLICITACAO_URGENCIAS.map((u) => (
-                  <option key={u}>{u}</option>
+                {prioridadeOptions.map((u: any) => (
+                  <option key={u.id} value={u.nome}>
+                    {u.nome}
+                  </option>
                 ))}
               </select>
             </label>

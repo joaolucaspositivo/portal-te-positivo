@@ -1,25 +1,3 @@
-export const TIPOS_SOLICITACAO = [
-  "Novo projeto",
-  "Melhoria de processo",
-  "Melhoria em sistema ou ferramenta",
-  "Correção de problema",
-  "Análise ou diagnóstico",
-  "Outro",
-];
-
-export const URGENCIAS = ["Baixa", "Média", "Alta", "Crítica"] as const;
-
-export const STATUS_SOLICITACAO = [
-  "Recebida",
-  "Em triagem",
-  "Em análise",
-  "Em execução",
-  "Aguardando retorno do solicitante",
-  "Concluída",
-  "Redirecionada",
-  "Não aprovada",
-] as const;
-
 export const STATUS_FERRAMENTA = [
   "Ativa",
   "Em piloto",
@@ -35,16 +13,6 @@ export const CATEGORIAS_FERRAMENTA = [
   "Avaliação",
   "Produtividade",
   "Outra",
-];
-
-export const CATEGORIAS_COMUNICADO = [
-  "Atualização de ferramenta",
-  "Novo projeto",
-  "Mudança de processo",
-  "Aviso importante",
-  "Orientação pedagógica",
-  "Piloto ou teste",
-  "Manutenção ou indisponibilidade",
 ];
 
 export const TIPOS_CONTATO = [

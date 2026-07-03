@@ -27,6 +27,7 @@ import { Route as AreaTeSolicitacoesRouteImport } from './routes/area-te.solicit
 import { Route as AreaTePerfilRouteImport } from './routes/area-te.perfil'
 import { Route as AreaTeFerramentasRouteImport } from './routes/area-te.ferramentas'
 import { Route as AreaTeContatosRouteImport } from './routes/area-te.contatos'
+import { Route as AreaTeConfiguracoesRouteImport } from './routes/area-te.configuracoes'
 import { Route as AreaTeComunicadosRouteImport } from './routes/area-te.comunicados'
 import { Route as AreaTeUnidadesIdRouteImport } from './routes/area-te.unidades.$id'
 import { Route as AreaTeTiposSolicitacaoIdRouteImport } from './routes/area-te.tipos-solicitacao.$id'
@@ -122,6 +123,11 @@ const AreaTeContatosRoute = AreaTeContatosRouteImport.update({
   path: '/contatos',
   getParentRoute: () => AreaTeRoute,
 } as any)
+const AreaTeConfiguracoesRoute = AreaTeConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AreaTeRoute,
+} as any)
 const AreaTeComunicadosRoute = AreaTeComunicadosRouteImport.update({
   id: '/comunicados',
   path: '/comunicados',
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
+  '/area-te/configuracoes': typeof AreaTeConfiguracoesRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
   '/area-te/perfil': typeof AreaTePerfilRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
+  '/area-te/configuracoes': typeof AreaTeConfiguracoesRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
   '/area-te/perfil': typeof AreaTePerfilRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
+  '/area-te/configuracoes': typeof AreaTeConfiguracoesRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
   '/area-te/perfil': typeof AreaTePerfilRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sobre'
     | '/area-te/comunicados'
+    | '/area-te/configuracoes'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
     | '/area-te/perfil'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sobre'
     | '/area-te/comunicados'
+    | '/area-te/configuracoes'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
     | '/area-te/perfil'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sobre'
     | '/area-te/comunicados'
+    | '/area-te/configuracoes'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
     | '/area-te/perfil'
@@ -431,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeContatosRouteImport
       parentRoute: typeof AreaTeRoute
     }
+    '/area-te/configuracoes': {
+      id: '/area-te/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/area-te/configuracoes'
+      preLoaderRoute: typeof AreaTeConfiguracoesRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
     '/area-te/comunicados': {
       id: '/area-te/comunicados'
       path: '/comunicados'
@@ -501,6 +520,7 @@ const AreaTeUnidadesRouteWithChildren = AreaTeUnidadesRoute._addFileChildren(
 
 interface AreaTeRouteChildren {
   AreaTeComunicadosRoute: typeof AreaTeComunicadosRoute
+  AreaTeConfiguracoesRoute: typeof AreaTeConfiguracoesRoute
   AreaTeContatosRoute: typeof AreaTeContatosRoute
   AreaTeFerramentasRoute: typeof AreaTeFerramentasRoute
   AreaTePerfilRoute: typeof AreaTePerfilRoute
@@ -513,6 +533,7 @@ interface AreaTeRouteChildren {
 
 const AreaTeRouteChildren: AreaTeRouteChildren = {
   AreaTeComunicadosRoute: AreaTeComunicadosRoute,
+  AreaTeConfiguracoesRoute: AreaTeConfiguracoesRoute,
   AreaTeContatosRoute: AreaTeContatosRoute,
   AreaTeFerramentasRoute: AreaTeFerramentasRoute,
   AreaTePerfilRoute: AreaTePerfilRoute,

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Plus, Pencil, Trash2, Star } from "lucide-react";
 import { toast } from "sonner";
 import { AdminFormShell, Field, inpCls } from "@/components/admin-form-shell";
-import { CATEGORIAS_COMUNICADO } from "@/lib/portal-constants";
+import { listCategoriasComunicadoPublic } from "@/lib/configuracoes.functions";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { ImageUploadField } from "@/components/image-upload-field";
 import {
@@ -53,9 +53,16 @@ function AdminComunicados() {
   const saveComunicadoFn = useServerFn(saveComunicadoAdmin);
   const deleteComunicadoFn = useServerFn(deleteComunicadoAdmin);
 
+  const listCategoriasFn = useServerFn(listCategoriasComunicadoPublic);
+
   const { data = [] } = useQuery({
     queryKey: ["admin-comunicados"],
     queryFn: () => listComunicadosFn(),
+  });
+
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["categorias-comunicado"],
+    queryFn: () => listCategoriasFn(),
   });
 
   const save = useMutation({
@@ -225,8 +232,10 @@ function AdminComunicados() {
                 className={inpCls}
               >
                 <option value="">—</option>
-                {CATEGORIAS_COMUNICADO.map((c) => (
-                  <option key={c}>{c}</option>
+                {categorias.map((c: any) => (
+                  <option key={c.id} value={c.nome}>
+                    {c.nome}
+                  </option>
                 ))}
               </select>
             </Field>

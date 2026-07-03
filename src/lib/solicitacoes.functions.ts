@@ -6,8 +6,6 @@ import {
   getUrgenciaPeso,
   normalizeSolicitacaoStatus,
   normalizeSolicitacaoUrgencia,
-  SOLICITACAO_STATUS,
-  SOLICITACAO_URGENCIAS,
 } from "@/lib/solicitacoes.constants";
 
 function assertEquipeTE(ctx: { roles?: string[] }) {
@@ -16,6 +14,73 @@ function assertEquipeTE(ctx: { roles?: string[] }) {
   if (!roles.includes("admin") && !roles.includes("equipe_te")) {
     throw new Error("Forbidden");
   }
+}
+
+async function getConfigOpcaoNome(
+  prisma: any,
+  grupo: "status_solicitacao" | "prioridade_solicitacao",
+  nome: string | null | undefined,
+  fallback: string,
+) {
+  const valor = nome?.trim();
+
+  if (!valor) {
+    const padrao = await prisma.configuracaoOpcao.findFirst({
+      where: {
+        grupo,
+        ativo: true,
+        padrao: true,
+      },
+      orderBy: {
+        ordem: "asc",
+      },
+    });
+
+    return padrao?.nome ?? fallback;
+  }
+
+  const opcao = await prisma.configuracaoOpcao.findFirst({
+    where: {
+      grupo,
+      ativo: true,
+      nome: valor,
+    },
+  });
+
+  if (!opcao) {
+    throw new Error(`Opção inválida: ${valor}`);
+  }
+
+  return opcao.nome;
+}
+
+async function getStatusAbertos(prisma: any) {
+  const opcoes = await prisma.configuracaoOpcao.findMany({
+    where: {
+      grupo: "status_solicitacao",
+      ativo: true,
+    },
+  });
+
+  return opcoes
+    .filter((opcao: any) => !!opcao.meta?.aberta)
+    .map((opcao: any) => opcao.nome);
+}
+
+async function getPrioridadePesoMap(prisma: any) {
+  const opcoes = await prisma.configuracaoOpcao.findMany({
+    where: {
+      grupo: "prioridade_solicitacao",
+      ativo: true,
+    },
+  });
+
+  return new Map(
+    opcoes.map((opcao: any) => [
+      opcao.nome,
+      Number(opcao.meta?.peso ?? getUrgenciaPeso(opcao.nome)),
+    ]),
+  );
 }
 
 async function getOptionalUserId() {
@@ -83,7 +148,12 @@ function toResponsavelRow(user: any) {
   };
 }
 
-function toSolicitacaoRow(s: any) {
+function toSolicitacaoRow(
+  s: any,
+  options?: {
+    prioridadePesoMap?: Map<string, number>;
+  },
+) {
   return {
     id: s.id,
     tipo_id: s.tipoId,
@@ -103,7 +173,8 @@ function toSolicitacaoRow(s: any) {
     unidades_impactadas: s.unidadesImpactadas,
     prazo_desejado: s.prazoDesejado,
     urgencia: normalizeSolicitacaoUrgencia(s.urgencia),
-    urgencia_peso: getUrgenciaPeso(s.urgencia),
+    urgencia_peso:
+      options?.prioridadePesoMap?.get(s.urgencia) ?? getUrgenciaPeso(s.urgencia),
     link_referencia: s.linkReferencia,
     observacoes_adicionais: s.observacoesAdicionais,
     respostas: s.dadosExtras,
@@ -224,6 +295,20 @@ export const createSolicitacaoPublic = createServerFn({ method: "POST" })
       throw new Error("Selecione uma unidade válida.");
     }
 
+    const urgencia = await getConfigOpcaoNome(
+      prisma,
+      "prioridade_solicitacao",
+      data.urgencia,
+      "Média",
+    );
+
+    const statusInicial = await getConfigOpcaoNome(
+      prisma,
+      "status_solicitacao",
+      null,
+      "Recebida",
+    );
+
     const created = await prisma.solicitacao.create({
       data: {
         tipoId: tipo.id,
@@ -237,9 +322,9 @@ export const createSolicitacaoPublic = createServerFn({ method: "POST" })
         tipoSolicitacao: tipo.nome,
         titulo: data.titulo,
         descricao: data.descricao,
-        urgencia: normalizeSolicitacaoUrgencia(data.urgencia),
+        urgencia: normalizeSolicitacaoUrgencia(urgencia),
         dadosExtras: data.respostas ?? {},
-        status: "Recebida",
+        status: normalizeSolicitacaoStatus(statusInicial),
       },
       include: {
         responsavel: {
@@ -270,6 +355,8 @@ export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
 
     const { prisma } = await import("./db.server");
 
+    const prioridadePesoMap = await getPrioridadePesoMap(prisma);
+
     const filters = data ?? {};
 
     const where: any = {};
@@ -287,8 +374,10 @@ export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
     }
 
     if (filters.apenas_abertas) {
+      const statusAbertos = await getStatusAbertos(prisma);
+
       where.status = {
-        in: ["Recebida", "Em análise", "Aguardando validação", "Em andamento"],
+        in: statusAbertos.length > 0 ? statusAbertos : ["Recebida"],
       };
     }
 
@@ -308,25 +397,15 @@ export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
       ],
     });
 
+    const statusAbertos = await getStatusAbertos(prisma);
+    const statusAbertosSet = new Set(statusAbertos);
+
     return solicitacoes
+      .map((s) => toSolicitacaoRow(s, { prioridadePesoMap }))
       .map(toSolicitacaoRow)
       .sort((a, b) => {
-        if (a.status !== b.status) {
-          const aAberta = ["Recebida", "Em análise", "Aguardando validação", "Em andamento"].includes(
-            a.status,
-          );
-          const bAberta = ["Recebida", "Em análise", "Aguardando validação", "Em andamento"].includes(
-            b.status,
-          );
-
-          if (aAberta !== bAberta) return aAberta ? -1 : 1;
-        }
-
-        if (a.urgencia_peso !== b.urgencia_peso) {
-          return b.urgencia_peso - a.urgencia_peso;
-        }
-
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        const aAberta = statusAbertosSet.has(a.status);
+        const bAberta = statusAbertosSet.has(b.status);
       });
   });
 
@@ -391,8 +470,8 @@ export const listEquipeTeOptions = createServerFn({ method: "GET" })
 
 const UpdateSolicitacaoSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(SOLICITACAO_STATUS),
-  urgencia: z.enum(SOLICITACAO_URGENCIAS).optional(),
+  status: z.string().trim().min(1).max(80),
+  urgencia: z.string().trim().min(1).max(80).optional(),
   responsavel_te: z.string().trim().max(160).optional().nullable(),
   observacoes_internas: z.string().trim().max(6000).optional().nullable(),
   responsavel_id: z.string().uuid().nullable().optional(),
@@ -431,13 +510,29 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
       throw new Error("Responsável selecionado não está ativo ou não pertence à equipe TE.");
     }
 
+    const status = await getConfigOpcaoNome(
+      prisma,
+      "status_solicitacao",
+      data.status,
+      "Recebida",
+    );
+
+    const urgencia = data.urgencia
+      ? await getConfigOpcaoNome(
+        prisma,
+        "prioridade_solicitacao",
+        data.urgencia,
+        "Média",
+      )
+      : null;
+
     const updated = await prisma.solicitacao.update({
       where: {
         id: data.id,
       },
       data: {
-        status: normalizeSolicitacaoStatus(data.status),
-        urgencia: data.urgencia ? normalizeSolicitacaoUrgencia(data.urgencia) : undefined,
+        status: normalizeSolicitacaoStatus(status),
+        urgencia: urgencia ? normalizeSolicitacaoUrgencia(urgencia) : undefined,
         responsavelTe:
           responsavel?.profile?.nomeCompleto ?? responsavel?.email ?? data.responsavel_te ?? null,
         observacoesInternas: data.observacoes_internas ?? null,

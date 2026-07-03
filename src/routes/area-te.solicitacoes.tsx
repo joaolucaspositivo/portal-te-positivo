@@ -3,13 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { TIPOS_SOLICITACAO, statusColor, urgencyColor } from "@/lib/portal-constants";
-import { listEquipeTeOptions, listSolicitacoesAdmin } from "@/lib/solicitacoes.functions";
+import { statusColor, urgencyColor } from "@/lib/portal-constants";
 import {
-  isSolicitacaoAberta,
-  SOLICITACAO_STATUS,
-  SOLICITACAO_URGENCIAS,
-} from "@/lib/solicitacoes.constants";
+  listEquipeTeOptions,
+  listSolicitacaoTiposPublic,
+  listSolicitacoesAdmin,
+} from "@/lib/solicitacoes.functions";
+import {
+  listPrioridadesSolicitacaoPublic,
+  listStatusSolicitacaoPublic,
+} from "@/lib/configuracoes.functions";
+
 
 export const Route = createFileRoute("/area-te/solicitacoes")({
   component: SolicListLayout,
@@ -35,6 +39,10 @@ function List() {
   const listSolicitacoesFn = useServerFn(listSolicitacoesAdmin);
   const listEquipeFn = useServerFn(listEquipeTeOptions);
 
+  const listTiposFn = useServerFn(listSolicitacaoTiposPublic);
+  const listStatusFn = useServerFn(listStatusSolicitacaoPublic);
+  const listPrioridadesFn = useServerFn(listPrioridadesSolicitacaoPublic);
+
   const { data = [], isLoading } = useQuery({
     queryKey: ["admin-solicitacoes", status, urg, responsavelId, apenasAbertas],
     queryFn: () =>
@@ -53,15 +61,32 @@ function List() {
     queryFn: () => listEquipeFn(),
   });
 
+  const { data: tiposSolicitacao = [] } = useQuery({
+    queryKey: ["public-tipos"],
+    queryFn: () => listTiposFn(),
+  });
+
+  const { data: statusOptions = [] } = useQuery({
+    queryKey: ["status-solicitacao"],
+    queryFn: () => listStatusFn(),
+  });
+
+  const { data: prioridadeOptions = [] } = useQuery({
+    queryKey: ["prioridades-solicitacao"],
+    queryFn: () => listPrioridadesFn(),
+  });
+
   const tipoOptions = useMemo(() => {
-    const values = data.map((s: any) => s.tipo_solicitacao).filter(Boolean);
-    return Array.from(new Set([...TIPOS_SOLICITACAO, ...values])).sort();
-  }, [data]);
+    const cadastrados = tiposSolicitacao.map((t: any) => t.nome).filter(Boolean);
+    const usados = data.map((s: any) => s.tipo_solicitacao).filter(Boolean);
+
+    return Array.from(new Set([...cadastrados, ...usados])).sort();
+  }, [data, tiposSolicitacao]);
 
   const unidadeOptions = useMemo(() => {
-  const values = data.map((s: any) => s.unidade).filter(Boolean);
-  return Array.from(new Set(values)).sort();
-}, [data]);
+    const values = data.map((s: any) => s.unidade).filter(Boolean);
+    return Array.from(new Set(values)).sort();
+  }, [data]);
 
   const filtered = data.filter((s: any) => {
     if (q) {
@@ -76,10 +101,33 @@ function List() {
     return true;
   });
 
+  const statusAbertos = useMemo(() => {
+    return new Set(
+      statusOptions
+        .filter((s: any) => !!s.aberta)
+        .map((s: any) => s.nome),
+    );
+  }, [statusOptions]);
+
+  const maiorPesoPrioridade = useMemo(() => {
+    return prioridadeOptions.reduce((max: number, p: any) => {
+      return Math.max(max, Number(p.peso ?? 0));
+    }, 0);
+  }, [prioridadeOptions]);
+
+  const prioridadePesoMap = useMemo(() => {
+    return new Map(
+      prioridadeOptions.map((p: any) => [p.nome, Number(p.peso ?? 0)]),
+    );
+  }, [prioridadeOptions]);
+
   const summary = {
     total: data.length,
-    abertas: data.filter((s: any) => isSolicitacaoAberta(s.status)).length,
-    criticas: data.filter((s: any) => s.urgencia === "Crítica").length,
+    abertas: data.filter((s: any) => statusAbertos.has(s.status)).length,
+    criticas: data.filter((s: any) => {
+      const peso = prioridadePesoMap.get(s.urgencia) ?? 0;
+      return maiorPesoPrioridade > 0 && peso === maiorPesoPrioridade;
+    }).length,
     semResponsavel: data.filter((s: any) => !s.responsavel_id).length,
   };
 
@@ -136,8 +184,10 @@ function List() {
           className="px-3 py-2 rounded-md border bg-background text-sm"
         >
           <option value="">Todos status</option>
-          {SOLICITACAO_STATUS.map((t) => (
-            <option key={t}>{t}</option>
+          {statusOptions.map((t: any) => (
+            <option key={t.id} value={t.nome}>
+              {t.nome}
+            </option>
           ))}
         </select>
 
@@ -147,8 +197,10 @@ function List() {
           className="px-3 py-2 rounded-md border bg-background text-sm"
         >
           <option value="">Todas urgências</option>
-          {SOLICITACAO_URGENCIAS.map((t) => (
-            <option key={t}>{t}</option>
+          {prioridadeOptions.map((t: any) => (
+            <option key={t.id} value={t.nome}>
+              {t.nome}
+            </option>
           ))}
         </select>
 

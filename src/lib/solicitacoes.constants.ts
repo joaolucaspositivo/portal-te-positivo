@@ -1,41 +1,13 @@
-export const SOLICITACAO_STATUS = [
-  "Recebida",
-  "Em análise",
-  "Aguardando validação",
-  "Em andamento",
-  "Concluída",
-  "Cancelada",
-] as const;
+export function normalizeSolicitacaoStatus(status: string | null | undefined): string {
+  const value = status?.trim();
 
-export type SolicitacaoStatus = (typeof SOLICITACAO_STATUS)[number];
-
-export const SOLICITACAO_URGENCIAS = ["Baixa", "Média", "Alta", "Crítica"] as const;
-
-export type SolicitacaoUrgencia = (typeof SOLICITACAO_URGENCIAS)[number];
-
-export const SOLICITACAO_STATUS_ABERTOS: SolicitacaoStatus[] = [
-  "Recebida",
-  "Em análise",
-  "Aguardando validação",
-  "Em andamento",
-];
-
-export function normalizeSolicitacaoStatus(status: string | null | undefined): SolicitacaoStatus {
-  if (SOLICITACAO_STATUS.includes(status as SolicitacaoStatus)) {
-    return status as SolicitacaoStatus;
-  }
-
-  return "Recebida";
+  return value || "Recebida";
 }
 
-export function normalizeSolicitacaoUrgencia(
-  urgencia: string | null | undefined,
-): SolicitacaoUrgencia {
-  if (SOLICITACAO_URGENCIAS.includes(urgencia as SolicitacaoUrgencia)) {
-    return urgencia as SolicitacaoUrgencia;
-  }
+export function normalizeSolicitacaoUrgencia(urgencia: string | null | undefined): string {
+  const value = urgencia?.trim();
 
-  return "Média";
+  return value || "Média";
 }
 
 export function getUrgenciaPeso(urgencia: string | null | undefined): number {
@@ -51,8 +23,4 @@ export function getUrgenciaPeso(urgencia: string | null | undefined): number {
     default:
       return 0;
   }
-}
-
-export function isSolicitacaoAberta(status: string | null | undefined): boolean {
-  return SOLICITACAO_STATUS_ABERTOS.includes(normalizeSolicitacaoStatus(status));
 }

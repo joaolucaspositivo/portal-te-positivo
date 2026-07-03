@@ -6,9 +6,21 @@ dist
 .nitro
 .git
 .gitignore
+
+# Nunca enviar env real para o contexto Docker
 .env
-.env.local
+.env.*
+*.local
+
+# Logs
 *.log
+
+# Uploads locais
+uploads
+portal-uploads
+
+# Arquivos que não precisam ir para a imagem
 Dockerfile
 docker-compose*.yml
 README*.md
+DEPLOY.md

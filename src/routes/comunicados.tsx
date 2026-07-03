@@ -5,10 +5,10 @@ import { useState } from "react";
 import { Star } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { CATEGORIAS_COMUNICADO } from "@/lib/portal-constants";
 import { StorageImage } from "@/components/storage-image";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { listComunicadosPublic } from "@/lib/conteudo.functions";
+import { listCategoriasComunicadoPublic } from "@/lib/configuracoes.functions";
 
 export const Route = createFileRoute("/comunicados")({
   head: () => ({
@@ -24,10 +24,16 @@ function Comunicados() {
   const [cat, setCat] = useState("");
 
   const listComunicadosFn = useServerFn(listComunicadosPublic);
+  const listCategoriasFn = useServerFn(listCategoriasComunicadoPublic);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["comunicados-public"],
     queryFn: () => listComunicadosFn(),
+  });
+
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["categorias-comunicado"],
+    queryFn: () => listCategoriasFn(),
   });
 
   const filtered = items.filter((c: any) => (cat ? c.categoria === cat : true));
@@ -54,8 +60,10 @@ function Comunicados() {
               className="w-full px-3 py-2 rounded-md border bg-background"
             >
               <option value="">Todas categorias</option>
-              {CATEGORIAS_COMUNICADO.map((c) => (
-                <option key={c}>{c}</option>
+              {categorias.map((c: any) => (
+                <option key={c.id} value={c.nome}>
+                  {c.nome}
+                </option>
               ))}
             </select>
           </div>
@@ -102,7 +110,9 @@ function Comunicados() {
                     {c.autor && ` · ${c.autor}`}
                   </div>
 
-                  {c.resumo && <p className="text-sm text-muted-foreground mb-3">{c.resumo}</p>}
+                  {c.resumo && (
+                    <p className="text-sm text-muted-foreground mb-3">{c.resumo}</p>
+                  )}
 
                   <details className="text-sm">
                     <summary className="cursor-pointer font-medium text-primary">

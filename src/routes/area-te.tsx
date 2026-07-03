@@ -12,6 +12,7 @@ import {
   FormInput,
   User as UserIcon,
   Building2,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ const nav: ReadonlyArray<NavItem> = [
   { to: "/area-te/unidades", label: "Unidades", icon: Building2, show: (r) => r.isAdmin },
   { to: "/area-te/usuarios", label: "Usuários", icon: UserCog, show: (r) => r.isAdmin },
   { to: "/area-te/perfil", label: "Meu perfil", icon: UserIcon, show: () => true },
+  { to: "/area-te/configuracoes", label: "Configurações", icon: Settings, show: (r) => r.isAdmin },
 ];
 
 function AreaTeLayout() {
