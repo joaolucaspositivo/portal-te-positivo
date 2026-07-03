@@ -18,6 +18,7 @@ import {
   listEquipeTeOptions,
   updateSolicitacaoAdmin,
   listSolicitacaoHistoricoAdmin,
+  addSolicitacaoComentarioAdmin,
 } from "@/lib/solicitacoes.functions";
 
 export const Route = createFileRoute("/area-te/solicitacoes/$id")({
