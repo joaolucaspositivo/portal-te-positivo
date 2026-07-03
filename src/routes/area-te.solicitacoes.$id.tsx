@@ -183,6 +183,46 @@ function SolicDetail() {
       </div>
     ) : null;
 
+  const historicoStyle = (tipo: string | null | undefined) => {
+    switch (tipo) {
+      case "criacao":
+        return {
+          label: "Criação",
+          className: "border-l-green-500 bg-green-500/5",
+        };
+
+      case "comentario":
+        return {
+          label: "Comentário",
+          className: "border-l-blue-500 bg-blue-500/5",
+        };
+
+      case "status":
+        return {
+          label: "Status",
+          className: "border-l-orange-500 bg-orange-500/5",
+        };
+
+      case "urgencia":
+        return {
+          label: "Urgência",
+          className: "border-l-red-500 bg-red-500/5",
+        };
+
+      case "responsavel":
+        return {
+          label: "Responsável",
+          className: "border-l-purple-500 bg-purple-500/5",
+        };
+
+      default:
+        return {
+          label: "Histórico",
+          className: "border-l-muted bg-muted/40",
+        };
+    }
+  };
+
   return (
     <div>
       <Link
@@ -415,30 +455,35 @@ function SolicDetail() {
               </button>
             </div>
 
-            {historico.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum histórico registrado.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {historico.map((h: any) => (
-                  <div key={h.id} className="border-l-2 pl-3">
+            {historico.map((h: any) => {
+              const style = historicoStyle(h.tipo);
+
+              return (
+                <div
+                  key={h.id}
+                  className={`rounded-md border border-l-4 p-3 ${style.className}`}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1">
                     <div className="text-sm font-medium">{h.titulo}</div>
 
-                    {h.descricao && (
-                      <p className="text-sm text-muted-foreground">
-                        {h.descricao}
-                      </p>
-                    )}
-
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {new Date(h.created_at).toLocaleString("pt-BR")}
-                      {h.autor_nome ? ` · ${h.autor_nome}` : ""}
-                    </div>
+                    <span className="shrink-0 rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
+                      {style.label}
+                    </span>
                   </div>
-                ))}
-              </div>
-            )}
+
+                  {h.descricao && (
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {h.descricao}
+                    </p>
+                  )}
+
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {new Date(h.created_at).toLocaleString("pt-BR")}
+                    {h.autor_nome ? ` · ${h.autor_nome}` : ""}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
