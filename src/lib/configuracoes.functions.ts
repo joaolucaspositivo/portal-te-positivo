@@ -201,12 +201,9 @@ export const deleteConfiguracaoOpcaoAdmin = createServerFn({ method: "POST" })
 
     const { prisma } = await import("./db.server");
 
-    await prisma.configuracaoOpcao.update({
+    await prisma.configuracaoOpcao.delete({
       where: {
         id: data.id,
-      },
-      data: {
-        ativo: false,
       },
     });
 
