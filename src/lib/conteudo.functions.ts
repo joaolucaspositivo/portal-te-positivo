@@ -52,13 +52,20 @@ function toFerramentaRow(f: any) {
 }
 
 function toComunicadoRow(c: any) {
+  const autorNome =
+    c.autorUser?.profile?.nomeCompleto ||
+    c.autorUser?.email ||
+    c.autor ||
+    null;
+
   return {
     id: c.id,
     titulo: c.titulo,
     resumo: c.resumo,
     conteudo: c.conteudo,
     categoria: c.categoria,
-    autor: c.autor,
+    autor: autorNome,
+    autor_id: c.autorId,
     imagem_url: c.imagemUrl,
     data_publicacao: c.dataPublicacao,
     destaque: c.destaque,
@@ -150,14 +157,14 @@ export const saveFerramentaAdmin = createServerFn({ method: "POST" })
 
     const ferramenta = data.id
       ? await prisma.ferramenta.update({
-          where: {
-            id: data.id,
-          },
-          data: payload,
-        })
+        where: {
+          id: data.id,
+        },
+        data: payload,
+      })
       : await prisma.ferramenta.create({
-          data: payload,
-        });
+        data: payload,
+      });
 
     return toFerramentaRow(ferramenta);
   });
@@ -186,6 +193,13 @@ export const listComunicadosPublic = createServerFn({ method: "GET" }).handler(a
     where: {
       publicado: true,
     },
+    include: {
+      autorUser: {
+        include: {
+          profile: true,
+        },
+      },
+    },
     orderBy: {
       dataPublicacao: "desc",
     },
@@ -202,6 +216,13 @@ export const listComunicadosAdmin = createServerFn({ method: "GET" })
     const { prisma } = await import("./db.server");
 
     const comunicados = await prisma.comunicado.findMany({
+      include: {
+        autorUser: {
+          include: {
+            profile: true,
+          },
+        },
+      },
       orderBy: {
         dataPublicacao: "desc",
       },
@@ -210,12 +231,51 @@ export const listComunicadosAdmin = createServerFn({ method: "GET" })
     return comunicados.map(toComunicadoRow);
   });
 
+export const listAutoresComunicadoAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .handler(async ({ context }) => {
+    assertEditor(context as any);
+
+    const { prisma } = await import("./db.server");
+
+    const users = await prisma.user.findMany({
+      where: {
+        profile: {
+          status: "ativo",
+        },
+        roles: {
+          some: {
+            role: {
+              in: ["admin", "equipe_te", "editor"],
+            },
+          },
+        },
+      },
+      include: {
+        profile: true,
+        roles: true,
+      },
+      orderBy: {
+        email: "asc",
+      },
+    });
+
+    return users.map((u) => ({
+      id: u.id,
+      nome: u.profile?.nomeCompleto || u.email,
+      email: u.email,
+      cargo: u.profile?.cargo,
+      roles: u.roles.map((r) => r.role),
+    }));
+  });
+
 const ComunicadoSchema = z.object({
   id: z.string().uuid().optional(),
   titulo: z.string().trim().min(1).max(220),
   resumo: z.string().trim().max(1000).optional().nullable(),
   conteudo: z.string().trim().min(1),
   categoria: z.string().trim().max(120).optional().nullable(),
+  autor_id: z.string().uuid().optional().nullable(),
   autor: z.string().trim().max(160).optional().nullable(),
   data_publicacao: z.string().trim().min(1),
   destaque: z.boolean().default(false),
@@ -231,12 +291,42 @@ export const saveComunicadoAdmin = createServerFn({ method: "POST" })
 
     const { prisma } = await import("./db.server");
 
+    let autorNome = emptyToNull(data.autor);
+
+    if (data.autor_id) {
+      const autor = await prisma.user.findFirst({
+        where: {
+          id: data.autor_id,
+          profile: {
+            status: "ativo",
+          },
+          roles: {
+            some: {
+              role: {
+                in: ["admin", "equipe_te", "editor"],
+              },
+            },
+          },
+        },
+        include: {
+          profile: true,
+        },
+      });
+
+      if (!autor) {
+        throw new Error("Autor inválido.");
+      }
+
+      autorNome = autor.profile?.nomeCompleto || autor.email;
+    }
+
     const payload = {
       titulo: data.titulo,
       resumo: emptyToNull(data.resumo),
       conteudo: data.conteudo,
       categoria: emptyToNull(data.categoria),
-      autor: emptyToNull(data.autor),
+      autorId: data.autor_id || null,
+      autor: autorNome,
       dataPublicacao: new Date(`${data.data_publicacao}T00:00:00`),
       destaque: data.destaque,
       publicado: data.publicado,
@@ -245,14 +335,14 @@ export const saveComunicadoAdmin = createServerFn({ method: "POST" })
 
     const comunicado = data.id
       ? await prisma.comunicado.update({
-          where: {
-            id: data.id,
-          },
-          data: payload,
-        })
+        where: {
+          id: data.id,
+        },
+        data: payload,
+      })
       : await prisma.comunicado.create({
-          data: payload,
-        });
+        data: payload,
+      });
 
     return toComunicadoRow(comunicado);
   });
@@ -379,28 +469,28 @@ export const saveContatoAdmin = createServerFn({ method: "POST" })
 
     const contato = data.id
       ? await prisma.contato.update({
-          where: {
-            id: data.id,
-          },
-          data: payload,
-          include: {
-            user: {
-              include: {
-                profile: true,
-              },
+        where: {
+          id: data.id,
+        },
+        data: payload,
+        include: {
+          user: {
+            include: {
+              profile: true,
             },
           },
-        })
+        },
+      })
       : await prisma.contato.create({
-          data: payload,
-          include: {
-            user: {
-              include: {
-                profile: true,
-              },
+        data: payload,
+        include: {
+          user: {
+            include: {
+              profile: true,
             },
           },
-        });
+        },
+      });
 
     return toContatoRow(contato, { isAuthed: true });
   });

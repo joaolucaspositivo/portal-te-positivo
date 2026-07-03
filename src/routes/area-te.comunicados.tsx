@@ -10,6 +10,7 @@ import { RichTextEditor } from "@/components/rich-text-editor";
 import { ImageUploadField } from "@/components/image-upload-field";
 import {
   deleteComunicadoAdmin,
+  listAutoresComunicadoAdmin,
   listComunicadosAdmin,
   saveComunicadoAdmin,
 } from "@/lib/conteudo.functions";
@@ -25,6 +26,7 @@ type C = Partial<{
   conteudo: string;
   categoria: string;
   autor: string;
+  autor_id: string | null;
   data_publicacao: string;
   destaque: boolean;
   publicado: boolean;
@@ -55,6 +57,8 @@ function AdminComunicados() {
 
   const listCategoriasFn = useServerFn(listCategoriasComunicadoPublic);
 
+  const listAutoresFn = useServerFn(listAutoresComunicadoAdmin);
+
   const { data = [] } = useQuery({
     queryKey: ["admin-comunicados"],
     queryFn: () => listComunicadosFn(),
@@ -63,6 +67,11 @@ function AdminComunicados() {
   const { data: categorias = [] } = useQuery({
     queryKey: ["categorias-comunicado"],
     queryFn: () => listCategoriasFn(),
+  });
+
+  const { data: autores = [] } = useQuery({
+    queryKey: ["autores-comunicado"],
+    queryFn: () => listAutoresFn(),
   });
 
   const save = useMutation({
@@ -78,11 +87,13 @@ function AdminComunicados() {
           resumo: c.resumo ?? null,
           conteudo: c.conteudo,
           categoria: c.categoria ?? null,
+          autor_id: c.autor_id ?? null,
           autor: c.autor ?? null,
           data_publicacao: c.data_publicacao ?? new Date().toISOString().slice(0, 10),
           destaque: !!c.destaque,
           publicado: c.publicado ?? true,
           imagem_url: c.imagem_url ?? null,
+
         },
       });
     },
@@ -241,11 +252,26 @@ function AdminComunicados() {
             </Field>
 
             <Field label="Autor">
-              <input
-                value={edit.autor ?? ""}
-                onChange={(e) => setEdit({ ...edit, autor: e.target.value })}
+              <select
+                value={edit.autor_id ?? ""}
+                onChange={(e) => {
+                  const autor = autores.find((a: any) => a.id === e.target.value);
+
+                  setEdit({
+                    ...edit,
+                    autor_id: e.target.value || null,
+                    autor: autor?.nome ?? "",
+                  });
+                }}
                 className={inpCls}
-              />
+              >
+                <option value="">—</option>
+                {autores.map((a: any) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nome}
+                  </option>
+                ))}
+              </select>
             </Field>
 
             <Field label="Data de publicação">

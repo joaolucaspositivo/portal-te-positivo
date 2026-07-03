@@ -22,6 +22,7 @@ model User {
   solicitacoesCriadas     Solicitacao[]    @relation("SolicitanteSolicitacoes")
   roles                   UserRole[]
   unidades                UsuarioUnidade[]
+  comunicadosAutor       Comunicado[]     @relation("AutorComunicados")
 
   @@map("users")
 }
@@ -242,6 +243,8 @@ model Comunicado {
   publicado      Boolean  @default(true)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  autorId        String?  @map("autor_id") @db.Uuid
+  autorUser      User?    @relation("AutorComunicados", fields: [autorId], references: [id])
 
   @@index([publicado])
   @@map("comunicados")
