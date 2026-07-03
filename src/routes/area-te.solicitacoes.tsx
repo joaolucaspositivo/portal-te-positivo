@@ -79,6 +79,11 @@ function List() {
     queryFn: () => listPrioridadesFn(),
   });
 
+  const { data: unidadesCadastradas = [] } = useQuery({
+    queryKey: ["unidades-publicas"],
+    queryFn: () => listUnidadesFn(),
+  });
+
 
 
   const tipoOptions = useMemo(() => {
