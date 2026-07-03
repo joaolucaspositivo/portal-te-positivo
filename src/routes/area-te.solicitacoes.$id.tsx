@@ -17,6 +17,7 @@ import {
   getSolicitacaoAdmin,
   listEquipeTeOptions,
   updateSolicitacaoAdmin,
+  listSolicitacaoHistoricoAdmin,
 } from "@/lib/solicitacoes.functions";
 
 export const Route = createFileRoute("/area-te/solicitacoes/$id")({
@@ -32,6 +33,7 @@ function SolicDetail() {
   const listEquipeFn = useServerFn(listEquipeTeOptions);
   const updateSolicitacaoFn = useServerFn(updateSolicitacaoAdmin);
   const deleteSolicitacaoFn = useServerFn(deleteSolicitacaoAdmin);
+  const listHistoricoFn = useServerFn(listSolicitacaoHistoricoAdmin);
 
   const listStatusFn = useServerFn(listStatusSolicitacaoPublic);
   const listPrioridadesFn = useServerFn(listPrioridadesSolicitacaoPublic);
@@ -44,6 +46,17 @@ function SolicDetail() {
           id,
         },
       }),
+  });
+
+  const { data: historico = [] } = useQuery({
+    queryKey: ["solic-historico", id],
+    queryFn: () =>
+      listHistoricoFn({
+        data: {
+          id,
+        },
+      }),
+    enabled: !!data,
   });
 
   const { data: equipe = [] } = useQuery({
@@ -98,6 +111,7 @@ function SolicDetail() {
       toast.success("Solicitação atualizada.");
       qc.invalidateQueries({ queryKey: ["solic", id] });
       qc.invalidateQueries({ queryKey: ["admin-solicitacoes"] });
+      qc.invalidateQueries({ queryKey: ["solic-historico", id] });
     },
     onError: (error: any) => {
       toast.error(error?.message ?? "Erro ao salvar.");
@@ -337,7 +351,8 @@ function SolicDetail() {
               disabled={save.isPending}
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium disabled:opacity-50"
             >
-              <Save className="h-4 w-4" /> Salvar alterações
+              <Save className="h-4 w-4" />
+              {save.isPending ? "Salvando..." : "Salvar alterações"}
             </button>
 
             <button
@@ -350,6 +365,35 @@ function SolicDetail() {
             >
               Excluir solicitação
             </button>
+          </div>
+
+          <div className="rounded-xl border bg-card p-6">
+            <h2 className="font-semibold mb-4">Histórico</h2>
+
+            {historico.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhum histórico registrado.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {historico.map((h: any) => (
+                  <div key={h.id} className="border-l-2 pl-3">
+                    <div className="text-sm font-medium">{h.titulo}</div>
+
+                    {h.descricao && (
+                      <p className="text-sm text-muted-foreground">
+                        {h.descricao}
+                      </p>
+                    )}
+
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {new Date(h.created_at).toLocaleString("pt-BR")}
+                      {h.autor_nome ? ` · ${h.autor_nome}` : ""}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

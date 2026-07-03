@@ -67,7 +67,7 @@ async function getStatusAbertos(prisma: any) {
     .map((opcao: any) => opcao.nome);
 }
 
-async function getPrioridadePesoMap(prisma: any) {
+async function getPrioridadePesoMap(prisma: any): Promise<Map<string, number>> {
   const opcoes = await prisma.configuracaoOpcao.findMany({
     where: {
       grupo: "prioridade_solicitacao",
@@ -75,12 +75,43 @@ async function getPrioridadePesoMap(prisma: any) {
     },
   });
 
-  return new Map(
-    opcoes.map((opcao: any) => [
-      opcao.nome,
+  return new Map<string, number>(
+    opcoes.map((opcao: any): [string, number] => [
+      String(opcao.nome),
       Number(opcao.meta?.peso ?? getUrgenciaPeso(opcao.nome)),
     ]),
   );
+}
+
+async function registrarHistoricoSolicitacao(
+  prisma: any,
+  input: {
+    solicitacaoId: string;
+    autorId?: string | null;
+    tipo: string;
+    titulo: string;
+    descricao?: string | null;
+    valorAnterior?: string | null;
+    valorNovo?: string | null;
+    metadata?: any;
+  },
+) {
+  try {
+    await prisma.solicitacaoHistorico.create({
+      data: {
+        solicitacaoId: input.solicitacaoId,
+        autorId: input.autorId ?? null,
+        tipo: input.tipo,
+        titulo: input.titulo,
+        descricao: input.descricao ?? null,
+        valorAnterior: input.valorAnterior ?? null,
+        valorNovo: input.valorNovo ?? null,
+        metadata: input.metadata ?? undefined,
+      },
+    });
+  } catch (error) {
+    console.error("[solicitacao-historico] Falha ao registrar histórico.", error);
+  }
 }
 
 async function getOptionalUserId() {
@@ -186,6 +217,23 @@ function toSolicitacaoRow(
     observacoes_internas: s.observacoesInternas,
     created_at: s.createdAt,
     updated_at: s.updatedAt,
+  };
+}
+
+function toHistoricoRow(h: any) {
+  return {
+    id: h.id,
+    solicitacao_id: h.solicitacaoId,
+    autor_id: h.autorId,
+    autor_nome: h.autor?.profile?.nomeCompleto ?? h.autor?.email ?? null,
+    autor_email: h.autor?.email ?? null,
+    tipo: h.tipo,
+    titulo: h.titulo,
+    descricao: h.descricao,
+    valor_anterior: h.valorAnterior,
+    valor_novo: h.valorNovo,
+    metadata: h.metadata,
+    created_at: h.createdAt,
   };
 }
 
@@ -345,6 +393,20 @@ export const createSolicitacaoPublic = createServerFn({ method: "POST" })
 
     const row = toSolicitacaoRow(created);
 
+    await registrarHistoricoSolicitacao(prisma, {
+      solicitacaoId: created.id,
+      autorId: userId,
+      tipo: "criacao",
+      titulo: "Solicitação criada",
+      descricao: `Solicitação aberta por ${created.nomeSolicitante}.`,
+      valorNovo: row.status,
+      metadata: {
+        tipo_solicitacao: row.tipo_solicitacao,
+        urgencia: row.urgencia,
+        unidade: row.unidade,
+      },
+    });
+
     const {
       notifySolicitacaoCriadaSolicitante,
       notifySolicitacaoCriadaEquipe,
@@ -371,7 +433,8 @@ export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
   .validator((data: unknown) => ListSolicitacoesAdminSchema.parse(data))
   .handler(async ({ data, context }) => {
-    assertEquipeTE(context as any);
+    const ctx = context as { userId?: string; roles?: string[] };
+    assertEquipeTE(ctx);
 
     const { prisma } = await import("./db.server");
 
@@ -448,7 +511,8 @@ export const getSolicitacaoAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
   .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    assertEquipeTE(context as any);
+    const ctx = context as { userId?: string; roles?: string[] };
+    assertEquipeTE(ctx);
 
     const { prisma } = await import("./db.server");
 
@@ -516,7 +580,8 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .validator((data: unknown) => UpdateSolicitacaoSchema.parse(data))
   .handler(async ({ data, context }) => {
-    assertEquipeTE(context as any);
+    const ctx = context as { userId?: string; roles?: string[] };
+    assertEquipeTE(ctx);
 
     const { prisma } = await import("./db.server");
 
@@ -594,6 +659,56 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
 
     const row = toSolicitacaoRow(updated);
 
+    if (before) {
+      const historicos: Promise<void>[] = [];
+
+      const statusAnterior = normalizeSolicitacaoStatus(before.status);
+      if (statusAnterior !== row.status) {
+        historicos.push(
+          registrarHistoricoSolicitacao(prisma, {
+            solicitacaoId: row.id,
+            autorId: ctx.userId ?? null,
+            tipo: "status",
+            titulo: "Status alterado",
+            descricao: `Status alterado de "${statusAnterior}" para "${row.status}".`,
+            valorAnterior: statusAnterior,
+            valorNovo: row.status,
+          }),
+        );
+      }
+
+      const urgenciaAnterior = normalizeSolicitacaoUrgencia(before.urgencia);
+      if (urgenciaAnterior !== row.urgencia) {
+        historicos.push(
+          registrarHistoricoSolicitacao(prisma, {
+            solicitacaoId: row.id,
+            autorId: ctx.userId ?? null,
+            tipo: "urgencia",
+            titulo: "Urgência alterada",
+            descricao: `Urgência alterada de "${urgenciaAnterior}" para "${row.urgencia}".`,
+            valorAnterior: urgenciaAnterior,
+            valorNovo: row.urgencia,
+          }),
+        );
+      }
+
+      if ((before.responsavelTe ?? "") !== (row.responsavel_te ?? "")) {
+        historicos.push(
+          registrarHistoricoSolicitacao(prisma, {
+            solicitacaoId: row.id,
+            autorId: ctx.userId ?? null,
+            tipo: "responsavel",
+            titulo: "Responsável alterado",
+            descricao: `Responsável alterado de "${before.responsavelTe ?? "Não atribuído"}" para "${row.responsavel_te ?? "Não atribuído"}".`,
+            valorAnterior: before.responsavelTe ?? null,
+            valorNovo: row.responsavel_te ?? null,
+          }),
+        );
+      }
+
+      await Promise.all(historicos);
+    }
+
     if (before && normalizeSolicitacaoStatus(before.status) !== row.status) {
       const { notifySolicitacaoStatusAlterado } = await import("./solicitacoes-email.server");
 
@@ -605,6 +720,34 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
     }
 
     return row;
+  });
+
+export const listSolicitacaoHistoricoAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    assertEquipeTE(context as any);
+
+    const { prisma } = await import("./db.server");
+    const db = prisma as any;
+
+    const historicos = await db.solicitacaoHistorico.findMany({
+      where: {
+        solicitacaoId: data.id,
+      },
+      include: {
+        autor: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return historicos.map(toHistoricoRow);
   });
 
 export const deleteSolicitacaoAdmin = createServerFn({ method: "POST" })
