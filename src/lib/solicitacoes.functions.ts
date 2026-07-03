@@ -343,7 +343,19 @@ export const createSolicitacaoPublic = createServerFn({ method: "POST" })
       },
     });
 
-    return toSolicitacaoRow(created);
+    const row = toSolicitacaoRow(created);
+
+    const {
+      notifySolicitacaoCriadaSolicitante,
+      notifySolicitacaoCriadaEquipe,
+    } = await import("./solicitacoes-email.server");
+
+    await Promise.all([
+      notifySolicitacaoCriadaSolicitante(row),
+      notifySolicitacaoCriadaEquipe(row),
+    ]);
+
+    return row;
   });
 
 const ListSolicitacoesAdminSchema = z
@@ -553,6 +565,12 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
       )
       : null;
 
+    const before = await prisma.solicitacao.findUnique({
+      where: {
+        id: data.id,
+      },
+    });
+
     const updated = await prisma.solicitacao.update({
       where: {
         id: data.id,
@@ -574,7 +592,19 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
       },
     });
 
-    return toSolicitacaoRow(updated);
+    const row = toSolicitacaoRow(updated);
+
+    if (before && normalizeSolicitacaoStatus(before.status) !== row.status) {
+      const { notifySolicitacaoStatusAlterado } = await import("./solicitacoes-email.server");
+
+      await notifySolicitacaoStatusAlterado({
+        solicitacao: row,
+        statusAnterior: normalizeSolicitacaoStatus(before.status),
+        statusNovo: row.status,
+      });
+    }
+
+    return row;
   });
 
 export const deleteSolicitacaoAdmin = createServerFn({ method: "POST" })
