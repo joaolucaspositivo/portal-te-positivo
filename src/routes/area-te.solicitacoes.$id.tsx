@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -88,6 +88,9 @@ function SolicDetail() {
   const [responsavelId, setResponsavelId] = useState<string>("");
   const [comentario, setComentario] = useState("");
 
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const timelineScrollRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (data) {
       setStatus(data.status ?? "");
@@ -163,6 +166,38 @@ function SolicDetail() {
     },
   });
 
+  const historicoList = Array.isArray(historico) ? historico : [];
+
+  const acompanhamentos = historicoList
+    .filter((h: any) => h.tipo === "comentario")
+    .sort(
+      (a: any, b: any) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+
+  const eventos = historicoList
+    .filter((h: any) => h.tipo !== "comentario")
+    .sort(
+      (a: any, b: any) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+
+  useEffect(() => {
+    const el = chatScrollRef.current;
+
+    if (!el) return;
+
+    el.scrollTop = el.scrollHeight;
+  }, [acompanhamentos.length]);
+
+  useEffect(() => {
+    const el = timelineScrollRef.current;
+
+    if (!el) return;
+
+    el.scrollTop = el.scrollHeight;
+  }, [eventos.length]);
+
   if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
 
   if (!data) {
@@ -184,16 +219,7 @@ function SolicDetail() {
       </div>
     ) : null;
 
-  const historicoList = Array.isArray(historico) ? historico : [];
 
-  const acompanhamentos = historicoList
-    .filter((h: any) => h.tipo === "comentario")
-    .sort(
-      (a: any, b: any) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-    );
-
-  const eventos = historicoList.filter((h: any) => h.tipo !== "comentario");
 
   const formatDateTime = (value: any) => {
     if (!value) return "";
@@ -297,7 +323,7 @@ function SolicDetail() {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <main className="space-y-6">
-          <section className="flex min-h-[620px] flex-col rounded-xl border bg-card">
+          <section className="flex h-[720px] max-h-[calc(100vh-180px)] min-h-[560px] flex-col rounded-xl border bg-card">
             <div className="border-b p-5">
               <h2 className="text-lg font-semibold">Chat da solicitação</h2>
               <p className="text-sm text-muted-foreground">
@@ -305,9 +331,12 @@ function SolicDetail() {
               </p>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-muted/20 p-5">
+            <div
+              ref={chatScrollRef}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-muted/20 p-5"
+            >
               {acompanhamentos.length === 0 ? (
-                <div className="flex h-full min-h-[320px] items-center justify-center rounded-lg border border-dashed bg-background/60 p-6 text-center">
+                <div className="flex min-h-full items-center justify-center rounded-lg border border-dashed bg-background/60 p-6 text-center">
                   <div>
                     <p className="text-sm font-medium">Nenhuma mensagem registrada.</p>
                     <p className="text-sm text-muted-foreground">
@@ -351,7 +380,7 @@ function SolicDetail() {
               )}
             </div>
 
-            <div className="border-t bg-card p-4">
+            <div className="shrink-0 border-t bg-card p-4">
               <div className="space-y-3">
                 <textarea
                   rows={3}
@@ -578,14 +607,17 @@ function SolicDetail() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div
+                ref={timelineScrollRef}
+                className="max-h-[420px] space-y-3 overflow-y-auto overscroll-contain pr-1"
+              >
                 {eventos.map((h: any) => {
                   const style = historicoStyle(h.tipo);
 
                   return (
                     <article
                       key={h.id}
-                      className={`rounded-lg border border-l-4 p-3 ${style.className}`}
+                      className={`rounded-lg border border-l-4 p-3 text-sm ${style.className}`}
                     >
                       <div className="mb-1 flex items-center justify-between gap-2">
                         <div className="text-sm font-semibold">{h.titulo}</div>
