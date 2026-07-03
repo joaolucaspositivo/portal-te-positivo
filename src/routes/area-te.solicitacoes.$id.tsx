@@ -159,7 +159,7 @@ function SolicDetail() {
           className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
             statusColorMap.get(data.status) as string | null,
           )}`}
-          style={badgeStyleFromConfig(statusColorMap.get(s.status) as string | null)}
+          style={badgeStyleFromConfig(statusColorMap.get(data.status) as string | null)}
         >
           {data.status}
         </span>
@@ -168,7 +168,7 @@ function SolicDetail() {
           className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
             prioridadeColorMap.get(data.urgencia) as string | null,
           )}`}
-          style={badgeStyleFromConfig(prioridadeColorMap.get(s.urgencia) as string | null)}
+          style={badgeStyleFromConfig(prioridadeColorMap.get(data.urgencia) as string | null)}
         >
           {data.urgencia}
         </span>
