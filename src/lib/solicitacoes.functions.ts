@@ -221,6 +221,74 @@ function toSolicitacaoRow(
   };
 }
 
+function toMinhaSolicitacaoRow(
+  s: any,
+  options?: {
+    prioridadePesoMap?: Map<string, number>;
+  },
+) {
+  const row = toSolicitacaoRow(s, options);
+
+  return {
+    id: row.id,
+    tipo_id: row.tipo_id,
+    unidade_id: row.unidade_id,
+    solicitante_id: row.solicitante_id,
+    responsavel_id: row.responsavel_id,
+
+    nome_solicitante: row.nome_solicitante,
+    email_solicitante: row.email_solicitante,
+    unidade: row.unidade,
+    segmento_area: row.segmento_area,
+    cargo_funcao: row.cargo_funcao,
+
+    tipo_solicitacao: row.tipo_solicitacao,
+    titulo: row.titulo,
+    descricao: row.descricao,
+    publico_impactado: row.publico_impactado,
+    unidades_impactadas: row.unidades_impactadas,
+    prazo_desejado: row.prazo_desejado,
+    urgencia: row.urgencia,
+    urgencia_peso: row.urgencia_peso,
+    link_referencia: row.link_referencia,
+    observacoes_adicionais: row.observacoes_adicionais,
+    respostas: row.respostas,
+    anexos_urls: row.anexos_urls,
+
+    status: row.status,
+    responsavel: row.responsavel,
+
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+async function getSolicitanteAccessWhere(prisma: any, userId: string) {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      email: true,
+    },
+  });
+
+  return {
+    OR: [
+      {
+        solicitanteId: userId,
+      },
+      ...(user?.email
+        ? [
+          {
+            emailSolicitante: user.email,
+          },
+        ]
+        : []),
+    ],
+  };
+}
+
 function toHistoricoRow(h: any) {
   return {
     id: h.id,
@@ -430,6 +498,123 @@ const ListSolicitacoesAdminSchema = z
     apenas_abertas: z.boolean().optional(),
   })
   .optional();
+
+export const listMinhasSolicitacoes = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .handler(async ({ context }) => {
+    const ctx = context as { userId?: string; roles?: string[] };
+
+    if (!ctx.userId) {
+      throw new Error("É necessário entrar para visualizar suas solicitações.");
+    }
+
+    const { prisma } = await import("./db.server");
+
+    const prioridadePesoMap = await getPrioridadePesoMap(prisma);
+    const accessWhere = await getSolicitanteAccessWhere(prisma, ctx.userId);
+
+    const solicitacoes = await prisma.solicitacao.findMany({
+      where: accessWhere,
+      include: {
+        responsavel: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return solicitacoes.map((s) =>
+      toMinhaSolicitacaoRow(s, {
+        prioridadePesoMap,
+      }),
+    );
+  });
+
+export const getMinhaSolicitacao = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const ctx = context as { userId?: string; roles?: string[] };
+
+    if (!ctx.userId) {
+      throw new Error("É necessário entrar para visualizar esta solicitação.");
+    }
+
+    const { prisma } = await import("./db.server");
+
+    const accessWhere = await getSolicitanteAccessWhere(prisma, ctx.userId);
+
+    const solicitacao = await prisma.solicitacao.findFirst({
+      where: {
+        id: data.id,
+        ...accessWhere,
+      },
+      include: {
+        responsavel: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+    });
+
+    return solicitacao ? toMinhaSolicitacaoRow(solicitacao) : null;
+  });
+
+export const listMinhaSolicitacaoHistorico = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const ctx = context as { userId?: string; roles?: string[] };
+
+    if (!ctx.userId) {
+      throw new Error("É necessário entrar para visualizar esta solicitação.");
+    }
+
+    const { prisma } = await import("./db.server");
+
+    const accessWhere = await getSolicitanteAccessWhere(prisma, ctx.userId);
+
+    const solicitacao = await prisma.solicitacao.findFirst({
+      where: {
+        id: data.id,
+        ...accessWhere,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!solicitacao) {
+      throw new Error("Solicitação não encontrada.");
+    }
+
+    const historicos = await prisma.solicitacaoHistorico.findMany({
+      where: {
+        solicitacaoId: data.id,
+        tipo: {
+          in: ["criacao", "status", "urgencia", "responsavel"],
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return historicos.map((h) => ({
+      id: h.id,
+      tipo: h.tipo,
+      titulo: h.titulo,
+      descricao: h.descricao,
+      valor_anterior: h.valorAnterior,
+      valor_novo: h.valorNovo,
+      created_at: h.createdAt,
+    }));
+  });
 
 export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])

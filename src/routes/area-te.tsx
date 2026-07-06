@@ -13,6 +13,7 @@ import {
   User as UserIcon,
   Building2,
   Settings,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ type NavItem = {
 
 const nav: ReadonlyArray<NavItem> = [
   { to: "/area-te", label: "Dashboard", icon: LayoutDashboard, exact: true, show: () => true },
+  { to: "/minhas-solicitacoes", label: "Minhas solicitações", icon: ClipboardList, show: () => true },
   { to: "/area-te/solicitacoes", label: "Solicitações", icon: Inbox, show: (r) => r.isEquipeTE },
   { to: "/area-te/tipos-solicitacao", label: "Tipos de solicitação", icon: FormInput, show: (r) => r.isAdmin },
   { to: "/area-te/ferramentas", label: "Ferramentas", icon: Wrench, show: (r) => r.isEditor },
@@ -151,6 +153,13 @@ function AreaTeLayout() {
               <div className="text-sm font-medium truncate">{profile?.nome_completo || user.email}</div>
               <div className="text-[10px] opacity-60 truncate">{user.email}</div>
             </div>
+          </Link>
+
+          <Link
+            to="/minhas-solicitacoes"
+            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-sidebar-accent"
+          >
+            <ClipboardList className="h-4 w-4" /> Minhas solicitações
           </Link>
 
           <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-sidebar-accent">

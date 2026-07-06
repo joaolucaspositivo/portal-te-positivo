@@ -98,6 +98,8 @@ function SolicSlug() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [createdSolicitacao, setCreatedSolicitacao] = useState<any>(null);
+
   const unidadesDisponiveis =
     minhasUnidades.length > 0
       ? minhasUnidades.map((u: any) => ({
@@ -210,7 +212,7 @@ function SolicSlug() {
     setLoading(true);
 
     try {
-      await createSolicitacaoFn({
+      const created = await createSolicitacaoFn({
         data: {
           tipoId: tipo.id,
           ...base,
@@ -218,6 +220,8 @@ function SolicSlug() {
           respostas,
         },
       });
+
+      setCreatedSolicitacao(created);
 
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -241,11 +245,22 @@ function SolicSlug() {
             interna.
           </p>
 
+          {user && createdSolicitacao?.id && (
+  <Link
+    to="/minhas-solicitacoes/$id"
+    params={{ id: createdSolicitacao.id }}
+    className="px-5 py-2 rounded-md border font-medium"
+  >
+    Acompanhar solicitação
+  </Link>
+)}
+
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <button
               onClick={() => {
                 setRespostas({});
                 setBase({ ...base, titulo: "", descricao: "" });
+                setCreatedSolicitacao(null);
                 setSubmitted(false);
               }}
               className="px-5 py-2 rounded-md bg-primary text-primary-foreground font-medium"
