@@ -1,8 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ClipboardList } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getCurrentUser, requestPasswordReset, signIn, signUp } from "@/lib/auth.functions";
@@ -37,7 +36,7 @@ function AuthPage() {
 
     getCurrentUserFn().then((currentUser) => {
       if (!mounted) return;
-      if (currentUser) navigate({ to: "/minhas-solicitacoes" });
+      if (currentUser) navigate({ to: "/area-te" });
     });
 
     return () => {
@@ -78,7 +77,7 @@ function AuthPage() {
         });
 
         toast.success("Login realizado com sucesso.");
-        navigate({ to: "/minhas-solicitacoes" });
+        navigate({ to: "/area-te" });
         return;
       }
 
@@ -215,28 +214,6 @@ function AuthPage() {
                 Voltar para login
               </button>
             )}
-          </div>
-
-          <div className="mt-6 rounded-lg border bg-muted/30 p-4">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <ClipboardList className="h-4 w-4" />
-              </div>
-
-              <div>
-                <h2 className="text-sm font-semibold">Acompanhe suas solicitações</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Após entrar, você poderá visualizar as solicitações abertas com seu usuário e acompanhar o andamento.
-                </p>
-
-                <Link
-                  to="/minhas-solicitacoes"
-                  className="mt-3 inline-flex text-sm font-medium text-primary hover:underline"
-                >
-                  Ir para minhas solicitações
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </main>

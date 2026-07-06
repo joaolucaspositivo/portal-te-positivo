@@ -155,13 +155,6 @@ function AreaTeLayout() {
             </div>
           </Link>
 
-          <Link
-            to="/minhas-solicitacoes"
-            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-sidebar-accent"
-          >
-            <ClipboardList className="h-4 w-4" /> Minhas solicitações
-          </Link>
-
           <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-sidebar-accent">
             <Home className="h-4 w-4" /> Voltar ao site
           </Link>

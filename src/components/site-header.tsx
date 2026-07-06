@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ClipboardList, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/use-auth";
@@ -51,20 +51,6 @@ export function SiteHeader() {
             );
           })}
 
-          {!loading && user && (
-            <Link
-              to="/minhas-solicitacoes"
-              className={cn(
-                "px-3 py-2 rounded-md text-sm font-medium transition-colors inline-flex items-center gap-1.5",
-                pathname.startsWith("/minhas-solicitacoes")
-                  ? "bg-accent text-accent-foreground"
-                  : "text-foreground/70 hover:text-foreground hover:bg-muted",
-              )}
-            >
-              <ClipboardList className="h-4 w-4" />
-              Minhas solicitações
-            </Link>
-          )}
           {loading ? null : user ? (
             <Link
               to="/area-te/perfil"
@@ -105,15 +91,6 @@ export function SiteHeader() {
                 {i.label}
               </Link>
             ))}
-            {user && (
-              <Link
-                to="/minhas-solicitacoes"
-                onClick={() => setOpen(false)}
-                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-muted"
-              >
-                Minhas solicitações
-              </Link>
-            )}
             <Link
               to="/area-te"
               onClick={() => setOpen(false)}

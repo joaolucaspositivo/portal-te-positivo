@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, ClipboardList, Inbox } from "lucide-react";
-import { useAuth } from "@/lib/use-auth";
+import { ArrowRight, Inbox } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { listSolicitacaoTiposPublic } from "@/lib/solicitacoes.functions";
@@ -24,8 +23,6 @@ export const Route = createFileRoute("/solicitacoes/")({
 function SolicitacoesGallery() {
   const listTiposFn = useServerFn(listSolicitacaoTiposPublic);
 
-  const { user } = useAuth();
-
   const { data: tipos = [], isLoading } = useQuery({
     queryKey: ["public-tipos"],
     queryFn: () => listTiposFn(),
@@ -38,35 +35,13 @@ function SolicitacoesGallery() {
       <main className="flex-1">
         <section className="bg-muted/40 border-b">
           <div className="container mx-auto px-4 py-12">
-            <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h1 className="text-4xl font-bold">Solicitações</h1>
+            <h1 className="text-4xl font-bold">Solicitações</h1>
 
-                <p className="mt-3 max-w-3xl text-muted-foreground">
-                  Escolha o tipo de solicitação ou chamado para abrir junto à equipe de Tecnologia
-                  Educacional. Cada tipo possui um formulário específico e é direcionado ao responsável
-                  adequado.
-                </p>
-              </div>
-
-              {user ? (
-                <Link
-                  to="/minhas-solicitacoes"
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground"
-                >
-                  <ClipboardList className="h-4 w-4" />
-                  Minhas solicitações
-                </Link>
-              ) : (
-                <Link
-                  to="/auth"
-                  className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-4 py-2 font-medium"
-                >
-                  <ClipboardList className="h-4 w-4" />
-                  Entrar para acompanhar
-                </Link>
-              )}
-            </div>
+            <p className="mt-3 text-muted-foreground max-w-3xl">
+              Escolha o tipo de solicitação ou chamado para abrir junto à equipe de Tecnologia
+              Educacional. Cada tipo possui um formulário específico e é direcionado ao responsável
+              adequado.
+            </p>
           </div>
         </section>
 
