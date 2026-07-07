@@ -36,7 +36,7 @@ type NavItem = {
 };
 
 const nav: ReadonlyArray<NavItem> = [
-  { to: "/area-te", label: "Dashboard", icon: LayoutDashboard, exact: true, show: () => true },
+  { to: "/area-te", label: "Dashboard", icon: LayoutDashboard, exact: true, show: (r) => r.isEquipeTE || r.isAdmin || r.isEditor },
   { to: "/area-te/minhas-solicitacoes", label: "Minhas solicitações", icon: ClipboardList, show: () => true },
   { to: "/area-te/solicitacoes", label: "Solicitações", icon: Inbox, show: (r) => r.isEquipeTE },
   { to: "/area-te/tipos-solicitacao", label: "Tipos de solicitação", icon: FormInput, show: (r) => r.isAdmin },
@@ -63,6 +63,14 @@ function AreaTeLayout() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    if (pathname !== "/area-te") return;
+    if (isAdmin || isEquipeTE || isEditor) return;
+
+    navigate({ to: "/area-te/minhas-solicitacoes" });
+  }, [loading, user, pathname, isAdmin, isEquipeTE, isEditor, navigate]);
 
   if (loading) {
     return (
