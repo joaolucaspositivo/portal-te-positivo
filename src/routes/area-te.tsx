@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Inbox,
@@ -14,6 +14,8 @@ import {
   Building2,
   Settings,
   ClipboardList,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
@@ -51,6 +53,7 @@ function AreaTeLayout() {
   const { user, profile, status, isAdmin, isEquipeTE, isEditor, loading, logout } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   async function handleLogout() {
     await logout();
@@ -114,17 +117,54 @@ function AreaTeLayout() {
 
   return (
     <div className="min-h-screen flex bg-muted/30">
-      <aside className="w-64 bg-sidebar text-sidebar-foreground flex-shrink-0 hidden md:flex flex-col">
-        <div className="p-5 border-b border-sidebar-border">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-              TE
-            </div>
-            <div>
-              <div className="text-sm font-bold">Portal TE</div>
-              <div className="text-[10px] uppercase tracking-wider opacity-60">Área da TE</div>
-            </div>
-          </Link>
+      <aside
+        className={cn(
+          "bg-sidebar text-sidebar-foreground flex-shrink-0 hidden md:flex flex-col transition-all duration-200",
+          sidebarCollapsed ? "w-20" : "w-64",
+        )}>
+        <div className={cn("border-b border-sidebar-border", sidebarCollapsed ? "p-3" : "p-5")}>
+          <div
+            className={cn(
+              "flex items-center",
+              sidebarCollapsed ? "flex-col gap-2" : "justify-between gap-2",
+            )}
+          >
+            <Link
+              to="/"
+              className={cn(
+                "flex min-w-0 items-center gap-2",
+                sidebarCollapsed ? "justify-center" : "",
+              )}
+              title="Portal TE"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+                TE
+              </div>
+
+              {!sidebarCollapsed && (
+                <div className="min-w-0">
+                  <div className="text-sm font-bold">Portal TE</div>
+                  <div className="text-[10px] uppercase tracking-wider opacity-60">
+                    Área da TE
+                  </div>
+                </div>
+              )}
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed((value) => !value)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-sidebar-accent"
+              aria-label={sidebarCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
+              title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
+            >
+              {sidebarCollapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 p-3 space-y-1">
@@ -135,35 +175,68 @@ function AreaTeLayout() {
               <Link
                 key={i.to}
                 to={i.to as any}
+                title={sidebarCollapsed ? i.label : undefined}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm",
+                  "flex items-center rounded-md text-sm",
+                  sidebarCollapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
                   active ? "bg-primary text-primary-foreground" : "hover:bg-sidebar-accent",
                 )}
               >
-                <i.icon className="h-4 w-4" /> {i.label}
+                <i.icon className="h-4 w-4 shrink-0" />
+                {!sidebarCollapsed && <span>{i.label}</span>}
               </Link>
             );
           })}
         </nav>
 
         <div className="p-3 border-t border-sidebar-border space-y-1">
-          <Link to="/area-te/perfil" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-sidebar-accent">
-            <UserAvatar path={profile?.avatar_url} name={profile?.nome_completo ?? user.email} size={32} />
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium truncate">{profile?.nome_completo || user.email}</div>
-              <div className="text-[10px] opacity-60 truncate">{user.email}</div>
-            </div>
+          <Link
+            to="/area-te/perfil"
+            title={sidebarCollapsed ? "Meu perfil" : undefined}
+            className={cn(
+              "flex items-center rounded-md hover:bg-sidebar-accent",
+              sidebarCollapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+            )}
+          >
+            <UserAvatar
+              path={profile?.avatar_url}
+              name={profile?.nome_completo ?? user.email}
+              size={32}
+            />
+
+            {!sidebarCollapsed && (
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium truncate">
+                  {profile?.nome_completo || user.email}
+                </div>
+                <div className="text-[10px] opacity-60 truncate">{user.email}</div>
+              </div>
+            )}
           </Link>
 
-          <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-sidebar-accent">
-            <Home className="h-4 w-4" /> Voltar ao site
+          <Link
+            to="/"
+            title={sidebarCollapsed ? "Voltar ao site" : undefined}
+            className={cn(
+              "flex items-center rounded-md text-sm hover:bg-sidebar-accent",
+              sidebarCollapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+            )}
+          >
+            <Home className="h-4 w-4 shrink-0" />
+            {!sidebarCollapsed && <span>Voltar ao site</span>}
           </Link>
 
           <button
+            type="button"
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-sidebar-accent"
+            title={sidebarCollapsed ? "Sair" : undefined}
+            className={cn(
+              "w-full flex items-center rounded-md text-sm hover:bg-sidebar-accent",
+              sidebarCollapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+            )}
           >
-            <LogOut className="h-4 w-4" /> Sair
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!sidebarCollapsed && <span>Sair</span>}
           </button>
         </div>
       </aside>

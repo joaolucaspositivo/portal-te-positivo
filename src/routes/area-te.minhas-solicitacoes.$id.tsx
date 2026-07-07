@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Inbox } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/use-auth";
 import {
@@ -22,6 +22,9 @@ function MinhaSolicitacaoDetalhePage() {
 
   const qc = useQueryClient();
   const [comentario, setComentario] = useState("");
+
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const timelineScrollRef = useRef<HTMLDivElement | null>(null);
 
   const getFn = useServerFn(getMinhaSolicitacao);
   const historicoFn = useServerFn(listMinhaSolicitacaoHistorico);
@@ -80,6 +83,22 @@ function MinhaSolicitacaoDetalhePage() {
   const eventos = Array.isArray(historico)
     ? historico.filter((h: any) => h.tipo !== "comentario")
     : [];
+
+  useEffect(() => {
+    const el = chatScrollRef.current;
+
+    if (!el) return;
+
+    el.scrollTop = el.scrollHeight;
+  }, [mensagens.length]);
+
+  useEffect(() => {
+    const el = timelineScrollRef.current;
+
+    if (!el) return;
+
+    el.scrollTop = el.scrollHeight;
+  }, [eventos.length]);
 
   return (
     <div className="space-y-6">
@@ -154,7 +173,9 @@ function MinhaSolicitacaoDetalhePage() {
                   </p>
                 </div>
 
-                <div className="max-h-[520px] overflow-y-auto p-6">
+                <div
+                  ref={chatScrollRef}
+                  className="max-h-[520px] overflow-y-auto overscroll-contain p-6">
                   {mensagens.length === 0 ? (
                     <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
                       <p className="text-sm font-medium">Nenhuma mensagem registrada.</p>
@@ -233,20 +254,44 @@ function MinhaSolicitacaoDetalhePage() {
                   </div>
                 </div>
               </section>
+            </main>
+
+            <aside className="space-y-6">
+              <section className="rounded-xl border bg-card p-6">
+                <h2 className="mb-4 font-semibold">Resumo</h2>
+
+                <div className="space-y-3 text-sm">
+                  <Info label="Status" value={data.status} />
+                  <Info label="Urgência" value={data.urgencia} />
+                  <Info label="Tipo" value={data.tipo_solicitacao} />
+                  <Info label="Unidade" value={data.unidade} />
+                </div>
+              </section>
 
               <section className="rounded-xl border bg-card p-6">
-                <h2 className="mb-4 font-semibold">Timeline</h2>
+                <div className="mb-4">
+                  <h2 className="font-semibold">Timeline</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Eventos registrados durante o ciclo da solicitação.
+                  </p>
+                </div>
 
                 {eventos.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum evento registrado até o momento.
-                  </p>
+                  <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-center">
+                    <p className="text-sm font-medium">Nenhum evento registrado.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Alterações de status, urgência e responsável aparecerão aqui.
+                    </p>
+                  </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div
+                    ref={timelineScrollRef}
+                    className="max-h-[420px] space-y-3 overflow-y-auto overscroll-contain pr-1"
+                  >
                     {eventos.map((h: any) => (
                       <article
                         key={h.id}
-                        className="rounded-lg border border-l-4 border-l-primary bg-muted/20 p-4"
+                        className="rounded-lg border border-l-4 border-l-primary bg-muted/20 p-3"
                       >
                         <div className="text-sm font-semibold">{h.titulo}</div>
 
@@ -263,19 +308,6 @@ function MinhaSolicitacaoDetalhePage() {
                     ))}
                   </div>
                 )}
-              </section>
-            </main>
-
-            <aside className="space-y-6">
-              <section className="rounded-xl border bg-card p-6">
-                <h2 className="mb-4 font-semibold">Resumo</h2>
-
-                <div className="space-y-3 text-sm">
-                  <Info label="Status" value={data.status} />
-                  <Info label="Urgência" value={data.urgencia} />
-                  <Info label="Tipo" value={data.tipo_solicitacao} />
-                  <Info label="Unidade" value={data.unidade} />
-                </div>
               </section>
 
               {data.responsavel && (
