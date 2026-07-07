@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Inbox } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
+import { useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/use-auth";
 import {
+  addMinhaSolicitacaoComentario,
   getMinhaSolicitacao,
   listMinhaSolicitacaoHistorico,
 } from "@/lib/solicitacoes.functions";
@@ -17,8 +20,13 @@ function MinhaSolicitacaoDetalhePage() {
   const { id } = Route.useParams();
   const { user, loading } = useAuth();
 
+  const qc = useQueryClient();
+  const [comentario, setComentario] = useState("");
+
   const getFn = useServerFn(getMinhaSolicitacao);
   const historicoFn = useServerFn(listMinhaSolicitacaoHistorico);
+
+  const addComentarioFn = useServerFn(addMinhaSolicitacaoComentario);
 
   const { data, isLoading } = useQuery({
     enabled: !!user,
@@ -40,6 +48,29 @@ function MinhaSolicitacaoDetalhePage() {
           id,
         },
       }),
+  });
+
+  const addComentario = useMutation({
+    mutationFn: async () => {
+      if (!comentario.trim()) {
+        throw new Error("Digite uma mensagem.");
+      }
+
+      await addComentarioFn({
+        data: {
+          id,
+          comentario,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Mensagem enviada.");
+      setComentario("");
+      qc.invalidateQueries({ queryKey: ["minha-solicitacao-historico", id] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message ?? "Erro ao enviar mensagem.");
+    },
   });
 
   const mensagens = Array.isArray(historico)
@@ -115,53 +146,92 @@ function MinhaSolicitacaoDetalhePage() {
                 </p>
               </section>
 
-              <section className="rounded-xl border bg-card p-6">
-                <h2 className="mb-1 font-semibold">Chat da solicitação</h2>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  Acompanhe as mensagens registradas pela equipe de Tecnologia Educacional.
-                </p>
+              <section className="rounded-xl border bg-card">
+                <div className="border-b p-6">
+                  <h2 className="mb-1 font-semibold">Chat da solicitação</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Envie mensagens para acompanhar a solicitação com a equipe de Tecnologia Educacional.
+                  </p>
+                </div>
 
-                {mensagens.length === 0 ? (
-                  <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
-                    <p className="text-sm font-medium">Nenhuma mensagem registrada.</p>
-                    <p className="text-sm text-muted-foreground">
-                      Quando a equipe registrar uma mensagem de acompanhamento, ela aparecerá aqui.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {mensagens.map((h: any) => {
-                      const authorName = h.autor_nome ?? "Tecnologia Educacional";
+                <div className="max-h-[520px] overflow-y-auto p-6">
+                  {mensagens.length === 0 ? (
+                    <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
+                      <p className="text-sm font-medium">Nenhuma mensagem registrada.</p>
+                      <p className="text-sm text-muted-foreground">
+                        Use o campo abaixo para enviar uma mensagem de acompanhamento.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {mensagens.map((h: any) => {
+                        const authorName = h.autor_nome ?? "Tecnologia Educacional";
+                        const isCurrentUser = h.autor_id && user?.id && h.autor_id === user.id;
 
-                      return (
-                        <article key={h.id} className="flex items-start gap-3">
-                          <UserAvatar
-                            path={h.autor_avatar_url}
-                            name={authorName}
-                            size={38}
-                          />
+                        return (
+                          <article
+                            key={h.id}
+                            className={`flex items-start gap-3 ${isCurrentUser ? "flex-row-reverse" : ""
+                              }`}
+                          >
+                            <UserAvatar
+                              path={h.autor_avatar_url}
+                              name={authorName}
+                              size={38}
+                            />
 
-                          <div className="min-w-0 flex-1">
-                            <div className="mb-1 flex flex-wrap items-center gap-2">
-                              <span className="text-sm font-semibold">{authorName}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(h.created_at).toLocaleString("pt-BR")}
-                              </span>
+                            <div
+                              className={`min-w-0 flex-1 ${isCurrentUser ? "text-right" : ""
+                                }`}
+                            >
+                              <div
+                                className={`mb-1 flex flex-wrap items-center gap-2 ${isCurrentUser ? "justify-end" : ""
+                                  }`}
+                              >
+                                <span className="text-sm font-semibold">{authorName}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(h.created_at).toLocaleString("pt-BR")}
+                                </span>
+                              </div>
+
+                              <div
+                                className={`inline-block max-w-[820px] rounded-2xl border bg-background px-4 py-3 text-left ${isCurrentUser ? "rounded-tr-sm" : "rounded-tl-sm"
+                                  }`}
+                              >
+                                {h.descricao && (
+                                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                                    {h.descricao}
+                                  </p>
+                                )}
+                              </div>
                             </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
-                            <div className="max-w-[820px] rounded-2xl rounded-tl-sm border bg-background px-4 py-3">
-                              {h.descricao && (
-                                <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                                  {h.descricao}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
+                <div className="border-t bg-card p-4">
+                  <textarea
+                    rows={3}
+                    value={comentario}
+                    onChange={(e) => setComentario(e.target.value)}
+                    placeholder="Digite uma mensagem para a equipe TE..."
+                    className="w-full resize-none rounded-md border bg-background px-3 py-2 text-sm"
+                  />
+
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => addComentario.mutate()}
+                      disabled={addComentario.isPending || !comentario.trim()}
+                      className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground disabled:opacity-50"
+                    >
+                      {addComentario.isPending ? "Enviando..." : "Enviar mensagem"}
+                    </button>
                   </div>
-                )}
+                </div>
               </section>
 
               <section className="rounded-xl border bg-card p-6">

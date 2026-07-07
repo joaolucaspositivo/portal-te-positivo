@@ -620,6 +620,7 @@ export const listMinhaSolicitacaoHistorico = createServerFn({ method: "GET" })
       valor_anterior: h.valorAnterior,
       valor_novo: h.valorNovo,
       created_at: h.createdAt,
+      autor_id: h.autorId,
       autor_nome: h.autor?.profile?.nomeCompleto ?? h.autor?.email ?? null,
       autor_avatar_url: h.autor?.profile?.avatarUrl ?? null,
     }));
@@ -633,6 +634,47 @@ export const listMinhaSolicitacaoHistorico = createServerFn({ method: "GET" })
       valor_novo: h.valorNovo,
       created_at: h.createdAt,
     }));
+  });
+
+export const addMinhaSolicitacaoComentario = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
+  .validator((data: unknown) => AddSolicitacaoComentarioSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const ctx = context as { userId?: string; roles?: string[] };
+
+    if (!ctx.userId) {
+      throw new Error("É necessário entrar para enviar uma mensagem.");
+    }
+
+    const { prisma } = await import("./db.server");
+
+    const accessWhere = await getSolicitanteAccessWhere(prisma, ctx.userId);
+
+    const solicitacao = await prisma.solicitacao.findFirst({
+      where: {
+        id: data.id,
+        ...accessWhere,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!solicitacao) {
+      throw new Error("Solicitação não encontrada.");
+    }
+
+    await registrarHistoricoSolicitacao(prisma, {
+      solicitacaoId: data.id,
+      autorId: ctx.userId,
+      tipo: "comentario",
+      titulo: "Mensagem do solicitante",
+      descricao: data.comentario,
+    });
+
+    return {
+      ok: true,
+    };
   });
 
 export const listSolicitacoesAdmin = createServerFn({ method: "GET" })
