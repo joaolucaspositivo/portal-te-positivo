@@ -2,12 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, Inbox } from "lucide-react";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { useAuth } from "@/lib/use-auth";
 import { listMinhasSolicitacoes } from "@/lib/solicitacoes.functions";
 
-export const Route = createFileRoute("/minhas-solicitacoes/")({
+export const Route = createFileRoute("/area-te/minhas-solicitacoes/")({
   component: MinhasSolicitacoesPage,
 });
 
@@ -22,7 +20,7 @@ function MinhasSolicitacoesPage() {
   });
 
   return (
-    <PageShell>
+  <div className="space-y-8">
       <section className="mb-8">
         <h1 className="text-3xl font-bold">Minhas solicitações</h1>
         <p className="mt-2 max-w-3xl text-muted-foreground">
@@ -69,7 +67,7 @@ function MinhasSolicitacoesPage() {
           {solicitacoes.map((s: any) => (
             <Link
               key={s.id}
-              to="/minhas-solicitacoes/$id"
+              to="/area-te/minhas-solicitacoes/$id"
               params={{ id: s.id }}
               className="group block rounded-xl border bg-card p-5 transition-colors hover:border-primary"
             >
@@ -111,7 +109,7 @@ function MinhasSolicitacoesPage() {
           ))}
         </div>
       )}
-    </PageShell>
+    <div>
   );
 }
 

@@ -35,7 +35,7 @@ type NavItem = {
 
 const nav: ReadonlyArray<NavItem> = [
   { to: "/area-te", label: "Dashboard", icon: LayoutDashboard, exact: true, show: () => true },
-  { to: "/minhas-solicitacoes", label: "Minhas solicitações", icon: ClipboardList, show: () => true },
+  { to: "/area-te/minhas-solicitacoes", label: "Minhas solicitações", icon: ClipboardList, show: () => true },
   { to: "/area-te/solicitacoes", label: "Solicitações", icon: Inbox, show: (r) => r.isEquipeTE },
   { to: "/area-te/tipos-solicitacao", label: "Tipos de solicitação", icon: FormInput, show: (r) => r.isAdmin },
   { to: "/area-te/ferramentas", label: "Ferramentas", icon: Wrench, show: (r) => r.isEditor },

@@ -2,8 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Inbox } from "lucide-react";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/use-auth";
 import {
@@ -11,7 +9,7 @@ import {
   listMinhaSolicitacaoHistorico,
 } from "@/lib/solicitacoes.functions";
 
-export const Route = createFileRoute("/minhas-solicitacoes/$id")({
+export const Route = createFileRoute("/area-te/minhas-solicitacoes/$id")({
   component: MinhaSolicitacaoDetalhePage,
 });
 
@@ -44,10 +42,18 @@ function MinhaSolicitacaoDetalhePage() {
       }),
   });
 
+  const mensagens = Array.isArray(historico)
+    ? historico.filter((h: any) => h.tipo === "comentario")
+    : [];
+
+  const eventos = Array.isArray(historico)
+    ? historico.filter((h: any) => h.tipo !== "comentario")
+    : [];
+
   return (
-    <PageShell>
+    <div className="space-y-6">
       <Link
-        to="/minhas-solicitacoes"
+        to="/area-te/minhas-solicitacoes"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Voltar para minhas solicitações
@@ -110,15 +116,64 @@ function MinhaSolicitacaoDetalhePage() {
               </section>
 
               <section className="rounded-xl border bg-card p-6">
-                <h2 className="mb-4 font-semibold">Acompanhamento</h2>
+                <h2 className="mb-1 font-semibold">Chat da solicitação</h2>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Acompanhe as mensagens registradas pela equipe de Tecnologia Educacional.
+                </p>
 
-                {historico.length === 0 ? (
+                {mensagens.length === 0 ? (
+                  <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
+                    <p className="text-sm font-medium">Nenhuma mensagem registrada.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Quando a equipe registrar uma mensagem de acompanhamento, ela aparecerá aqui.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {mensagens.map((h: any) => {
+                      const authorName = h.autor_nome ?? "Tecnologia Educacional";
+
+                      return (
+                        <article key={h.id} className="flex items-start gap-3">
+                          <UserAvatar
+                            path={h.autor_avatar_url}
+                            name={authorName}
+                            size={38}
+                          />
+
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-semibold">{authorName}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(h.created_at).toLocaleString("pt-BR")}
+                              </span>
+                            </div>
+
+                            <div className="max-w-[820px] rounded-2xl rounded-tl-sm border bg-background px-4 py-3">
+                              {h.descricao && (
+                                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                                  {h.descricao}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-xl border bg-card p-6">
+                <h2 className="mb-4 font-semibold">Timeline</h2>
+
+                {eventos.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Nenhum evento registrado até o momento.
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {historico.map((h: any) => (
+                    {eventos.map((h: any) => (
                       <article
                         key={h.id}
                         className="rounded-lg border border-l-4 border-l-primary bg-muted/20 p-4"
@@ -184,7 +239,7 @@ function MinhaSolicitacaoDetalhePage() {
           </div>
         </div>
       )}
-    </PageShell>
+    </div>
   );
 }
 

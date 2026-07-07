@@ -597,13 +597,32 @@ export const listMinhaSolicitacaoHistorico = createServerFn({ method: "GET" })
       where: {
         solicitacaoId: data.id,
         tipo: {
-          in: ["criacao", "status", "urgencia", "responsavel"],
+          in: ["criacao", "status", "urgencia", "responsavel", "comentario"],
+        },
+      },
+      include: {
+        autor: {
+          include: {
+            profile: true,
+          },
         },
       },
       orderBy: {
         createdAt: "asc",
       },
     });
+
+    return historicos.map((h) => ({
+      id: h.id,
+      tipo: h.tipo,
+      titulo: h.titulo,
+      descricao: h.descricao,
+      valor_anterior: h.valorAnterior,
+      valor_novo: h.valorNovo,
+      created_at: h.createdAt,
+      autor_nome: h.autor?.profile?.nomeCompleto ?? h.autor?.email ?? null,
+      autor_avatar_url: h.autor?.profile?.avatarUrl ?? null,
+    }));
 
     return historicos.map((h) => ({
       id: h.id,
