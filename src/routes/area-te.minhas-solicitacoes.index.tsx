@@ -269,9 +269,9 @@ function MinhasSolicitacoesPage() {
 
                       <td className="p-3">{s.unidade}</td>
 
-                      <td className="p-3">
+                      <td className="p-3 whitespace-nowrap">
                         <span
-                          className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+                          className={`inline-flex items-center whitespace-nowrappx-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
                             prioridadeColorMap.get(s.urgencia) as string | null,
                           )}`}
                           style={badgeStyleFromConfig(
@@ -282,9 +282,9 @@ function MinhasSolicitacoesPage() {
                         </span>
                       </td>
 
-                      <td className="p-3">
+                      <td className="p-3 whitespace-nowrap">
                         <span
-                          className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+                          className={`inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
                             statusColorMap.get(s.status) as string | null,
                           )}`}
                           style={badgeStyleFromConfig(

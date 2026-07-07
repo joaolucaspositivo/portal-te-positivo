@@ -258,10 +258,10 @@ function List() {
               <th className="p-3">Tipo</th>
               <th className="p-3">Solicitante</th>
               <th className="p-3">Unidade</th>
-              <th className="p-3">Urgência</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Responsável</th>
-              <th className="p-3">Data</th>
+              <th className="p-3 whitespace-nowrap">Urgência</th>
+              <th className="p-3 whitespace-nowrap">Status</th>
+              <th className="p-3 whitespace-nowrap">Responsável</th>
+              <th className="p-3 whitespace-nowrap">Data</th>
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -289,9 +289,9 @@ function List() {
                     <div className="text-xs text-muted-foreground">{s.email_solicitante}</div>
                   </td>
                   <td className="p-3">{s.unidade}</td>
-                  <td className="p-3">
+                  <td className="p-3 whitespace-nowrap">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+                      className={`inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
                         prioridadeColorMap.get(s.urgencia) as string | null,
                       )}`}
                       style={badgeStyleFromConfig(prioridadeColorMap.get(s.urgencia) as string | null)}
@@ -299,9 +299,9 @@ function List() {
                       {s.urgencia}
                     </span>
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 whitespace-nowrap">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+                      className={`inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
                         statusColorMap.get(s.status) as string | null,
                       )}`}
                       style={badgeStyleFromConfig(statusColorMap.get(s.status) as string | null)}
@@ -309,10 +309,10 @@ function List() {
                       {s.status}
                     </span>
                   </td>
-                  <td className="p-3 text-muted-foreground">
+                  <td className="p-3 whitespace-nowrap text-muted-foreground">
                     {s.responsavel?.nome_completo || s.responsavel_te || "—"}
                   </td>
-                  <td className="p-3 text-muted-foreground">
+                  <td className="p-3 whitespace-nowrap text-muted-foreground">
                     {new Date(s.created_at).toLocaleDateString("pt-BR")}
                   </td>
                   <td className="p-3">
