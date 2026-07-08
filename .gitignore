@@ -40,3 +40,9 @@ dist-ssr
 !.env.example
 !.env.docker.example
 !.env.production.example
+
+# Certificados locais para build Docker em rede corporativa
+certs/*.crt
+certs/*.cer
+certs/*.pem
+!certs/.gitkeep

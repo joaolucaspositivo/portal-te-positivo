@@ -218,7 +218,7 @@ Esperado:
 portal-te-postgres-prod
 portal-te-app-prod
 ```
-
+curl http://localhost:8080/api/health
 ---
 
 ## 10. Rodar migrations

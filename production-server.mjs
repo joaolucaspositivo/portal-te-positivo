@@ -103,6 +103,13 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host || `localhost:${port}`}`);
 
+    if (url.pathname === "/api/health") {
+      res.statusCode = 200;
+      res.setHeader("content-type", "application/json; charset=utf-8");
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+
     const servedStatic = await serveStatic(req, res, url.pathname);
     if (servedStatic) return;
 

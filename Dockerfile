@@ -1,31 +1,36 @@
-FROM node:22.12.0-bookworm-slim AS deps
+FROM node:22.13.1-bookworm-slim AS deps
 
 WORKDIR /app
-
-ENV NPM_CONFIG_STRICT_SSL=false
-ENV npm_config_strict_ssl=false
-ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
 RUN apt-get update -y \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
+COPY certs ./certs
+
+RUN find ./certs -type f \( -name "*.crt" -o -name "*.cer" -o -name "*.pem" \) \
+  -exec sh -c 'for cert do base=$(basename "$cert"); cp "$cert" "/usr/local/share/ca-certificates/${base%.*}.crt"; done' sh {} + \
+  && update-ca-certificates
+
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+
+RUN npm config set cafile /etc/ssl/certs/ca-certificates.crt
+RUN npm install -g npm@11 --no-audit --no-fund
+
+RUN npm install -g npm@11
 
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 
-RUN npm config set strict-ssl false
+
 RUN npm ci --no-audit --no-fund
 RUN npx prisma generate
 
 
-FROM node:22.12.0-bookworm-slim AS builder
+FROM node:22.13.1-bookworm-slim AS builder
 
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NPM_CONFIG_STRICT_SSL=false
-ENV npm_config_strict_ssl=false
-ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
 RUN apt-get update -y \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
@@ -37,7 +42,7 @@ COPY . .
 RUN npm run build
 
 
-FROM node:22.12.0-bookworm-slim AS runner
+FROM node:22.13.1-bookworm-slim AS runner
 
 WORKDIR /app
 
