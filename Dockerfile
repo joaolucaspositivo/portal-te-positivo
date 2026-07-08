@@ -5,24 +5,25 @@ WORKDIR /app
 RUN apt-get update -y \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
+
 COPY certs ./certs
 
 RUN find ./certs -type f \( -name "*.crt" -o -name "*.cer" -o -name "*.pem" \) \
   -exec sh -c 'for cert do base=$(basename "$cert"); cp "$cert" "/usr/local/share/ca-certificates/${base%.*}.crt"; done' sh {} + \
   && update-ca-certificates
 
+ENV NODE_OPTIONS=--use-openssl-ca
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+ENV NPM_CONFIG_CAFILE=/etc/ssl/certs/ca-certificates.crt
 
 RUN npm config set cafile /etc/ssl/certs/ca-certificates.crt
-RUN npm install -g npm@11 --no-audit --no-fund
-
-RUN npm install -g npm@11
 
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 
-
 RUN npm ci --no-audit --no-fund
+
 RUN npx prisma generate
 
 
