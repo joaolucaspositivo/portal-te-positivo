@@ -29,7 +29,7 @@ services:
     env_file:
       - .env.production
     environment:
-      DATABASE_URL: postgresql://portal:portal_dev_password@postgres:5432/portal_te?schema=public
+      DATABASE_URL: postgresql://portal:${POSTGRES_PASSWORD}@postgres:5432/portal_te?schema=public
       UPLOAD_DIR: /app/uploads
       NODE_ENV: production
       PORT: 8080

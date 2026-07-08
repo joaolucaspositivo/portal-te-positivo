@@ -3,10 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Inbox, Search } from "lucide-react";
-import {
-  badgeColorFromConfig,
-  badgeStyleFromConfig,
-} from "@/lib/portal-constants";
+import { badgeColorFromConfig, badgeStyleFromConfig } from "@/lib/portal-constants";
 import {
   listPrioridadesSolicitacaoPublic,
   listStatusSolicitacaoPublic,
@@ -49,11 +46,7 @@ function MinhasSolicitacoesPage() {
   });
 
   const statusAbertos = useMemo(() => {
-    return new Set(
-      statusOptions
-        .filter((s: any) => !!s.aberta)
-        .map((s: any) => s.nome),
-    );
+    return new Set(statusOptions.filter((s: any) => !!s.aberta).map((s: any) => s.nome));
   }, [statusOptions]);
 
   const tipoOptions = useMemo(() => {
@@ -63,9 +56,7 @@ function MinhasSolicitacoesPage() {
   }, [solicitacoes]);
 
   const unidadeOptions = useMemo(() => {
-    return Array.from(
-      new Set(solicitacoes.map((s: any) => s.unidade).filter(Boolean)),
-    ).sort();
+    return Array.from(new Set(solicitacoes.map((s: any) => s.unidade).filter(Boolean))).sort();
   }, [solicitacoes]);
 
   const statusColorMap = useMemo(() => {
@@ -77,9 +68,7 @@ function MinhasSolicitacoesPage() {
   }, [prioridadeOptions]);
 
   const prioridadePesoMap = useMemo(() => {
-    return new Map(
-      prioridadeOptions.map((p: any) => [p.nome, Number(p.peso ?? 0)]),
-    );
+    return new Map(prioridadeOptions.map((p: any) => [p.nome, Number(p.peso ?? 0)]));
   }, [prioridadeOptions]);
 
   const maiorPesoPrioridade = useMemo(() => {
@@ -90,7 +79,8 @@ function MinhasSolicitacoesPage() {
 
   const filtered = solicitacoes.filter((s: any) => {
     if (q) {
-      const text = `${s.titulo} ${s.tipo_solicitacao} ${s.unidade} ${s.descricao} ${s.status} ${s.urgencia}`.toLowerCase();
+      const text =
+        `${s.titulo} ${s.tipo_solicitacao} ${s.unidade} ${s.descricao} ${s.status} ${s.urgencia}`.toLowerCase();
 
       if (!text.includes(q.toLowerCase())) return false;
     }
@@ -129,9 +119,7 @@ function MinhasSolicitacoesPage() {
         <div className="rounded-xl border bg-card p-8 text-center">
           <Inbox className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
 
-          <h2 className="text-xl font-semibold">
-            Entre para acompanhar suas solicitações
-          </h2>
+          <h2 className="text-xl font-semibold">Entre para acompanhar suas solicitações</h2>
 
           <p className="mt-2 text-sm text-muted-foreground">
             O acompanhamento fica disponível para usuários logados.
@@ -263,15 +251,13 @@ function MinhasSolicitacoesPage() {
                         )}
                       </td>
 
-                      <td className="p-3 text-muted-foreground">
-                        {s.tipo_solicitacao}
-                      </td>
+                      <td className="p-3 text-muted-foreground">{s.tipo_solicitacao}</td>
 
                       <td className="p-3">{s.unidade}</td>
 
                       <td className="p-3 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center whitespace-nowrappx-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
+                          className={`inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-xs ${badgeColorFromConfig(
                             prioridadeColorMap.get(s.urgencia) as string | null,
                           )}`}
                           style={badgeStyleFromConfig(

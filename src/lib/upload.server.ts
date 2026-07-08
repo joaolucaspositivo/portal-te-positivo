@@ -10,7 +10,6 @@ const ALLOWED_MIME_TYPES = new Map([
   ["image/jpeg", "jpg"],
   ["image/webp", "webp"],
   ["image/gif", "gif"],
-  ["image/svg+xml", "svg"],
   ["application/pdf", "pdf"],
 ]);
 

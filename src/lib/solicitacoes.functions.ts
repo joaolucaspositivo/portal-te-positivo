@@ -62,9 +62,7 @@ async function getStatusAbertos(prisma: any) {
     },
   });
 
-  return opcoes
-    .filter((opcao: any) => !!opcao.meta?.aberta)
-    .map((opcao: any) => opcao.nome);
+  return opcoes.filter((opcao: any) => !!opcao.meta?.aberta).map((opcao: any) => opcao.nome);
 }
 
 async function getPrioridadePesoMap(prisma: any): Promise<Map<string, number>> {
@@ -205,8 +203,7 @@ function toSolicitacaoRow(
     unidades_impactadas: s.unidadesImpactadas,
     prazo_desejado: s.prazoDesejado,
     urgencia: normalizeSolicitacaoUrgencia(s.urgencia),
-    urgencia_peso:
-      options?.prioridadePesoMap?.get(s.urgencia) ?? getUrgenciaPeso(s.urgencia),
+    urgencia_peso: options?.prioridadePesoMap?.get(s.urgencia) ?? getUrgenciaPeso(s.urgencia),
     link_referencia: s.linkReferencia,
     observacoes_adicionais: s.observacoesAdicionais,
     respostas: s.dadosExtras,
@@ -280,10 +277,10 @@ async function getSolicitanteAccessWhere(prisma: any, userId: string) {
       },
       ...(user?.email
         ? [
-          {
-            emailSolicitante: user.email,
-          },
-        ]
+            {
+              emailSolicitante: user.email,
+            },
+          ]
         : []),
     ],
   };
@@ -397,35 +394,25 @@ export const createSolicitacaoPublic = createServerFn({ method: "POST" })
 
     const unidadeSelecionada = data.unidade_id
       ? await prisma.unidade.findFirst({
-        where: {
-          id: data.unidade_id,
-          status: "ativa",
-        },
-      })
+          where: {
+            id: data.unidade_id,
+            status: "ativa",
+          },
+        })
       : await prisma.unidade.findFirst({
-        where: {
-          nome: data.unidade,
-          status: "ativa",
-        },
-      });
+          where: {
+            nome: data.unidade,
+            status: "ativa",
+          },
+        });
 
     if (!unidadeSelecionada) {
       throw new Error("Selecione uma unidade válida.");
     }
 
-    const urgencia = await getConfigOpcaoNome(
-      prisma,
-      "prioridade_solicitacao",
-      data.urgencia,
-      "",
-    );
+    const urgencia = await getConfigOpcaoNome(prisma, "prioridade_solicitacao", data.urgencia, "");
 
-    const statusInicial = await getConfigOpcaoNome(
-      prisma,
-      "status_solicitacao",
-      null,
-      "",
-    );
+    const statusInicial = await getConfigOpcaoNome(prisma, "status_solicitacao", null, "");
 
     if (!urgencia) {
       throw new Error("Nenhuma prioridade padrão configurada.");
@@ -477,10 +464,8 @@ export const createSolicitacaoPublic = createServerFn({ method: "POST" })
       },
     });
 
-    const {
-      notifySolicitacaoCriadaSolicitante,
-      notifySolicitacaoCriadaEquipe,
-    } = await import("./solicitacoes-email.server");
+    const { notifySolicitacaoCriadaSolicitante, notifySolicitacaoCriadaEquipe } =
+      await import("./solicitacoes-email.server");
 
     await Promise.all([
       notifySolicitacaoCriadaSolicitante(row),
@@ -623,16 +608,6 @@ export const listMinhaSolicitacaoHistorico = createServerFn({ method: "GET" })
       autor_id: h.autorId,
       autor_nome: h.autor?.profile?.nomeCompleto ?? h.autor?.email ?? null,
       autor_avatar_url: h.autor?.profile?.avatarUrl ?? null,
-    }));
-
-    return historicos.map((h) => ({
-      id: h.id,
-      tipo: h.tipo,
-      titulo: h.titulo,
-      descricao: h.descricao,
-      valor_anterior: h.valorAnterior,
-      valor_novo: h.valorNovo,
-      created_at: h.createdAt,
     }));
   });
 
@@ -840,47 +815,37 @@ export const updateSolicitacaoAdmin = createServerFn({ method: "POST" })
 
     const responsavel = data.responsavel_id
       ? await prisma.user.findFirst({
-        where: {
-          id: data.responsavel_id,
-          profile: {
-            status: "ativo",
-          },
-          roles: {
-            some: {
-              role: {
-                in: ["admin", "equipe_te", "editor"],
+          where: {
+            id: data.responsavel_id,
+            profile: {
+              status: "ativo",
+            },
+            roles: {
+              some: {
+                role: {
+                  in: ["admin", "equipe_te", "editor"],
+                },
               },
             },
           },
-        },
-        include: {
-          profile: true,
-        },
-      })
+          include: {
+            profile: true,
+          },
+        })
       : null;
 
     if (data.responsavel_id && !responsavel) {
       throw new Error("Responsável selecionado não está ativo ou não possui papel permitido.");
     }
 
-    const status = await getConfigOpcaoNome(
-      prisma,
-      "status_solicitacao",
-      data.status,
-      "",
-    );
+    const status = await getConfigOpcaoNome(prisma, "status_solicitacao", data.status, "");
 
     if (!status) {
       throw new Error("Status inválido ou não configurado.");
     }
 
     const urgencia = data.urgencia
-      ? await getConfigOpcaoNome(
-        prisma,
-        "prioridade_solicitacao",
-        data.urgencia,
-        "",
-      )
+      ? await getConfigOpcaoNome(prisma, "prioridade_solicitacao", data.urgencia, "")
       : null;
 
     const before = await prisma.solicitacao.findUnique({
