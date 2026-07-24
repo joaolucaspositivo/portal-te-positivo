@@ -31,7 +31,9 @@ const UnidadeInput = z.object({
 export const listUnidades = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("unidades")
       .select("*")
       .order("nome");
@@ -40,7 +42,7 @@ export const listUnidades = createServerFn({ method: "GET" })
     const ids = (data ?? []).map((u: any) => u.id);
     if (ids.length === 0) return (data ?? []).map((u: any) => ({ ...u, usuarios_count: 0 }));
 
-    const { data: vinculos } = await context.supabase
+    const { data: vinculos } = await supabaseAdmin
       .from("usuario_unidades")
       .select("unidade_id");
     const counts = new Map<string, number>();
@@ -54,7 +56,9 @@ export const getUnidade = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: u, error } = await context.supabase
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: u, error } = await supabaseAdmin
       .from("unidades").select("*").eq("id", data.id).maybeSingle();
     if (error) throw new Error(error.message);
     return u;
