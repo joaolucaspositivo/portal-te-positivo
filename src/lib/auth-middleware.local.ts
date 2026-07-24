@@ -31,7 +31,7 @@ export const requireAuth = createMiddleware({ type: "function" }).server(async (
 /** Use depois de requireAuth pra exigir um papel específico. */
 export function requireRole(role: AppRole) {
   return createMiddleware({ type: "function" }).server(async ({ next, context }) => {
-    const ctx = context as { roles?: AppRole[] };
+    const ctx = context as unknown as { roles?: AppRole[] };
     if (!ctx.roles?.includes(role)) {
       throw new Error(`Forbidden: papel "${role}" obrigatório`);
     }

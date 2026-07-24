@@ -38,7 +38,7 @@ export const signUp = createServerFn({ method: "POST" })
       await prisma.profile.update({ where: { id: user.id }, data: { status: "ativo" } });
     }
 
-    const roles = user.roles.map((r) => r.role);
+    const roles = user.roles.map((r: { role: import("@prisma/client").$Enums.AppRole }) => r.role);
     const accessToken = signAccessToken({ sub: user.id, email: user.email, roles });
     const refreshToken = await issueRefreshToken(user.id);
     return { accessToken, refreshToken, user: { id: user.id, email: user.email, roles } };
@@ -63,7 +63,7 @@ export const signIn = createServerFn({ method: "POST" })
     const ok = await verifyPassword(data.password, user.passwordHash);
     if (!ok) throw new Error("E-mail ou senha inválidos.");
 
-    const roles = user.roles.map((r) => r.role);
+    const roles = user.roles.map((r: { role: import("@prisma/client").$Enums.AppRole }) => r.role);
     const accessToken = signAccessToken({ sub: user.id, email: user.email, roles });
     const refreshToken = await issueRefreshToken(user.id);
     return { accessToken, refreshToken, user: { id: user.id, email: user.email, roles } };
@@ -86,7 +86,7 @@ export const refreshSession = createServerFn({ method: "POST" })
     });
     if (!user) throw new Error("Usuário não encontrado.");
 
-    const roles = user.roles.map((r) => r.role);
+    const roles = user.roles.map((r: { role: import("@prisma/client").$Enums.AppRole }) => r.role);
     const accessToken = signAccessToken({ sub: user.id, email: user.email, roles });
     return {
       accessToken,

@@ -11,6 +11,33 @@ services:
       - "5432:5432"
     volumes:
       - portal_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal -d portal_te"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portal-te-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # Sobrescreve DATABASE_URL do .env pra usar o hostname interno do compose
+      DATABASE_URL: "postgresql://portal:portal_dev_password@postgres:5432/portal_te?schema=public"
+      NODE_ENV: production
+      PORT: "3000"
+      UPLOAD_DIR: /var/lib/portal-te/uploads
+    ports:
+      - "3000:3000"
+    volumes:
+      - portal_uploads:/var/lib/portal-te/uploads
 
 volumes:
   portal_pgdata:
+  portal_uploads:
