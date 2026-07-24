@@ -1,0 +1,12 @@
+node_modules
+dist
+.wrangler
+.output
+.git
+.env
+.env.local
+*.log
+.DS_Store
+.lovable
+supabase
+MIGRACAO_POSTGRES.md
