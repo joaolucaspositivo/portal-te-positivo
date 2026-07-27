@@ -1,18 +1,23 @@
 // functionMiddleware cliente: anexa o access token JWT a toda chamada de server fn.
 // Substitui o attachSupabaseAuth gerado.
+// Guarda access token em memória (não em localStorage — o refresh é que persiste).
 import { createMiddleware } from "@tanstack/react-start";
 
-const ACCESS_TOKEN_KEY = "portal-te.accessToken";
+let accessToken: string | null = null;
+const listeners = new Set<() => void>();
 
 export function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  return accessToken;
 }
 
 export function setAccessToken(token: string | null): void {
-  if (typeof window === "undefined") return;
-  if (token) window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
-  else window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  accessToken = token;
+  listeners.forEach((l) => l());
+}
+
+export function subscribeAccessToken(l: () => void): () => void {
+  listeners.add(l);
+  return () => listeners.delete(l);
 }
 
 export const attachLocalAuth = createMiddleware({ type: "function" }).client(async ({ next }) => {

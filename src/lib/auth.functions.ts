@@ -120,7 +120,18 @@ export const getCurrentUser = createServerFn({ method: "GET" })
         id: user.id,
         email: user.email,
         roles: user.roles.map((r) => r.role),
-        profile: user.profile,
+        profile: user.profile
+          ? {
+              id: user.profile.id,
+              nome_completo: user.profile.nomeCompleto,
+              cargo: user.profile.cargo,
+              unidade: user.profile.unidade,
+              telefone: user.profile.telefone,
+              avatar_url: user.profile.avatarUrl,
+              bio: user.profile.bio,
+              status: user.profile.status,
+            }
+          : null,
       };
     } catch {
       return null;

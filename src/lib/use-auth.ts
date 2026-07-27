@@ -1,70 +1,85 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import { useCallback, useEffect, useState } from "react";
+import type { AppRole, ProfileStatus } from "@prisma/client";
+import { fetchCurrentUser, tryRefresh } from "./auth-client";
+import { subscribeAccessToken, getAccessToken } from "./auth-attacher.local";
 
-type Role = Database["public"]["Enums"]["app_role"];
-type ProfileStatus = Database["public"]["Enums"]["profile_status"];
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+/** Perfil serializado (snake_case) — formato consumido pelas telas. */
+export type ProfileDTO = {
+  id: string;
+  nome_completo: string | null;
+  cargo: string | null;
+  unidade: string | null;
+  telefone: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  status: ProfileStatus;
+};
+
+type CurrentUser = {
+  id: string;
+  email: string;
+  roles: AppRole[];
+  profile: ProfileDTO | null;
+};
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
-    async function loadFor(u: User | null) {
-      if (!u) {
-        if (mounted) {
-          setRoles([]);
-          setProfile(null);
-          setLoading(false);
-        }
+  const reload = useCallback(async () => {
+    // Se não temos access token mas temos refresh, tenta renovar.
+    if (!getAccessToken()) {
+      const ok = await tryRefresh();
+      if (!ok) {
+        setUser(null);
+        setLoading(false);
         return;
       }
-      const [{ data: rolesData }, { data: profData }] = await Promise.all([
-        supabase.from("user_roles").select("role").eq("user_id", u.id),
-        supabase.from("profiles").select("*").eq("id", u.id).maybeSingle(),
-      ]);
-      if (mounted) {
-        setRoles((rolesData ?? []).map((r) => r.role));
-        setProfile(profData ?? null);
-        setLoading(false);
-      }
     }
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setUser(data.session?.user ?? null);
-      loadFor(data.session?.user ?? null);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      setUser(session?.user ?? null);
-      loadFor(session?.user ?? null);
-    });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
+    try {
+      const me = await fetchCurrentUser();
+      setUser(me ? (me as CurrentUser) : null);
+    } catch {
+      // Token pode ter expirado; tenta refresh e reprova.
+      const ok = await tryRefresh();
+      if (ok) {
+        try {
+          const me = await fetchCurrentUser();
+          setUser(me ? (me as CurrentUser) : null);
+        } catch {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    void reload();
+    const unsub = subscribeAccessToken(() => {
+      void reload();
+    });
+    return unsub;
+  }, [reload]);
+
+  const roles = user?.roles ?? [];
   const isAdmin = roles.includes("admin");
   const isEquipeTE = roles.includes("equipe_te") || isAdmin;
   const isEditor = roles.includes("editor") || isAdmin;
-  const status: ProfileStatus | null = profile?.status ?? null;
-  return { user, roles, profile, status, isAdmin, isEquipeTE, isEditor, loading, refresh: () => {
-    supabase.auth.getSession().then(({ data }) => {
-      const u = data.session?.user ?? null;
-      setUser(u);
-      if (!u) { setRoles([]); setProfile(null); return; }
-      Promise.all([
-        supabase.from("user_roles").select("role").eq("user_id", u.id),
-        supabase.from("profiles").select("*").eq("id", u.id).maybeSingle(),
-      ]).then(([{ data: rd }, { data: pd }]) => {
-        setRoles((rd ?? []).map((r) => r.role));
-        setProfile(pd ?? null);
-      });
-    });
-  } };
+  const status: ProfileStatus | null = user?.profile?.status ?? null;
+
+  return {
+    user,
+    roles,
+    profile: user?.profile ?? null,
+    status,
+    isAdmin,
+    isEquipeTE,
+    isEditor,
+    loading,
+    refresh: reload,
+  };
 }
