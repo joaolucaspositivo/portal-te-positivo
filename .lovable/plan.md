@@ -1,103 +1,66 @@
-## Objetivo
+## Passo 2 — Runtime Node + Auth cliente Prisma (standalone completo)
 
-Transformar o Portal TE em uma aplicação **100% independente do Lovable/Supabase**, empacotada em Docker, com Postgres + Prisma + backend próprio (Node) + frontend React servido pelo mesmo servidor. Instalação: `git clone` → `cp .env.example .env` → `docker compose up -d` → pronto.
+Esta é a virada definitiva: o preview do Lovable **para de funcionar** depois deste passo. A partir daqui todo desenvolvimento acontece via `docker compose up`.
 
-A Fase A (Prisma schema, auth caseiro JWT/bcrypt, `db.server.ts`, `auth.functions.ts`, docker-compose do Postgres) já está feita. Este plano é a **Fase B**: trocar toda a camada Supabase por Prisma + disco local, mudar o runtime de Cloudflare Worker para Node, e empacotar tudo em Docker.
+### 1. Runtime: Cloudflare Worker → Node
 
----
+- `vite.config.ts`: trocar preset nitro para `node-server`; remover `src/server.ts` (wrapper Worker) e apontar entry padrão do TanStack Start.
+- `package.json`: script `start` = `node .output/server/index.mjs`; ajustar `Dockerfile`/entrypoint pra rodar `node` ao invés de wrangler/worker.
+- Remover dependências e código Cloudflare (`@lovable.dev/vite-tanstack-config` mantém, mas o target vira Node).
 
-## Escopo
+### 2. Auth do cliente — trocar Supabase por JWT local
 
-### 1. Runtime: Cloudflare Worker → Node.js
+Substituir todo `supabase.auth.*` no frontend:
 
-- Substituir `@lovable.dev/vite-tanstack-config` por config Vite/TanStack Start padrão apontando para preset **`node-server`** (não `cloudflare`).
-- Reescrever `src/server.ts` como entry Node (sem `env`/`ctx` do Worker).
-- Remover `wrangler`/nitro-cloudflare do build.
+- **Novo `src/lib/auth-client.ts`**: guarda `accessToken` em memória + `refreshToken` em `localStorage`; funções `signIn/signUp/signOut/refresh/getCurrentUser` chamando as `createServerFn` já existentes em `src/lib/auth.functions.ts`.
+- **Reescrever `src/lib/use-auth.ts`**: usar o novo client (sem `@supabase/supabase-js`), retorno igual (`user`, `roles`, `profile`, `isAdmin`, etc.) pra não quebrar as telas.
+- **Reescrever `src/routes/auth.tsx`**: form chama `signIn/signUp` locais.
+- **`src/start.ts`**: trocar `attachSupabaseAuth` por middleware novo `attachLocalAuth` (já existe em `src/lib/auth-attacher.local.ts`) que injeta `Authorization: Bearer <accessToken>`.
+- **Refresh automático**: interceptar 401 do server function, chamar `refreshSession`, repetir a chamada uma vez.
 
-### 2. Auth: Supabase Auth → JWT caseiro (já pronto no backend)
+### 3. Data layer — reescrever `*.functions.ts` para Prisma
 
-- Trocar `src/lib/use-auth.ts` para consumir `getCurrentUser` + `signIn`/`signOut`/`refreshSession` locais.
-- Reescrever `src/routes/auth.tsx` (login/signup/reset) chamando as server fns locais.
-- Criar `/reset-password` (token por e-mail via SMTP, ou log em dev).
-- Em `src/start.ts`, trocar `attachSupabaseAuth` por `attachLocalAuth`.
-- Refresh automático em 401 no cliente.
-- Trigger de admin (`tecipp@colegiopositivo.com.br` + `joao.duarte@...`) migrado para o `signUp` do `auth.functions.ts`.
+Trocar cliente Supabase por Prisma nos arquivos:
 
-### 3. Data layer: PostgREST/`supabase-js` → Prisma
+- `src/lib/users.functions.ts` (list/approve/block/edit user, gerir roles e unidades)
+- `src/lib/unidades.functions.ts` (CRUD + link usuário-unidade)
+- Criar `src/lib/solicitacoes.functions.ts`, `src/lib/comunicados.functions.ts`, `src/lib/ferramentas.functions.ts`, `src/lib/contatos.functions.ts`, `src/lib/tipos-solicitacao.functions.ts` e `src/lib/perfil.functions.ts` cobrindo o que hoje é query Supabase direto nas rotas.
+- Reescrever cada rota (`src/routes/area-te.*.tsx`, `src/routes/index.tsx`, `/comunicados`, `/contatos`, `/ferramentas`, `/solicitacoes.*`) pra consumir as server functions via TanStack Query (não mais `supabase.from(...)` no cliente).
+- Autorização: middleware `requireAuth` + checagem de `roles` dentro de cada handler (equivalente às RLS antigas).
 
-Reescrever todas as `*.functions.ts` para usar Prisma, com autorização explícita no código (substitui RLS):
+### 4. Upload/download em disco local
 
-- `users.functions.ts` — CRUD usuários, aprovar/bloquear, papéis.
-- `unidades.functions.ts` — CRUD unidades + vínculos usuário↔unidade.
-- Criar: `solicitacoes.functions.ts`, `tipos-solicitacao.functions.ts`, `comunicados.functions.ts`, `ferramentas.functions.ts`, `contatos.functions.ts`, `profiles.functions.ts`.
-- Rotas públicas que hoje leem via `supabase` no cliente passam a chamar server fns.
-- Helper `requireRole(...)` já existe em `auth-middleware.local.ts`.
+- **Nova rota** `src/routes/api/upload.ts` (POST multipart, auth obrigatória, valida mime/tamanho, salva em `UPLOAD_DIR/<bucket>/<uuid>-<nome>`).
+- **Nova rota** `src/routes/api/files/$.ts` (GET, checa permissão conforme bucket: `portal-avatars` público-autenticado, `portal-media` público, retorna arquivo via stream Node).
+- Tabela `uploads` (id, path, mime, size, ownerId, bucket) via nova migração Prisma.
+- Trocar `src/components/image-upload-field.tsx` e `src/components/storage-image.tsx` para usar `/api/upload` e `/api/files/...` (sem signed URLs).
+- Coluna `avatar_url`/`imagem_url` passa a guardar path relativo (`/api/files/portal-media/<id>`).
 
-### 4. Storage: Supabase Storage → disco local
+### 5. Google OAuth manual
 
-- Rota `POST /api/upload` (multipart, autenticada, valida mime/tamanho) salva em `UPLOAD_DIR` com nome `uuid.ext`.
-- Rota `GET /api/files/:path` serve com checagem de auth (buckets privados) ou público (avatares/imagens de comunicados/ferramentas — a escolher).
-- Substituir `StorageImage`/`useSignedUrl` (`src/components/storage-image.tsx`) e `ImageUploadField` pelas novas rotas.
-- Buckets viram pastas: `portal-media/`, `portal-avatars/`.
+- Rotas `src/routes/api/auth/google.ts` (redirect) e `src/routes/api/auth/google/callback.ts` (troca `code` por token, busca perfil, faz upsert em `User`, emite JWT/refresh e redireciona pro app).
+- Botão "Entrar com Google" em `/auth` aponta pra `/api/auth/google`.
+- Usa `GOOGLE_OAUTH_CLIENT_ID`/`SECRET` do `.env` (já existem).
 
-### 5. Migração de dados (Supabase → Postgres local)
+### 6. Limpeza Supabase
 
-Script `scripts/migrate-from-supabase.ts`:
+- Remover `@supabase/supabase-js`, `@lovable.dev/cloud-auth-js` do `package.json`.
+- Deletar `src/integrations/supabase/*`, `supabase/config.toml`.
+- Remover `attachSupabaseAuth`/`requireSupabaseAuth` do código.
+- Remover `.env` vars `VITE_SUPABASE_*`.
 
-1. Lê tabelas do Supabase via `supabase-js` (URL/anon existentes).
-2. Insere no Postgres local via Prisma respeitando ordem de FKs.
-3. Baixa arquivos dos buckets e salva em `UPLOAD_DIR`, reescrevendo caminhos.
-4. Usuários: cria em `users` sem senha (`password_hash = null`) e força fluxo "definir senha" no primeiro login (token por e-mail).
+### 7. Script de migração de dados
 
-### 6. Docker & empacotamento
+- `scripts/migrate-from-supabase.ts` (tsx): lê `MIGRATE_SUPABASE_URL`/`SERVICE_ROLE_KEY`, copia tabelas na ordem correta de FKs (users → profiles → user_roles → unidades → usuario_unidades → solicitacao_tipos/campos → solicitacoes → comunicados → ferramentas → contatos), baixa arquivos dos buckets `portal-media`/`portal-avatars` pra `UPLOAD_DIR` e reescreve as URLs.
+- Documentado em `README.standalone.md` (seção já existe, será finalizada).
 
-- `Dockerfile` multi-stage (deps → build → runtime Node 20-alpine, non-root, healthcheck em `/api/health`).
-- `docker-compose.yml` completo com 3 serviços: `postgres`, `app` (porta 3000), `migrator` (roda `prisma migrate deploy` uma vez).
-- Volumes: `pgdata`, `uploads`.
-- `.env.example` já existe — completar com `SESSION_SECRET`, `NODE_ENV`, etc.
-- `entrypoint.sh`: espera Postgres → `prisma migrate deploy` → `node .output/server/index.mjs`.
+### 8. Validação final
 
-### 7. Limpeza final
-
-Remover: `src/integrations/supabase/*`, `supabase/`, dependência `@supabase/supabase-js`, `MIGRACAO_POSTGRES.md` (substituído por `README.md` novo com instrução Docker), `attachSupabaseAuth`, arquivos `.server.ts` do Supabase.
-
-### 8. Documentação
-
-`README.md` novo cobrindo: pré-requisitos (Docker), instalação em 3 comandos, primeiro login admin, backup do volume Postgres, migração a partir de instância Supabase existente, configuração OAuth Google (opcional), SMTP para reset de senha.
+- `docker compose up -d --build` → app sobe em `localhost:3000`.
+- Fluxo E2E: signup → login → criar unidade → aprovar usuário → abrir solicitação → upload de imagem em comunicado → logout.
 
 ---
 
-## Ordem de execução (para não quebrar tudo de uma vez)
+### Aviso importante
 
-```text
-1. Runtime Node + Dockerfile + compose (app roda vazio)
-2. Auth cliente (use-auth + auth.tsx + start.ts) apontando pro backend local
-3. Reescrever functions Prisma módulo a módulo:
-   profiles → users → unidades → tipos-solicitacao →
-   solicitacoes → comunicados → ferramentas → contatos
-4. Rotas de upload/download + trocar StorageImage/ImageUploadField
-5. Script de migração de dados Supabase→local
-6. Remover código Supabase morto
-7. README + smoke test end-to-end via Docker
-```
-
-Cada passo mantém o app buildando; passos 3.x são independentes por módulo.
-
----
-
-## Trade-offs (pontos importantes)
-
-- **Preview do Lovable para de funcionar** a partir do passo 1 (runtime Node ≠ Cloudflare Worker). Desenvolvimento passa a ser 100% local via `docker compose up`.
-- **Perde**: realtime do Supabase (não usamos hoje), UI de admin do Supabase, edge global. **Ganha**: autonomia total, `psql`/`prisma studio` direto, deploy em qualquer VPS.
-- **Reset de senha por e-mail**: exige SMTP configurado; sem SMTP, o link vai pro log do container (ok em dev).
-- **OAuth Google**: opcional, adiciono se você quiser manter — precisa cadastrar redirect URI da URL pública final.
-- **Escala**: single-node com disco local. Multi-instância exigiria S3/MinIO no futuro (fácil de trocar depois).
-
----
-
-## Perguntas antes de começar
-
-1. **URL pública final**: já tem domínio definido (ex.: `portal-te.colegiopositivo.com.br`) ou rodo tudo com placeholder `http://localhost:3000` e você troca depois?
-2. **OAuth Google**: mantém no MVP ou fica só e-mail/senha por enquanto?
-3. **Migração de dados Supabase**: quer que eu escreva o script pra puxar os dados atuais (comunicados, ferramentas, usuários já cadastrados) ou começa base zerada?
-4. **SMTP**: você já tem servidor SMTP (do Colégio) ou uso Mailhog no compose pra desenvolvimento e você pluga o real depois?
+Depois deste passo o **preview do Lovable não abre mais** (o runtime Cloudflare é substituído por Node). Todo desenvolvimento futuro vira `docker compose up` local + edição manual — a experiência "editar no Lovable e ver o preview" acaba. Confirma que quer seguir assim antes de eu implementar?
