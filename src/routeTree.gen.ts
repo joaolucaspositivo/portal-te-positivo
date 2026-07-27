@@ -15,7 +15,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ComunicadosRouteImport } from './routes/comunicados'
 import { Route as ContatosRouteImport } from './routes/contatos'
 import { Route as FerramentasRouteImport } from './routes/ferramentas'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SobreRouteImport } from './routes/sobre'
+import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
 import { Route as AreaTeComunicadosRouteImport } from './routes/area-te.comunicados'
 import { Route as AreaTeContatosRouteImport } from './routes/area-te.contatos'
@@ -25,11 +28,15 @@ import { Route as AreaTeSolicitacoesRouteImport } from './routes/area-te.solicit
 import { Route as AreaTeTiposSolicitacaoRouteImport } from './routes/area-te.tipos-solicitacao'
 import { Route as AreaTeUnidadesRouteImport } from './routes/area-te.unidades'
 import { Route as AreaTeUsuariosRouteImport } from './routes/area-te.usuarios'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as SolicitacoesIndexRouteImport } from './routes/solicitacoes.index'
 import { Route as SolicitacoesSlugRouteImport } from './routes/solicitacoes.$slug'
+import { Route as ApiAuthGoogleRouteImport } from './routes/api/auth.google'
+import { Route as ApiFilesSplatRouteImport } from './routes/api/files.$'
 import { Route as AreaTeSolicitacoesIdRouteImport } from './routes/area-te.solicitacoes.$id'
 import { Route as AreaTeTiposSolicitacaoIdRouteImport } from './routes/area-te.tipos-solicitacao.$id'
 import { Route as AreaTeUnidadesIdRouteImport } from './routes/area-te.unidades.$id'
+import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api/auth.google.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,9 +68,24 @@ const FerramentasRoute = FerramentasRouteImport.update({
   path: '/ferramentas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
   path: '/sobre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUploadRoute = ApiUploadRouteImport.update({
+  id: '/api/upload',
+  path: '/api/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AreaTeIndexRoute = AreaTeIndexRouteImport.update({
@@ -111,6 +133,11 @@ const AreaTeUsuariosRoute = AreaTeUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AreaTeRoute,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
 const SolicitacoesIndexRoute = SolicitacoesIndexRouteImport.update({
   id: '/solicitacoes/',
   path: '/solicitacoes/',
@@ -119,6 +146,16 @@ const SolicitacoesIndexRoute = SolicitacoesIndexRouteImport.update({
 const SolicitacoesSlugRoute = SolicitacoesSlugRouteImport.update({
   id: '/solicitacoes/$slug',
   path: '/solicitacoes/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthGoogleRoute = ApiAuthGoogleRouteImport.update({
+  id: '/api/auth/google',
+  path: '/api/auth/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFilesSplatRoute = ApiFilesSplatRouteImport.update({
+  id: '/api/files/$',
+  path: '/api/files/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AreaTeSolicitacoesIdRoute = AreaTeSolicitacoesIdRouteImport.update({
@@ -137,15 +174,23 @@ const AreaTeUnidadesIdRoute = AreaTeUnidadesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AreaTeUnidadesRoute,
 } as any)
+const ApiAuthGoogleCallbackRoute = ApiAuthGoogleCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => ApiAuthGoogleRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/area-te': typeof AreaTeRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
+  '/api/upload': typeof ApiUploadRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
@@ -154,20 +199,27 @@ export interface FileRoutesByFullPath {
   '/area-te/tipos-solicitacao': typeof AreaTeTiposSolicitacaoRouteWithChildren
   '/area-te/unidades': typeof AreaTeUnidadesRouteWithChildren
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/solicitacoes/$slug': typeof SolicitacoesSlugRoute
   '/area-te/': typeof AreaTeIndexRoute
   '/solicitacoes/': typeof SolicitacoesIndexRoute
+  '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/files/$': typeof ApiFilesSplatRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
   '/area-te/tipos-solicitacao/$id': typeof AreaTeTiposSolicitacaoIdRoute
   '/area-te/unidades/$id': typeof AreaTeUnidadesIdRoute
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
+  '/api/upload': typeof ApiUploadRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
@@ -176,22 +228,29 @@ export interface FileRoutesByTo {
   '/area-te/tipos-solicitacao': typeof AreaTeTiposSolicitacaoRouteWithChildren
   '/area-te/unidades': typeof AreaTeUnidadesRouteWithChildren
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/solicitacoes/$slug': typeof SolicitacoesSlugRoute
   '/area-te': typeof AreaTeIndexRoute
   '/solicitacoes': typeof SolicitacoesIndexRoute
+  '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/files/$': typeof ApiFilesSplatRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
   '/area-te/tipos-solicitacao/$id': typeof AreaTeTiposSolicitacaoIdRoute
   '/area-te/unidades/$id': typeof AreaTeUnidadesIdRoute
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/area-te': typeof AreaTeRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/comunicados': typeof ComunicadosRoute
   '/contatos': typeof ContatosRoute
   '/ferramentas': typeof FerramentasRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
+  '/api/upload': typeof ApiUploadRoute
   '/area-te/comunicados': typeof AreaTeComunicadosRoute
   '/area-te/contatos': typeof AreaTeContatosRoute
   '/area-te/ferramentas': typeof AreaTeFerramentasRoute
@@ -200,12 +259,16 @@ export interface FileRoutesById {
   '/area-te/tipos-solicitacao': typeof AreaTeTiposSolicitacaoRouteWithChildren
   '/area-te/unidades': typeof AreaTeUnidadesRouteWithChildren
   '/area-te/usuarios': typeof AreaTeUsuariosRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/solicitacoes/$slug': typeof SolicitacoesSlugRoute
   '/area-te/': typeof AreaTeIndexRoute
   '/solicitacoes/': typeof SolicitacoesIndexRoute
+  '/api/auth/google': typeof ApiAuthGoogleRouteWithChildren
+  '/api/files/$': typeof ApiFilesSplatRoute
   '/area-te/solicitacoes/$id': typeof AreaTeSolicitacoesIdRoute
   '/area-te/tipos-solicitacao/$id': typeof AreaTeTiposSolicitacaoIdRoute
   '/area-te/unidades/$id': typeof AreaTeUnidadesIdRoute
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -216,7 +279,10 @@ export interface FileRouteTypes {
     | '/comunicados'
     | '/contatos'
     | '/ferramentas'
+    | '/forgot-password'
+    | '/reset-password'
     | '/sobre'
+    | '/api/upload'
     | '/area-te/comunicados'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
@@ -225,12 +291,16 @@ export interface FileRouteTypes {
     | '/area-te/tipos-solicitacao'
     | '/area-te/unidades'
     | '/area-te/usuarios'
+    | '/auth/callback'
     | '/solicitacoes/$slug'
     | '/area-te/'
     | '/solicitacoes/'
+    | '/api/auth/google'
+    | '/api/files/$'
     | '/area-te/solicitacoes/$id'
     | '/area-te/tipos-solicitacao/$id'
     | '/area-te/unidades/$id'
+    | '/api/auth/google/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -238,7 +308,10 @@ export interface FileRouteTypes {
     | '/comunicados'
     | '/contatos'
     | '/ferramentas'
+    | '/forgot-password'
+    | '/reset-password'
     | '/sobre'
+    | '/api/upload'
     | '/area-te/comunicados'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
@@ -247,12 +320,16 @@ export interface FileRouteTypes {
     | '/area-te/tipos-solicitacao'
     | '/area-te/unidades'
     | '/area-te/usuarios'
+    | '/auth/callback'
     | '/solicitacoes/$slug'
     | '/area-te'
     | '/solicitacoes'
+    | '/api/auth/google'
+    | '/api/files/$'
     | '/area-te/solicitacoes/$id'
     | '/area-te/tipos-solicitacao/$id'
     | '/area-te/unidades/$id'
+    | '/api/auth/google/callback'
   id:
     | '__root__'
     | '/'
@@ -261,7 +338,10 @@ export interface FileRouteTypes {
     | '/comunicados'
     | '/contatos'
     | '/ferramentas'
+    | '/forgot-password'
+    | '/reset-password'
     | '/sobre'
+    | '/api/upload'
     | '/area-te/comunicados'
     | '/area-te/contatos'
     | '/area-te/ferramentas'
@@ -270,24 +350,33 @@ export interface FileRouteTypes {
     | '/area-te/tipos-solicitacao'
     | '/area-te/unidades'
     | '/area-te/usuarios'
+    | '/auth/callback'
     | '/solicitacoes/$slug'
     | '/area-te/'
     | '/solicitacoes/'
+    | '/api/auth/google'
+    | '/api/files/$'
     | '/area-te/solicitacoes/$id'
     | '/area-te/tipos-solicitacao/$id'
     | '/area-te/unidades/$id'
+    | '/api/auth/google/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AreaTeRoute: typeof AreaTeRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   ComunicadosRoute: typeof ComunicadosRoute
   ContatosRoute: typeof ContatosRoute
   FerramentasRoute: typeof FerramentasRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SobreRoute: typeof SobreRoute
+  ApiUploadRoute: typeof ApiUploadRoute
   SolicitacoesSlugRoute: typeof SolicitacoesSlugRoute
   SolicitacoesIndexRoute: typeof SolicitacoesIndexRoute
+  ApiAuthGoogleRoute: typeof ApiAuthGoogleRouteWithChildren
+  ApiFilesSplatRoute: typeof ApiFilesSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -334,11 +423,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FerramentasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sobre': {
       id: '/sobre'
       path: '/sobre'
       fullPath: '/sobre'
       preLoaderRoute: typeof SobreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/upload': {
+      id: '/api/upload'
+      path: '/api/upload'
+      fullPath: '/api/upload'
+      preLoaderRoute: typeof ApiUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/area-te/': {
@@ -404,6 +514,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeUsuariosRouteImport
       parentRoute: typeof AreaTeRoute
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/solicitacoes/': {
       id: '/solicitacoes/'
       path: '/solicitacoes'
@@ -416,6 +533,20 @@ declare module '@tanstack/react-router' {
       path: '/solicitacoes/$slug'
       fullPath: '/solicitacoes/$slug'
       preLoaderRoute: typeof SolicitacoesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/google': {
+      id: '/api/auth/google'
+      path: '/api/auth/google'
+      fullPath: '/api/auth/google'
+      preLoaderRoute: typeof ApiAuthGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/files/$': {
+      id: '/api/files/$'
+      path: '/api/files/$'
+      fullPath: '/api/files/$'
+      preLoaderRoute: typeof ApiFilesSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/area-te/solicitacoes/$id': {
@@ -438,6 +569,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/area-te/unidades/$id'
       preLoaderRoute: typeof AreaTeUnidadesIdRouteImport
       parentRoute: typeof AreaTeUnidadesRoute
+    }
+    '/api/auth/google/callback': {
+      id: '/api/auth/google/callback'
+      path: '/callback'
+      fullPath: '/api/auth/google/callback'
+      preLoaderRoute: typeof ApiAuthGoogleCallbackRouteImport
+      parentRoute: typeof ApiAuthGoogleRoute
     }
   }
 }
@@ -506,16 +644,43 @@ const AreaTeRouteChildren: AreaTeRouteChildren = {
 const AreaTeRouteWithChildren =
   AreaTeRoute._addFileChildren(AreaTeRouteChildren)
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
+interface ApiAuthGoogleRouteChildren {
+  ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
+}
+
+const ApiAuthGoogleRouteChildren: ApiAuthGoogleRouteChildren = {
+  ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,
+}
+
+const ApiAuthGoogleRouteWithChildren = ApiAuthGoogleRoute._addFileChildren(
+  ApiAuthGoogleRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AreaTeRoute: AreaTeRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   ComunicadosRoute: ComunicadosRoute,
   ContatosRoute: ContatosRoute,
   FerramentasRoute: FerramentasRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SobreRoute: SobreRoute,
+  ApiUploadRoute: ApiUploadRoute,
   SolicitacoesSlugRoute: SolicitacoesSlugRoute,
   SolicitacoesIndexRoute: SolicitacoesIndexRoute,
+  ApiAuthGoogleRoute: ApiAuthGoogleRouteWithChildren,
+  ApiFilesSplatRoute: ApiFilesSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
