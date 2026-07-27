@@ -1,13 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
-import type { AppRole, Profile, ProfileStatus } from "@prisma/client";
+import type { AppRole, ProfileStatus } from "@prisma/client";
 import { fetchCurrentUser, tryRefresh } from "./auth-client";
 import { subscribeAccessToken, getAccessToken } from "./auth-attacher.local";
+
+/** Perfil serializado (snake_case) — formato consumido pelas telas. */
+export type ProfileDTO = {
+  id: string;
+  nome_completo: string | null;
+  cargo: string | null;
+  unidade: string | null;
+  telefone: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  status: ProfileStatus;
+};
 
 type CurrentUser = {
   id: string;
   email: string;
   roles: AppRole[];
-  profile: Profile | null;
+  profile: ProfileDTO | null;
 };
 
 export function useAuth() {
