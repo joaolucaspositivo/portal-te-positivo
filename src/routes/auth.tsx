@@ -109,11 +109,14 @@ function AuthPage() {
             Entrar com Google
           </button>
           <div className="mt-4 flex items-center justify-between text-sm">
-            <button onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                  className="mt-4 text-sm text-primary hover:underline w-full text-center">
-            {mode === "login" ? "Não tem conta? Criar conta" : "Já tem conta? Entrar"}
-          </button>
-            <a href="/forgot-password" className="text-sm text-muted-foreground hover:underline">
+            <button
+              type="button"
+              onClick={() => setMode(mode === "login" ? "signup" : "login")}
+              className="text-primary hover:underline"
+            >
+              {mode === "login" ? "Criar conta" : "Já tenho conta"}
+            </button>
+            <a href="/forgot-password" className="text-muted-foreground hover:underline">
               Esqueci a senha
             </a>
           </div>
