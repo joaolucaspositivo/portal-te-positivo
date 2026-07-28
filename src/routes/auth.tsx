@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+import { signIn, signUp, fetchCurrentUser } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -21,32 +21,34 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/area-te" });
-    });
+    fetchCurrentUser()
+      .then((me) => {
+        if (me) navigate({ to: "/area-te" });
+      })
+      .catch(() => {});
   }, [navigate]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    if (mode === "login") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      if (mode === "login") {
+        await signIn(email, password);
+        navigate({ to: "/area-te" });
+      } else {
+        await signUp(email, password, name);
+        toast.success("Conta criada. Aguarde aprovação de um administrador para acessar a Área da TE.");
+        navigate({ to: "/area-te" });
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha na autenticação");
+    } finally {
       setLoading(false);
-      if (error) return toast.error(error.message);
-      navigate({ to: "/area-te" });
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email, password,
-        options: {
-          data: { nome: name },
-          emailRedirectTo: `${window.location.origin}/area-te`,
-        },
-      });
-      setLoading(false);
-      if (error) return toast.error(error.message);
-      toast.success("Conta criada. Você já pode entrar.");
-      setMode("login");
     }
+  }
+
+  function loginWithGoogle() {
+    window.location.href = "/api/auth/google";
   }
 
   return (
@@ -87,10 +89,37 @@ function AuthPage() {
               {loading ? "Aguarde…" : mode === "login" ? "Entrar" : "Criar conta"}
             </button>
           </form>
-          <button onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                  className="mt-4 text-sm text-primary hover:underline w-full text-center">
-            {mode === "login" ? "Não tem conta? Criar conta" : "Já tem conta? Entrar"}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">ou</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={loginWithGoogle}
+            className="w-full py-2.5 rounded-md border font-medium hover:bg-muted transition flex items-center justify-center gap-2"
+          >
+            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 010-9.18l-7.98-6.19a24 24 0 000 21.56l7.98-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Entrar com Google
           </button>
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <button
+              type="button"
+              onClick={() => setMode(mode === "login" ? "signup" : "login")}
+              className="text-primary hover:underline"
+            >
+              {mode === "login" ? "Criar conta" : "Já tenho conta"}
+            </button>
+            <a href="/forgot-password" className="text-muted-foreground hover:underline">
+              Esqueci a senha
+            </a>
+          </div>
         </div>
       </main>
       <SiteFooter />
