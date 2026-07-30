@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useSignedUrl } from "./storage-image";
+import { fileUrl } from "./storage-image";
+import { getAccessToken } from "@/lib/auth-attacher.local";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif"];
@@ -13,14 +13,14 @@ export function ImageUploadField({
   onChange,
   bucket = "portal-media",
 }: {
-  folder: string;
+  folder?: string;
   value?: string | null;
   onChange: (path: string | null) => void;
   bucket?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const { data: previewUrl } = useSignedUrl(value, bucket);
+  const previewUrl = fileUrl(value, bucket);
 
   async function handleFile(file: File) {
     if (!ALLOWED.includes(file.type)) {
@@ -33,28 +33,26 @@ export function ImageUploadField({
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "bin";
-      const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage
-        .from(bucket)
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (error) throw error;
-      // best-effort cleanup of previous file
-      if (value) {
-        await supabase.storage.from(bucket).remove([value]).catch(() => {});
-      }
-      onChange(path);
+      const form = new FormData();
+      form.append("bucket", bucket);
+      form.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getAccessToken() ?? ""}` },
+        body: form,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const result = (await res.json()) as { path: string };
+      onChange(result.path);
       toast.success("Imagem enviada.");
     } catch (e: any) {
-      toast.error(e.message ?? "Falha no upload.");
+      toast.error(e?.message ?? "Falha no upload.");
     } finally {
       setUploading(false);
     }
   }
 
-  async function remove() {
-    if (!value) return;
-    await supabase.storage.from(bucket).remove([value]).catch(() => {});
+  function remove() {
     onChange(null);
   }
 

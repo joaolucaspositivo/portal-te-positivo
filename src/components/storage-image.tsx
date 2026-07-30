@@ -1,22 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-
 const DEFAULT_BUCKET = "portal-media";
 
+/** Constrói a URL pública servida pelo backend local (/api/files/...). */
+export function fileUrl(path?: string | null, bucket: string = DEFAULT_BUCKET) {
+  if (!path) return null;
+  if (path.startsWith("http") || path.startsWith("/api/files/")) return path;
+  const clean = path.replace(/^\/+/, "");
+  return clean.startsWith(`${bucket}/`) ? `/api/files/${clean}` : `/api/files/${bucket}/${clean}`;
+}
+
+/** Compat com o código antigo: devolve { data: url } sem requisição de rede. */
 export function useSignedUrl(path?: string | null, bucket: string = DEFAULT_BUCKET) {
-  return useQuery({
-    enabled: !!path,
-    queryKey: ["signed-url", bucket, path],
-    staleTime: 1000 * 60 * 30,
-    queryFn: async () => {
-      if (!path) return null;
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(path, 60 * 60); // 1h
-      if (error) throw error;
-      return data.signedUrl;
-    },
-  });
+  return { data: fileUrl(path, bucket) };
 }
 
 export function StorageImage({
@@ -30,7 +24,7 @@ export function StorageImage({
   className?: string;
   bucket?: string;
 }) {
-  const { data: url } = useSignedUrl(path, bucket);
-  if (!path || !url) return null;
+  const url = fileUrl(path, bucket);
+  if (!url) return null;
   return <img src={url} alt={alt} className={className} loading="lazy" />;
 }

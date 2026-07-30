@@ -1,4 +1,4 @@
-import { useSignedUrl } from "./storage-image";
+import { fileUrl } from "./storage-image";
 import { cn } from "@/lib/utils";
 
 export function UserAvatar({
@@ -12,7 +12,7 @@ export function UserAvatar({
   size?: number;
   className?: string;
 }) {
-  const { data: url } = useSignedUrl(path, "portal-avatars");
+  const url = fileUrl(path, "portal-avatars");
   const initials = (name ?? "?")
     .split(/\s+/)
     .filter(Boolean)
@@ -28,7 +28,7 @@ export function UserAvatar({
       style={{ width: size, height: size, fontSize: Math.round(size * 0.4) }}
       aria-label={name ?? "Avatar"}
     >
-      {path && url ? (
+      {url ? (
         <img src={url} alt={name ?? ""} className="h-full w-full object-cover" />
       ) : (
         <span>{initials}</span>
