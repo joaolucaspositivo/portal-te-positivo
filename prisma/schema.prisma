@@ -216,6 +216,7 @@ model Solicitacao {
   anexosUrls             Json?    @map("anexos_urls")
   status                 String   @default("Recebida")
   responsavelTe          String?  @map("responsavel_te")
+  responsavelId          String?  @map("responsavel_id") @db.Uuid
   observacoesInternas    String?  @map("observacoes_internas")
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -277,6 +278,7 @@ model Contato {
   telefoneWhatsapp String?  @map("telefone_whatsapp")
   tipoContato      String?  @map("tipo_contato")
   ativo            Boolean  @default(true)
+  userId           String?  @map("user_id") @db.Uuid
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

@@ -152,6 +152,7 @@ CREATE TABLE "solicitacoes" (
     "anexos_urls"            JSONB,
     "status"                 TEXT NOT NULL DEFAULT 'Recebida',
     "responsavel_te"         TEXT,
+    "responsavel_id"         UUID,
     "observacoes_internas"   TEXT,
     "created_at"             TIMESTAMPTZ NOT NULL DEFAULT now(),
     "updated_at"             TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -203,6 +204,7 @@ CREATE TABLE "contatos" (
     "telefone_whatsapp" TEXT,
     "tipo_contato"      TEXT,
     "ativo"             BOOLEAN NOT NULL DEFAULT true,
+    "user_id"           UUID,
     "created_at"        TIMESTAMPTZ NOT NULL DEFAULT now(),
     "updated_at"        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
