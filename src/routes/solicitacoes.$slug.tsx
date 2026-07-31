@@ -113,27 +113,30 @@ function SolicSlug() {
         return;
       }
     }
-    if (!tipo.permite_anonimo && !user) {
-      toast.error("É necessário entrar para abrir este tipo de solicitação.");
-      return;
-    }
     setLoading(true);
-    const payload: any = {
-      ...base,
-      tipo_solicitacao: tipo.nome,
-      tipo_id: tipo.id,
-      status: "Recebida",
-      respostas,
-      solicitante_id: user?.id ?? null,
-    };
-    const { error } = await supabase.from("solicitacoes").insert(payload);
-    setLoading(false);
-    if (error) {
+    try {
+      await criarSolicitacao({
+        data: {
+          nome_solicitante: base.nome_solicitante,
+          email_solicitante: base.email_solicitante,
+          unidade: base.unidade,
+          unidade_id: base.unidade_id,
+          cargo_funcao: base.cargo_funcao || null,
+          titulo: base.titulo,
+          descricao: base.descricao,
+          urgencia: base.urgencia,
+          tipo_solicitacao: tipo.nome,
+          tipo_id: tipo.id,
+          dados_extras: respostas,
+        },
+      });
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
       toast.error("Não foi possível enviar a solicitação.");
-      return;
+    } finally {
+      setLoading(false);
     }
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   if (submitted) {
@@ -164,12 +167,6 @@ function SolicSlug() {
       </Link>
       <h1 className="text-3xl font-bold">{tipo.nome}</h1>
       {tipo.descricao && <p className="text-muted-foreground mt-1 mb-6 max-w-3xl">{tipo.descricao}</p>}
-      {!tipo.permite_anonimo && !user && (
-        <div className="mb-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm">
-          Este tipo de solicitação exige que você esteja logado. <Link to="/auth" className="font-medium underline">Entrar</Link>
-        </div>
-      )}
-
       <form onSubmit={onSubmit} className="space-y-6 max-w-3xl">
         <Section title="Seus dados">
           <FieldLabel label="Nome completo *">
