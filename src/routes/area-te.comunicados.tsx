@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Star } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listComunicadosAdmin, saveComunicado, deleteComunicado } from "@/lib/conteudo.functions";
 import { AdminFormShell, Field, inpCls } from "@/components/admin-form-shell";
 import { CATEGORIAS_COMUNICADO } from "@/lib/portal-constants";
 import { RichTextEditor } from "@/components/rich-text-editor";
@@ -23,25 +24,31 @@ const empty: C = { titulo: "", conteudo: "", publicado: true, destaque: false, d
 function AdminComunicados() {
   const qc = useQueryClient();
   const [edit, setEdit] = useState<C | null>(null);
+  const listFn = useServerFn(listComunicadosAdmin);
+  const saveFn = useServerFn(saveComunicado);
+  const deleteFn = useServerFn(deleteComunicado);
   const { data = [] } = useQuery({
     queryKey: ["admin-comunicados"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("comunicados").select("*").order("data_publicacao", { ascending: false });
-      if (error) throw error; return data ?? [];
-    },
+    queryFn: () => listFn(),
   });
 
   const save = useMutation({
     mutationFn: async (c: C) => {
       if (!c.titulo?.trim() || !c.conteudo?.trim()) throw new Error("Título e conteúdo obrigatórios");
-      if (c.id) {
-        const { id, ...rest } = c;
-        const { error } = await supabase.from("comunicados").update(rest).eq("id", id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("comunicados").insert(c as any);
-        if (error) throw error;
-      }
+      await saveFn({
+        data: {
+          id: c.id,
+          titulo: c.titulo,
+          resumo: c.resumo ?? null,
+          conteudo: c.conteudo,
+          categoria: c.categoria ?? null,
+          autor: c.autor ?? null,
+          imagem_url: c.imagem_url ?? null,
+          data_publicacao: c.data_publicacao || undefined,
+          destaque: !!c.destaque,
+          publicado: c.publicado ?? true,
+        },
+      });
     },
     onSuccess: () => { toast.success("Salvo."); setEdit(null);
       qc.invalidateQueries({ queryKey: ["admin-comunicados"] });
@@ -53,8 +60,11 @@ function AdminComunicados() {
 
   async function remove(id: string) {
     if (!confirm("Excluir este comunicado?")) return;
-    const { error } = await supabase.from("comunicados").delete().eq("id", id);
-    if (error) return toast.error("Erro.");
+    try {
+      await deleteFn({ data: { id } });
+    } catch {
+      return toast.error("Erro.");
+    }
     qc.invalidateQueries({ queryKey: ["admin-comunicados"] });
     qc.invalidateQueries({ queryKey: ["comunicados-public"] });
     qc.invalidateQueries({ queryKey: ["home-comunicados"] });
