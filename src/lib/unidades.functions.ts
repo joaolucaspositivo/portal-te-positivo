@@ -159,6 +159,17 @@ export const listMinhasUnidades = createServerFn({ method: "GET" })
     }));
   });
 
+export const listUnidadesDoUsuario = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .inputValidator((data: unknown) => z.object({ userId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertAdmin } = await import("./authz.server");
+    assertAdmin(context);
+    const { prisma } = await import("./db.server");
+    const vinculos = await prisma.usuarioUnidade.findMany({ where: { userId: data.userId } });
+    return vinculos.map((v) => ({ unidade_id: v.unidadeId, principal: v.principal }));
+  });
+
 export const setUserUnidades = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator((data: unknown) =>
