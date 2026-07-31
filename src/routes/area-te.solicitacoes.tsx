@@ -2,7 +2,8 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listSolicitacoes } from "@/lib/solicitacoes.functions";
 import {
   STATUS_SOLICITACAO, TIPOS_SOLICITACAO, URGENCIAS, UNIDADES,
   statusColor, urgencyColor,
@@ -24,13 +25,10 @@ function List() {
   const [unidade, setUnidade] = useState("");
   const [status, setStatus] = useState("");
   const [urg, setUrg] = useState("");
+  const listFn = useServerFn(listSolicitacoes);
   const { data = [], isLoading } = useQuery({
     queryKey: ["admin-solicitacoes"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("solicitacoes").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFn(),
   });
   const filtered = data.filter((s: any) => {
     if (q) {
