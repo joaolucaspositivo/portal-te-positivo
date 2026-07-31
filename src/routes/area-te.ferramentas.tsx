@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listFerramentasPublic, saveFerramenta, deleteFerramenta } from "@/lib/conteudo.functions";
 import { AdminFormShell, Field, inpCls } from "@/components/admin-form-shell";
 import { CATEGORIAS_FERRAMENTA, STATUS_FERRAMENTA, statusColor } from "@/lib/portal-constants";
 import { ImageUploadField } from "@/components/image-upload-field";
@@ -22,25 +23,31 @@ const empty: F = { nome: "", status: "Ativa" };
 function AdminFerramentas() {
   const qc = useQueryClient();
   const [edit, setEdit] = useState<F | null>(null);
+  const listFn = useServerFn(listFerramentasPublic);
+  const saveFn = useServerFn(saveFerramenta);
+  const deleteFn = useServerFn(deleteFerramenta);
   const { data = [] } = useQuery({
     queryKey: ["admin-ferramentas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("ferramentas").select("*").order("nome");
-      if (error) throw error; return data ?? [];
-    },
+    queryFn: () => listFn(),
   });
 
   const save = useMutation({
     mutationFn: async (f: F) => {
       if (!f.nome?.trim()) throw new Error("Nome obrigatório");
-      if (f.id) {
-        const { id, ...rest } = f;
-        const { error } = await supabase.from("ferramentas").update(rest).eq("id", id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("ferramentas").insert(f as any);
-        if (error) throw error;
-      }
+      await saveFn({
+        data: {
+          id: f.id,
+          nome: f.nome,
+          descricao: f.descricao ?? null,
+          categoria: f.categoria ?? null,
+          publico_alvo: f.publico_alvo ?? null,
+          segmento: f.segmento ?? null,
+          link_acesso: f.link_acesso ?? null,
+          responsavel: f.responsavel ?? null,
+          imagem_url: f.imagem_url ?? null,
+          status: f.status ?? "Ativa",
+        },
+      });
     },
     onSuccess: () => { toast.success("Salvo."); setEdit(null); qc.invalidateQueries({ queryKey: ["admin-ferramentas"] }); qc.invalidateQueries({ queryKey: ["ferramentas"] }); },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar."),
@@ -48,8 +55,11 @@ function AdminFerramentas() {
 
   async function remove(id: string) {
     if (!confirm("Excluir esta ferramenta?")) return;
-    const { error } = await supabase.from("ferramentas").delete().eq("id", id);
-    if (error) return toast.error("Erro ao excluir.");
+    try {
+      await deleteFn({ data: { id } });
+    } catch {
+      return toast.error("Erro ao excluir.");
+    }
     toast.success("Excluída.");
     qc.invalidateQueries({ queryKey: ["admin-ferramentas"] });
     qc.invalidateQueries({ queryKey: ["ferramentas"] });
