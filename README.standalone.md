@@ -96,3 +96,16 @@ Enquanto os passos 2–6 não terminam, `docker compose up` **builda** mas o
 app ainda tenta falar com Supabase — o container é útil pra validar a
 infraestrutura, não a aplicação completa. A troca definitiva do runtime
 (Cloudflare Worker → Node) acontece junto do passo 2.
+## Build standalone (Node)
+
+O `vite.config.ts` padrão é o do editor (alvo Cloudflare). Para rodar fora do
+Lovable, use o config Node:
+
+```bash
+npx prisma generate
+npx vite build --config vite.config.node.ts
+node .output/server/index.mjs
+```
+
+O `Dockerfile` já usa esse config; o container inicia com
+`prisma migrate deploy` + `node .output/server/index.mjs`.
