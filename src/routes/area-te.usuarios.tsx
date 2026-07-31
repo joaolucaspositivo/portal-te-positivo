@@ -15,8 +15,7 @@ import {
   sendPasswordReset,
   deleteUser,
 } from "@/lib/users.functions";
-import { listUnidades, setUserUnidades } from "@/lib/unidades.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { listUnidades, setUserUnidades, listUnidadesDoUsuario } from "@/lib/unidades.functions";
 
 export const Route = createFileRoute("/area-te/usuarios")({
   component: AdminUsers,
@@ -213,6 +212,7 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
   const deleteFn = useServerFn(deleteUser);
   const listUnidadesFn = useServerFn(listUnidades);
   const setUserUnidadesFn = useServerFn(setUserUnidades);
+  const listVinculosFn = useServerFn(listUnidadesDoUsuario);
 
   const { data: unidades = [] } = useQuery({
     queryKey: ["admin-unidades"],
@@ -220,14 +220,7 @@ function EditUserDrawer({ user, onClose }: { user: any; onClose: () => void }) {
   });
   const { data: vinculosAtuais = [] } = useQuery({
     queryKey: ["admin-user-unidades", user.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("usuario_unidades")
-        .select("unidade_id, principal")
-        .eq("user_id", user.id);
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listVinculosFn({ data: { userId: user.id } }),
   });
   const [unidadeIds, setUnidadeIds] = useState<string[]>([]);
   const [principalId, setPrincipalId] = useState<string | null>(null);
