@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { getSolicitacao, updateSolicitacao, listEquipeTE } from "@/lib/solicitacoes.functions";
+import { getSolicitacao, updateSolicitacao, deleteSolicitacao, listEquipeTE } from "@/lib/solicitacoes.functions";
 import { STATUS_SOLICITACAO, statusColor, urgencyColor } from "@/lib/portal-constants";
 
 export const Route = createFileRoute("/area-te/solicitacoes/$id")({
@@ -18,6 +18,7 @@ function SolicDetail() {
   const getFn = useServerFn(getSolicitacao);
   const updateFn = useServerFn(updateSolicitacao);
   const equipeFn = useServerFn(listEquipeTE);
+  const deleteFn = useServerFn(deleteSolicitacao);
   const { data, isLoading } = useQuery({
     queryKey: ["solic", id],
     queryFn: () => getFn({ data: { id } }),
@@ -154,8 +155,11 @@ function SolicDetail() {
             </button>
             <button onClick={async () => {
               if (!confirm("Excluir esta solicitação?")) return;
-              const { error } = await supabase.from("solicitacoes").delete().eq("id", id);
-              if (error) return toast.error("Erro ao excluir.");
+              try {
+                await deleteFn({ data: { id } });
+              } catch {
+                return toast.error("Erro ao excluir.");
+              }
               toast.success("Excluída.");
               navigate({ to: "/area-te/solicitacoes" });
             }} className="w-full mt-2 text-sm text-destructive hover:underline">Excluir solicitação</button>
