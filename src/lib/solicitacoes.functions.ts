@@ -258,6 +258,17 @@ export const updateSolicitacao = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteSolicitacao = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertAdmin } = await import("./authz.server");
+    assertAdmin(context);
+    const { prisma } = await import("./db.server");
+    await prisma.solicitacao.delete({ where: { id: data.id } });
+    return { ok: true };
+  });
+
 /** Membros da equipe TE (equipe_te/admin) para atribuição. */
 export const listEquipeTE = createServerFn({ method: "GET" })
   .middleware([requireAuth])
