@@ -1,10 +1,8 @@
 # ============================================================
 # Portal TE — imagem Node standalone (multi-stage)
 # ============================================================
-# Requer preset Node no build (ver vite.config.node.ts, fase B).
-# Enquanto o vite.config.ts ainda for o preset Cloudflare do Lovable,
-# este Dockerfile buildará o worker — para uso 100% Node, ative o
-# vite.config.node.ts conforme instruções no README.
+# O build usa vite.config.node.ts (preset Nitro "node-server"),
+# gerando .output/server/index.mjs — 100% independente do Lovable/Cloudflare.
 
 FROM oven/bun:1.3-alpine AS deps
 WORKDIR /app
@@ -20,7 +18,7 @@ COPY . .
 # DATABASE_URL placeholder — prisma generate só lê o schema
 RUN DATABASE_URL="postgresql://placeholder@localhost/placeholder" \
     bunx prisma generate
-RUN bun run build
+RUN bunx vite build --config vite.config.node.ts
 
 FROM node:22-alpine AS runtime
 WORKDIR /app
@@ -29,7 +27,7 @@ ENV NODE_ENV=production \
 RUN addgroup -S portal && adduser -S portal -G portal \
  && mkdir -p /var/lib/portal-te/uploads \
  && chown -R portal:portal /var/lib/portal-te
-COPY --from=build --chown=portal:portal /app/dist ./dist
+COPY --from=build --chown=portal:portal /app/.output ./.output
 COPY --from=build --chown=portal:portal /app/node_modules ./node_modules
 COPY --from=build --chown=portal:portal /app/prisma ./prisma
 COPY --from=build --chown=portal:portal /app/package.json ./package.json

@@ -1,37 +1,51 @@
 ## Objetivo
 
-Concluir a Fase B: eliminar todo o resto do Supabase (dados, storage e auth nas telas) para o Portal TE rodar 100% no Docker com Postgres + Prisma + auth próprio.
+Concluir a migração standalone: nenhuma rota deve mais importar o cliente Supabase. A camada de dados (Prisma + auth local + storage local) já está pronta; falta ligar as telas nela e apagar o que sobrou do Supabase.
 
 ## Estado atual (verificado)
 
-- Já migrados: `auth.server.ts`, `auth-client.ts`, `users.functions.ts`, `mail.server.ts`, `storage.server.ts`, rotas `/api/upload`, `/api/files/$`, OAuth Google, `/auth`, `/forgot-password`, `/reset-password`, schema + migração Prisma.
-- Ainda usam Supabase: `unidades.functions.ts`, `auth.functions.ts`, os dois componentes de imagem e praticamente todas as rotas (`area-te.*`, `comunicados`, `contatos`, `ferramentas`, `solicitacoes.*`, `index`), além de `src/start.ts` e da pasta `src/integrations/supabase/`.
+- Prontos: `auth.functions.ts`, `users.functions.ts`, `unidades.functions.ts`, `conteudo.functions.ts` (ferramentas, comunicados, contatos), `solicitacoes.functions.ts` (tipos, campos, criação pública, gestão), `authz.server.ts`, `storage.server.ts`, `/api/upload`, `/api/files/$`, `image-upload-field`, `storage-image`, `user-avatar`.
+- Ainda importam Supabase: 18 rotas (`index`, `comunicados`, `contatos`, `ferramentas`, `solicitacoes.index`, `solicitacoes.$slug`, e todas as `area-te.*`), além de `src/start.ts` e `src/integrations/supabase/`.
+- Falta uma função de "perfil próprio" (ler/atualizar dados e avatar do usuário logado) para a tela `area-te.perfil`.
 
-## Plano
+## Etapa 1 — Perfil próprio
 
-### 1. Novas camadas de dados (Prisma + auth local)
-Criar server functions no padrão já usado (validação Zod, `requireLocalAuth`, serializadores de `prisma-helpers.server.ts`):
-- `src/lib/conteudo.functions.ts` — ferramentas, comunicados e contatos: listagem pública (somente colunas seguras para não autenticados) e CRUD restrito a admin/equipe_te/editor.
-- `src/lib/solicitacoes.functions.ts` — tipos e campos de solicitação (form builder), criação pública de solicitação com validação, listagem/atualização de status, responsável e observações internas para a equipe.
-- Reescrever `src/lib/unidades.functions.ts` para Prisma (CRUD de unidades + vínculo usuário-unidade), preservando as assinaturas atuais.
-- Adicionar helper `assertRole` em módulo `.server.ts` separado (regra de splitting: arquivos com `createServerFn` só contêm imports e as funções).
+Adicionar em `src/lib/profile.functions.ts` (com middleware de auth local):
+- `getMeuPerfil` — dados do usuário logado + papéis.
+- `updateMeuPerfil` — nome, cargo, unidade, telefone, bio, avatar (caminho do storage local). Status e papéis não são editáveis pelo próprio usuário.
+- `changeMinhaSenha` — senha atual + nova, com bcrypt.
 
-### 2. Storage local nos componentes
-- `image-upload-field.tsx`: enviar via `POST /api/upload` (multipart) em vez do storage do Supabase; remoção via endpoint de delete autenticado.
-- `storage-image.tsx`: montar a URL diretamente de `/api/files/<bucket>/<path>`, dispensando URLs assinadas.
+## Etapa 2 — Rotas públicas
 
-### 3. Rotas
-- Trocar em todas as rotas o cliente Supabase por chamadas às novas server functions (TanStack Query mantido).
-- `area-te.tsx`: guarda de acesso pelo `use-auth` local (JWT), sem sessão Supabase.
-- Rotas públicas (`index`, `comunicados`, `ferramentas`, `contatos`, `solicitacoes.*`) passam a ler pelas funções públicas.
+Substituir chamadas `supabase.from(...)` por `useSuspenseQuery`/`useQuery` sobre as server functions já existentes:
+- `index.tsx` → `listComunicadosPublic`, `listFerramentasPublic`
+- `comunicados.tsx` → `listComunicadosPublic`
+- `ferramentas.tsx` → `listFerramentasPublic`
+- `contatos.tsx` → `listContatosPublic` (e-mail/telefone continuam ocultos para anônimos)
+- `solicitacoes.index.tsx` → `listTiposPublic`
+- `solicitacoes.$slug.tsx` → `getTipoBySlug` + `listUnidades` + `createSolicitacao`
 
-### 4. Limpeza e verificação
-- Remover `src/integrations/supabase/`, `supabase/config.toml` e as referências em `src/start.ts` (mantendo apenas `attachLocalAuth`).
-- Remover a dependência `@supabase/supabase-js` do `package.json`.
-- Rodar typecheck e build; conferir a home e uma rota admin no preview.
+## Etapa 3 — Rotas administrativas (`area-te.*`)
+
+- `area-te.tsx` (layout/guarda) → usar `useAuth` local em vez de sessão Supabase.
+- `area-te.index.tsx` (dashboard/KPIs) → contagens vindas de `listSolicitacoes` e listas de conteúdo.
+- `area-te.solicitacoes.tsx` / `.$id.tsx` → `listSolicitacoes`, `getSolicitacao`, `updateSolicitacao`, `listEquipeTE`.
+- `area-te.tipos-solicitacao.tsx` / `.$id.tsx` → `listTiposAdmin`, `getTipo`, `saveTipo`, `deleteTipo`, `listCampos`, `saveCampo`, `deleteCampo`, `swapCamposOrdem`.
+- `area-te.comunicados.tsx`, `.ferramentas.tsx`, `.contatos.tsx` → funções CRUD de `conteudo.functions.ts` + `listProfileOptions`.
+- `area-te.usuarios.tsx` → funções de `users.functions.ts`.
+- `area-te.perfil.tsx` → funções da Etapa 1.
+
+Sem mudanças de layout ou visual: só a origem dos dados.
+
+## Etapa 4 — Remoção do Supabase
+
+- Apagar `src/integrations/supabase/` inteiro e `supabase/config.toml`.
+- Limpar `src/start.ts` (só `attachLocalAuth`) e as variáveis `VITE_SUPABASE_*` do `.env.example`.
+- Remover `@supabase/supabase-js` do `package.json`.
+- Rodar typecheck e build para confirmar que nada mais referencia o Supabase.
 
 ## Notas técnicas
 
-- Sem RLS: toda a autorização passa a ser explícita nos handlers (papel do usuário lido de `user_roles`), então cada função de escrita precisa de checagem de papel — esse é o ponto de maior risco da etapa.
-- Listagens públicas devolvem DTOs reduzidos (contatos sem e-mail/telefone para anônimos), mantendo o endurecimento de segurança já feito antes.
-- Uploads gravam em volume Docker montado em `/app/uploads`.
+- Todos os DTOs continuam em snake_case via `prisma-helpers.server.ts`, então os componentes de tela quase não mudam — troca-se apenas a função de busca.
+- Mutations passam a usar `useMutation` + `invalidateQueries`, mantendo os toasts atuais.
+- Após esta etapa o portal roda 100% no Docker (Node + Postgres + Prisma), sem dependência do Lovable/Supabase; o preview do Lovable deixa de refletir o backend real.

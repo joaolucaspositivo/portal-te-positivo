@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Mail, Phone, Search, Lock } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+import { listContatosPublic } from "@/lib/conteudo.functions";
 import { UNIDADES, TIPOS_CONTATO } from "@/lib/portal-constants";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/use-auth";
@@ -27,25 +27,7 @@ function Contatos() {
   const isAuthed = !!user;
   const { data: items = [] } = useQuery({
     queryKey: ["contatos-public", isAuthed],
-    queryFn: async () => {
-      const cols = isAuthed
-        ? "id, nome, funcao, unidade, tipo_contato, user_id, email, telefone_whatsapp"
-        : "id, nome, funcao, unidade, tipo_contato, user_id";
-      const { data, error } = await supabase
-        .from("contatos")
-        .select(cols)
-        .eq("ativo", true).order("nome");
-      if (error) throw error;
-      const list = data ?? [];
-      const ids = list.map((c: any) => c.user_id).filter(Boolean);
-      if (ids.length === 0) return list.map((c: any) => ({ ...c, avatar_url: null }));
-      const { data: profs } = await supabase
-        .from("profiles_public")
-        .select("id, avatar_url")
-        .in("id", ids);
-      const map = new Map((profs ?? []).map((p: any) => [p.id, p.avatar_url]));
-      return list.map((c: any) => ({ ...c, avatar_url: map.get(c.user_id) ?? null }));
-    },
+    queryFn: () => listContatosPublic(),
   });
   const filtered = items.filter((c: any) => {
     if (q && !`${c.nome} ${c.funcao ?? ""}`.toLowerCase().includes(q.toLowerCase())) return false;

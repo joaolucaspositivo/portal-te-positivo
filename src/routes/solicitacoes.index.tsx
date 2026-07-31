@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Inbox } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+import { listTiposPublic } from "@/lib/solicitacoes.functions";
 
 export const Route = createFileRoute("/solicitacoes/")({
   head: () => ({
@@ -19,15 +19,7 @@ export const Route = createFileRoute("/solicitacoes/")({
 function SolicitacoesGallery() {
   const { data: tipos = [], isLoading } = useQuery({
     queryKey: ["public-tipos"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("solicitacao_tipos")
-        .select("id, nome, slug, descricao, icone, ordem")
-        .eq("ativo", true)
-        .order("ordem");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listTiposPublic(),
   });
 
   return (

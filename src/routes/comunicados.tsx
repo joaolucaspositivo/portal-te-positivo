@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Star } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+import { listComunicadosPublic } from "@/lib/conteudo.functions";
 import { CATEGORIAS_COMUNICADO } from "@/lib/portal-constants";
 import { StorageImage } from "@/components/storage-image";
 import { sanitizeHtml } from "@/lib/sanitize-html";
@@ -23,13 +23,7 @@ function Comunicados() {
   const [cat, setCat] = useState("");
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["comunicados-public"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("comunicados").select("*").eq("publicado", true)
-        .order("data_publicacao", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listComunicadosPublic(),
   });
   const filtered = items.filter((c: any) => (cat ? c.categoria === cat : true));
 

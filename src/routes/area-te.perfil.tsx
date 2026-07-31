@@ -3,7 +3,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/use-auth";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { updateMyProfile } from "@/lib/profile.functions";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { UserAvatar } from "@/components/user-avatar";
 import { UNIDADES } from "@/lib/portal-constants";
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/area-te/perfil")({
 
 function PerfilPage() {
   const { user, profile, refresh, loading } = useAuth();
+  const updateFn = useServerFn(updateMyProfile);
   const [form, setForm] = useState({
     nome_completo: "",
     cargo: "",
@@ -39,8 +41,7 @@ function PerfilPage() {
   const save = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sem sessão.");
-      const { error } = await supabase.from("profiles").update(form).eq("id", user.id);
-      if (error) throw error;
+      await updateFn({ data: form });
     },
     onSuccess: () => {
       toast.success("Perfil atualizado.");

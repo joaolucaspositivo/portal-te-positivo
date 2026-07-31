@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Inbox, Wrench, Megaphone, Users, LogOut, Home, UserCog, FormInput, User as UserIcon, Building2,
 } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
-import { supabase } from "@/integrations/supabase/client";
+import { signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user-avatar";
 
@@ -49,7 +49,7 @@ function AreaTeLayout() {
           <p className="text-muted-foreground mb-4">
             Sua conta ({user.email}) foi bloqueada. Entre em contato com a equipe TE.
           </p>
-          <button onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/" }); }}
+          <button onClick={async () => { await signOut(); navigate({ to: "/" }); }}
                   className="px-4 py-2 rounded-md bg-primary text-primary-foreground">Sair</button>
         </div>
       </div>
@@ -63,7 +63,7 @@ function AreaTeLayout() {
           <p className="text-muted-foreground mb-4">
             Sua conta ({user.email}) foi criada e está aguardando aprovação de um administrador.
           </p>
-          <button onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/" }); }}
+          <button onClick={async () => { await signOut(); navigate({ to: "/" }); }}
                   className="px-4 py-2 rounded-md bg-primary text-primary-foreground">Sair</button>
         </div>
       </div>
@@ -108,7 +108,7 @@ function AreaTeLayout() {
           <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-sidebar-accent">
             <Home className="h-4 w-4" /> Voltar ao site
           </Link>
-          <button onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/" }); }}
+          <button onClick={async () => { await signOut(); navigate({ to: "/" }); }}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-sidebar-accent">
             <LogOut className="h-4 w-4" /> Sair
           </button>
@@ -117,7 +117,7 @@ function AreaTeLayout() {
       <div className="flex-1 min-w-0">
         <header className="md:hidden bg-sidebar text-sidebar-foreground px-4 py-3 flex items-center justify-between">
           <Link to="/" className="font-bold">Portal TE · Admin</Link>
-          <button onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/" }); }}
+          <button onClick={async () => { await signOut(); navigate({ to: "/" }); }}
                   className="text-sm">Sair</button>
         </header>
         <div className="md:hidden overflow-x-auto bg-sidebar text-sidebar-foreground border-t border-sidebar-border px-2 py-2 flex gap-1">

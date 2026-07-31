@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Search, ExternalLink } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+import { listFerramentasPublic } from "@/lib/conteudo.functions";
 import { CATEGORIAS_FERRAMENTA, STATUS_FERRAMENTA, statusColor } from "@/lib/portal-constants";
 import { StorageImage } from "@/components/storage-image";
 
@@ -24,11 +24,7 @@ function Ferramentas() {
   const [st, setSt] = useState("");
   const { data: ferramentas = [], isLoading } = useQuery({
     queryKey: ["ferramentas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("ferramentas").select("*").order("nome");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFerramentasPublic(),
   });
   const filtered = ferramentas.filter((f: any) => {
     if (q && !f.nome.toLowerCase().includes(q.toLowerCase())) return false;

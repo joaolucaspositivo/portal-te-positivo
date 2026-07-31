@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+import { listComunicadosPublic, listFerramentasPublic } from "@/lib/conteudo.functions";
 import { StorageImage } from "@/components/storage-image";
 
 export const Route = createFileRoute("/")({
@@ -46,27 +46,12 @@ const teRoles = [
 function Index() {
   const { data: comunicados } = useQuery({
     queryKey: ["home-comunicados"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("comunicados")
-        .select("*")
-        .eq("publicado", true)
-        .order("data_publicacao", { ascending: false })
-        .limit(3);
-      return data ?? [];
-    },
+    queryFn: async () => (await listComunicadosPublic()).slice(0, 3),
   });
   const { data: ferramentas } = useQuery({
     queryKey: ["home-ferramentas"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("ferramentas")
-        .select("*")
-        .eq("status", "Ativa")
-        .order("nome")
-        .limit(4);
-      return data ?? [];
-    },
+    queryFn: async () =>
+      (await listFerramentasPublic()).filter((f) => f.status === "Ativa").slice(0, 4),
   });
 
   return (

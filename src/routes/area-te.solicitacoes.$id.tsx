@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getSolicitacao, updateSolicitacao, deleteSolicitacao, listEquipeTE } from "@/lib/solicitacoes.functions";
 import { STATUS_SOLICITACAO, statusColor, urgencyColor } from "@/lib/portal-constants";
 
 export const Route = createFileRoute("/area-te/solicitacoes/$id")({
@@ -14,28 +15,18 @@ function SolicDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const getFn = useServerFn(getSolicitacao);
+  const updateFn = useServerFn(updateSolicitacao);
+  const equipeFn = useServerFn(listEquipeTE);
+  const deleteFn = useServerFn(deleteSolicitacao);
   const { data, isLoading } = useQuery({
     queryKey: ["solic", id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("solicitacoes").select("*").eq("id", id).single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getFn({ data: { id } }),
   });
 
   const { data: equipe = [] } = useQuery({
     queryKey: ["equipe-te-options"],
-    queryFn: async () => {
-      // members with equipe_te or admin role
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id, role")
-        .in("role", ["equipe_te", "admin"]);
-      const ids = Array.from(new Set((roles ?? []).map((r: any) => r.user_id)));
-      if (ids.length === 0) return [];
-      const { data: profs } = await supabase.from("profiles").select("id, nome_completo").in("id", ids);
-      return profs ?? [];
-    },
+    queryFn: () => equipeFn(),
   });
 
   const [status, setStatus] = useState("");
@@ -54,15 +45,15 @@ function SolicDetail() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("solicitacoes")
-        .update({
+      await updateFn({
+        data: {
+          id,
           status,
-          responsavel_te: resp,
-          observacoes_internas: obs,
+          responsavel_te: resp || null,
+          observacoes_internas: obs || null,
           responsavel_id: responsavelId || null,
-        })
-        .eq("id", id);
-      if (error) throw error;
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Solicitação atualizada.");
@@ -164,8 +155,11 @@ function SolicDetail() {
             </button>
             <button onClick={async () => {
               if (!confirm("Excluir esta solicitação?")) return;
-              const { error } = await supabase.from("solicitacoes").delete().eq("id", id);
-              if (error) return toast.error("Erro ao excluir.");
+              try {
+                await deleteFn({ data: { id } });
+              } catch {
+                return toast.error("Erro ao excluir.");
+              }
               toast.success("Excluída.");
               navigate({ to: "/area-te/solicitacoes" });
             }} className="w-full mt-2 text-sm text-destructive hover:underline">Excluir solicitação</button>

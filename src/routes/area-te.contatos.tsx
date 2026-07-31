@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listContatosAdmin, saveContato, deleteContato, listProfileOptions } from "@/lib/conteudo.functions";
 import { AdminFormShell, Field, inpCls } from "@/components/admin-form-shell";
 import { UNIDADES, TIPOS_CONTATO } from "@/lib/portal-constants";
 
@@ -20,38 +21,36 @@ const empty: C = { nome: "", ativo: true };
 function AdminContatos() {
   const qc = useQueryClient();
   const [edit, setEdit] = useState<C | null>(null);
+  const listFn = useServerFn(listContatosAdmin);
+  const saveFn = useServerFn(saveContato);
+  const deleteFn = useServerFn(deleteContato);
+  const profilesFn = useServerFn(listProfileOptions);
   const { data = [] } = useQuery({
     queryKey: ["admin-contatos"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("contatos").select("*").order("nome");
-      if (error) throw error; return data ?? [];
-    },
+    queryFn: () => listFn(),
   });
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles-options"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, nome_completo, cargo, unidade")
-        .eq("status", "ativo")
-        .order("nome_completo");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => profilesFn(),
   });
 
   const save = useMutation({
     mutationFn: async (c: C) => {
       if (!c.nome?.trim()) throw new Error("Nome obrigatório");
-      if (c.id) {
-        const { id, ...rest } = c;
-        const { error } = await supabase.from("contatos").update(rest).eq("id", id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("contatos").insert(c as any);
-        if (error) throw error;
-      }
+      await saveFn({
+        data: {
+          id: c.id,
+          nome: c.nome,
+          funcao: c.funcao ?? null,
+          unidade: c.unidade ?? null,
+          email: c.email ?? null,
+          telefone_whatsapp: c.telefone_whatsapp ?? null,
+          tipo_contato: c.tipo_contato ?? null,
+          ativo: c.ativo ?? true,
+          user_id: c.user_id ?? null,
+        },
+      });
     },
     onSuccess: () => { toast.success("Salvo."); setEdit(null);
       qc.invalidateQueries({ queryKey: ["admin-contatos"] });
@@ -61,8 +60,11 @@ function AdminContatos() {
 
   async function remove(id: string) {
     if (!confirm("Excluir este contato?")) return;
-    const { error } = await supabase.from("contatos").delete().eq("id", id);
-    if (error) return toast.error("Erro.");
+    try {
+      await deleteFn({ data: { id } });
+    } catch {
+      return toast.error("Erro.");
+    }
     qc.invalidateQueries({ queryKey: ["admin-contatos"] });
     qc.invalidateQueries({ queryKey: ["contatos-public"] });
     toast.success("Excluído.");

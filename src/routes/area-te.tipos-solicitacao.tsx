@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listTiposAdmin, saveTipo, deleteTipo } from "@/lib/solicitacoes.functions";
 import { AdminFormShell, Field, inpCls } from "@/components/admin-form-shell";
 
 export const Route = createFileRoute("/area-te/tipos-solicitacao")({
@@ -28,16 +29,12 @@ function slugify(s: string) {
 
 function List() {
   const qc = useQueryClient();
+  const listFn = useServerFn(listTiposAdmin);
+  const saveFn = useServerFn(saveTipo);
+  const deleteFn = useServerFn(deleteTipo);
   const { data = [], isLoading } = useQuery({
     queryKey: ["admin-tipos"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("solicitacao_tipos")
-        .select("*")
-        .order("ordem");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFn(),
   });
 
   const [edit, setEdit] = useState<any | null>(null);
@@ -45,22 +42,16 @@ function List() {
   const save = useMutation({
     mutationFn: async (t: any) => {
       const payload = {
+        id: t.id as string | undefined,
         nome: t.nome?.trim(),
         slug: t.slug?.trim() || slugify(t.nome ?? ""),
         descricao: t.descricao ?? null,
         icone: t.icone ?? null,
         ordem: Number(t.ordem ?? 0),
         ativo: t.ativo ?? true,
-        permite_anonimo: t.permite_anonimo ?? true,
       };
       if (!payload.nome) throw new Error("Nome obrigatório");
-      if (t.id) {
-        const { error } = await supabase.from("solicitacao_tipos").update(payload).eq("id", t.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("solicitacao_tipos").insert(payload);
-        if (error) throw error;
-      }
+      await saveFn({ data: payload });
     },
     onSuccess: () => { toast.success("Salvo."); setEdit(null); qc.invalidateQueries({ queryKey: ["admin-tipos"] }); },
     onError: (e: any) => toast.error(e.message ?? "Erro."),
@@ -68,8 +59,11 @@ function List() {
 
   async function remove(id: string) {
     if (!confirm("Excluir este tipo e todos os seus campos?")) return;
-    const { error } = await supabase.from("solicitacao_tipos").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    try {
+      await deleteFn({ data: { id } });
+    } catch (e: any) {
+      return toast.error(e?.message ?? "Erro ao excluir.");
+    }
     qc.invalidateQueries({ queryKey: ["admin-tipos"] });
   }
 
@@ -80,7 +74,7 @@ function List() {
           <h1 className="text-3xl font-bold">Tipos de solicitação</h1>
           <p className="text-muted-foreground">Crie e edite os formulários disponíveis ao público.</p>
         </div>
-        <button onClick={() => setEdit({ ativo: true, permite_anonimo: true, ordem: 0 })}
+        <button onClick={() => setEdit({ ativo: true, ordem: 0 })}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium">
           <Plus className="h-4 w-4" /> Novo tipo
         </button>
@@ -90,7 +84,7 @@ function List() {
           <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="p-3">Nome</th><th className="p-3">Slug</th><th className="p-3">Ordem</th>
-              <th className="p-3">Anônimo?</th><th className="p-3">Ativo</th><th className="p-3"></th>
+              <th className="p-3">Campos</th><th className="p-3">Ativo</th><th className="p-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -108,7 +102,7 @@ function List() {
                 </td>
                 <td className="p-3 text-muted-foreground font-mono text-xs">{t.slug}</td>
                 <td className="p-3">{t.ordem}</td>
-                <td className="p-3">{t.permite_anonimo ? "Sim" : "Não"}</td>
+                <td className="p-3">{t.campos_count ?? 0}</td>
                 <td className="p-3">{t.ativo ? "Sim" : "Não"}</td>
                 <td className="p-3 text-right">
                   <button onClick={() => setEdit(t)} className="p-1.5 hover:bg-muted rounded mr-1"><Pencil className="h-4 w-4" /></button>
@@ -141,10 +135,6 @@ function List() {
             <Field label="Ícone (lucide name)">
               <input value={edit.icone ?? ""} onChange={(e) => setEdit({ ...edit, icone: e.target.value })} className={inpCls} placeholder="inbox" />
             </Field>
-            <label className="flex items-center gap-2 text-sm col-span-2">
-              <input type="checkbox" checked={!!edit.permite_anonimo} onChange={(e) => setEdit({ ...edit, permite_anonimo: e.target.checked })} />
-              Permite abertura sem login
-            </label>
             <label className="flex items-center gap-2 text-sm col-span-2">
               <input type="checkbox" checked={!!edit.ativo} onChange={(e) => setEdit({ ...edit, ativo: e.target.checked })} />
               Ativo (visível ao público)

@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+import { getTipoBySlug, createSolicitacao } from "@/lib/solicitacoes.functions";
 import { UNIDADES, URGENCIAS } from "@/lib/portal-constants";
 import { DynamicFormFields, type DynamicField } from "@/components/dynamic-form";
 import { useAuth } from "@/lib/use-auth";
@@ -34,6 +34,7 @@ function SolicSlug() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const minhasUnidadesFn = useServerFn(listMinhasUnidades);
+  const criarSolicitacao = useServerFn(createSolicitacao);
   const { data: minhasUnidades = [] } = useQuery({
     enabled: !!user,
     queryKey: ["minhas-unidades", user?.id],
@@ -42,31 +43,19 @@ function SolicSlug() {
 
   const { data: tipo, isLoading: tipoLoading } = useQuery({
     queryKey: ["public-tipo", slug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("solicitacao_tipos")
-        .select("*")
-        .eq("slug", slug)
-        .eq("ativo", true)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getTipoBySlug({ data: { slug } }),
   });
 
-  const { data: campos = [] } = useQuery({
-    enabled: !!tipo,
-    queryKey: ["public-campos", tipo?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("solicitacao_campos")
-        .select("id, chave, label, tipo_campo, obrigatorio, opcoes, placeholder, help_text, ordem")
-        .eq("tipo_id", tipo!.id)
-        .order("ordem");
-      if (error) throw error;
-      return (data ?? []) as DynamicField[];
-    },
-  });
+  const campos: DynamicField[] = (tipo?.campos ?? []).map((c) => ({
+    id: c.id,
+    chave: c.chave,
+    label: c.rotulo,
+    tipo_campo: c.tipo_campo,
+    obrigatorio: c.obrigatorio,
+    placeholder: c.placeholder,
+    help_text: c.ajuda,
+    opcoes: c.opcoes,
+  }));
 
   const [base, setBase] = useState<Base>({
     nome_solicitante: "",
@@ -124,27 +113,30 @@ function SolicSlug() {
         return;
       }
     }
-    if (!tipo.permite_anonimo && !user) {
-      toast.error("É necessário entrar para abrir este tipo de solicitação.");
-      return;
-    }
     setLoading(true);
-    const payload: any = {
-      ...base,
-      tipo_solicitacao: tipo.nome,
-      tipo_id: tipo.id,
-      status: "Recebida",
-      respostas,
-      solicitante_id: user?.id ?? null,
-    };
-    const { error } = await supabase.from("solicitacoes").insert(payload);
-    setLoading(false);
-    if (error) {
+    try {
+      await criarSolicitacao({
+        data: {
+          nome_solicitante: base.nome_solicitante,
+          email_solicitante: base.email_solicitante,
+          unidade: base.unidade,
+          unidade_id: base.unidade_id,
+          cargo_funcao: base.cargo_funcao || null,
+          titulo: base.titulo,
+          descricao: base.descricao,
+          urgencia: base.urgencia,
+          tipo_solicitacao: tipo.nome,
+          tipo_id: tipo.id,
+          dados_extras: respostas,
+        },
+      });
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
       toast.error("Não foi possível enviar a solicitação.");
-      return;
+    } finally {
+      setLoading(false);
     }
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   if (submitted) {
@@ -175,12 +167,6 @@ function SolicSlug() {
       </Link>
       <h1 className="text-3xl font-bold">{tipo.nome}</h1>
       {tipo.descricao && <p className="text-muted-foreground mt-1 mb-6 max-w-3xl">{tipo.descricao}</p>}
-      {!tipo.permite_anonimo && !user && (
-        <div className="mb-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm">
-          Este tipo de solicitação exige que você esteja logado. <Link to="/auth" className="font-medium underline">Entrar</Link>
-        </div>
-      )}
-
       <form onSubmit={onSubmit} className="space-y-6 max-w-3xl">
         <Section title="Seus dados">
           <FieldLabel label="Nome completo *">
