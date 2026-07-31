@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { supabase } from "@/integrations/supabase/client";
+import { getTipoBySlug, createSolicitacao } from "@/lib/solicitacoes.functions";
 import { UNIDADES, URGENCIAS } from "@/lib/portal-constants";
 import { DynamicFormFields, type DynamicField } from "@/components/dynamic-form";
 import { useAuth } from "@/lib/use-auth";
@@ -34,6 +34,7 @@ function SolicSlug() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const minhasUnidadesFn = useServerFn(listMinhasUnidades);
+  const criarSolicitacao = useServerFn(createSolicitacao);
   const { data: minhasUnidades = [] } = useQuery({
     enabled: !!user,
     queryKey: ["minhas-unidades", user?.id],
@@ -42,31 +43,19 @@ function SolicSlug() {
 
   const { data: tipo, isLoading: tipoLoading } = useQuery({
     queryKey: ["public-tipo", slug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("solicitacao_tipos")
-        .select("*")
-        .eq("slug", slug)
-        .eq("ativo", true)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getTipoBySlug({ data: { slug } }),
   });
 
-  const { data: campos = [] } = useQuery({
-    enabled: !!tipo,
-    queryKey: ["public-campos", tipo?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("solicitacao_campos")
-        .select("id, chave, label, tipo_campo, obrigatorio, opcoes, placeholder, help_text, ordem")
-        .eq("tipo_id", tipo!.id)
-        .order("ordem");
-      if (error) throw error;
-      return (data ?? []) as DynamicField[];
-    },
-  });
+  const campos: DynamicField[] = (tipo?.campos ?? []).map((c) => ({
+    id: c.id,
+    chave: c.chave,
+    label: c.rotulo,
+    tipo_campo: c.tipo_campo,
+    obrigatorio: c.obrigatorio,
+    placeholder: c.placeholder,
+    help_text: c.ajuda,
+    opcoes: c.opcoes,
+  }));
 
   const [base, setBase] = useState<Base>({
     nome_solicitante: "",
