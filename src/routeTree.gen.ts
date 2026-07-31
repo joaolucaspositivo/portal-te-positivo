@@ -9,68 +9,38 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SobreRouteImport } from './routes/sobre'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as FerramentasRouteImport } from './routes/ferramentas'
-import { Route as ContatosRouteImport } from './routes/contatos'
-import { Route as ComunicadosRouteImport } from './routes/comunicados'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AreaTeRouteImport } from './routes/area-te'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SolicitacoesIndexRouteImport } from './routes/solicitacoes.index'
-import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
-import { Route as SolicitacoesSlugRouteImport } from './routes/solicitacoes.$slug'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as AreaTeUsuariosRouteImport } from './routes/area-te.usuarios'
-import { Route as AreaTeUnidadesRouteImport } from './routes/area-te.unidades'
-import { Route as AreaTeTiposSolicitacaoRouteImport } from './routes/area-te.tipos-solicitacao'
-import { Route as AreaTeSolicitacoesRouteImport } from './routes/area-te.solicitacoes'
-import { Route as AreaTePerfilRouteImport } from './routes/area-te.perfil'
-import { Route as AreaTeFerramentasRouteImport } from './routes/area-te.ferramentas'
-import { Route as AreaTeContatosRouteImport } from './routes/area-te.contatos'
-import { Route as AreaTeComunicadosRouteImport } from './routes/area-te.comunicados'
+import { Route as AreaTeRouteImport } from './routes/area-te'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ComunicadosRouteImport } from './routes/comunicados'
+import { Route as ContatosRouteImport } from './routes/contatos'
+import { Route as FerramentasRouteImport } from './routes/ferramentas'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as ApiUploadRouteImport } from './routes/api/upload'
-import { Route as AreaTeUnidadesIdRouteImport } from './routes/area-te.unidades.$id'
-import { Route as AreaTeTiposSolicitacaoIdRouteImport } from './routes/area-te.tipos-solicitacao.$id'
-import { Route as AreaTeSolicitacoesIdRouteImport } from './routes/area-te.solicitacoes.$id'
-import { Route as ApiFilesSplatRouteImport } from './routes/api/files.$'
+import { Route as AreaTeIndexRouteImport } from './routes/area-te.index'
+import { Route as AreaTeComunicadosRouteImport } from './routes/area-te.comunicados'
+import { Route as AreaTeContatosRouteImport } from './routes/area-te.contatos'
+import { Route as AreaTeFerramentasRouteImport } from './routes/area-te.ferramentas'
+import { Route as AreaTePerfilRouteImport } from './routes/area-te.perfil'
+import { Route as AreaTeSolicitacoesRouteImport } from './routes/area-te.solicitacoes'
+import { Route as AreaTeTiposSolicitacaoRouteImport } from './routes/area-te.tipos-solicitacao'
+import { Route as AreaTeUnidadesRouteImport } from './routes/area-te.unidades'
+import { Route as AreaTeUsuariosRouteImport } from './routes/area-te.usuarios'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as SolicitacoesIndexRouteImport } from './routes/solicitacoes.index'
+import { Route as SolicitacoesSlugRouteImport } from './routes/solicitacoes.$slug'
 import { Route as ApiAuthGoogleRouteImport } from './routes/api/auth.google'
+import { Route as ApiFilesSplatRouteImport } from './routes/api/files.$'
+import { Route as AreaTeSolicitacoesIdRouteImport } from './routes/area-te.solicitacoes.$id'
+import { Route as AreaTeTiposSolicitacaoIdRouteImport } from './routes/area-te.tipos-solicitacao.$id'
+import { Route as AreaTeUnidadesIdRouteImport } from './routes/area-te.unidades.$id'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api/auth.google.callback'
 
-const SobreRoute = SobreRouteImport.update({
-  id: '/sobre',
-  path: '/sobre',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FerramentasRoute = FerramentasRouteImport.update({
-  id: '/ferramentas',
-  path: '/ferramentas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContatosRoute = ContatosRouteImport.update({
-  id: '/contatos',
-  path: '/contatos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComunicadosRoute = ComunicadosRouteImport.update({
-  id: '/comunicados',
-  path: '/comunicados',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AreaTeRoute = AreaTeRouteImport.update({
@@ -78,14 +48,44 @@ const AreaTeRoute = AreaTeRouteImport.update({
   path: '/area-te',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SolicitacoesIndexRoute = SolicitacoesIndexRouteImport.update({
-  id: '/solicitacoes/',
-  path: '/solicitacoes/',
+const ComunicadosRoute = ComunicadosRouteImport.update({
+  id: '/comunicados',
+  path: '/comunicados',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContatosRoute = ContatosRouteImport.update({
+  id: '/contatos',
+  path: '/contatos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FerramentasRoute = FerramentasRouteImport.update({
+  id: '/ferramentas',
+  path: '/ferramentas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SobreRoute = SobreRouteImport.update({
+  id: '/sobre',
+  path: '/sobre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUploadRoute = ApiUploadRouteImport.update({
+  id: '/api/upload',
+  path: '/api/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AreaTeIndexRoute = AreaTeIndexRouteImport.update({
@@ -93,44 +93,9 @@ const AreaTeIndexRoute = AreaTeIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AreaTeRoute,
 } as any)
-const SolicitacoesSlugRoute = SolicitacoesSlugRouteImport.update({
-  id: '/solicitacoes/$slug',
-  path: '/solicitacoes/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/callback',
-  path: '/callback',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AreaTeUsuariosRoute = AreaTeUsuariosRouteImport.update({
-  id: '/usuarios',
-  path: '/usuarios',
-  getParentRoute: () => AreaTeRoute,
-} as any)
-const AreaTeUnidadesRoute = AreaTeUnidadesRouteImport.update({
-  id: '/unidades',
-  path: '/unidades',
-  getParentRoute: () => AreaTeRoute,
-} as any)
-const AreaTeTiposSolicitacaoRoute = AreaTeTiposSolicitacaoRouteImport.update({
-  id: '/tipos-solicitacao',
-  path: '/tipos-solicitacao',
-  getParentRoute: () => AreaTeRoute,
-} as any)
-const AreaTeSolicitacoesRoute = AreaTeSolicitacoesRouteImport.update({
-  id: '/solicitacoes',
-  path: '/solicitacoes',
-  getParentRoute: () => AreaTeRoute,
-} as any)
-const AreaTePerfilRoute = AreaTePerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => AreaTeRoute,
-} as any)
-const AreaTeFerramentasRoute = AreaTeFerramentasRouteImport.update({
-  id: '/ferramentas',
-  path: '/ferramentas',
+const AreaTeComunicadosRoute = AreaTeComunicadosRouteImport.update({
+  id: '/comunicados',
+  path: '/comunicados',
   getParentRoute: () => AreaTeRoute,
 } as any)
 const AreaTeContatosRoute = AreaTeContatosRouteImport.update({
@@ -138,20 +103,65 @@ const AreaTeContatosRoute = AreaTeContatosRouteImport.update({
   path: '/contatos',
   getParentRoute: () => AreaTeRoute,
 } as any)
-const AreaTeComunicadosRoute = AreaTeComunicadosRouteImport.update({
-  id: '/comunicados',
-  path: '/comunicados',
+const AreaTeFerramentasRoute = AreaTeFerramentasRouteImport.update({
+  id: '/ferramentas',
+  path: '/ferramentas',
   getParentRoute: () => AreaTeRoute,
 } as any)
-const ApiUploadRoute = ApiUploadRouteImport.update({
-  id: '/api/upload',
-  path: '/api/upload',
+const AreaTePerfilRoute = AreaTePerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AreaTeRoute,
+} as any)
+const AreaTeSolicitacoesRoute = AreaTeSolicitacoesRouteImport.update({
+  id: '/solicitacoes',
+  path: '/solicitacoes',
+  getParentRoute: () => AreaTeRoute,
+} as any)
+const AreaTeTiposSolicitacaoRoute = AreaTeTiposSolicitacaoRouteImport.update({
+  id: '/tipos-solicitacao',
+  path: '/tipos-solicitacao',
+  getParentRoute: () => AreaTeRoute,
+} as any)
+const AreaTeUnidadesRoute = AreaTeUnidadesRouteImport.update({
+  id: '/unidades',
+  path: '/unidades',
+  getParentRoute: () => AreaTeRoute,
+} as any)
+const AreaTeUsuariosRoute = AreaTeUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AreaTeRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
+const SolicitacoesIndexRoute = SolicitacoesIndexRouteImport.update({
+  id: '/solicitacoes/',
+  path: '/solicitacoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AreaTeUnidadesIdRoute = AreaTeUnidadesIdRouteImport.update({
+const SolicitacoesSlugRoute = SolicitacoesSlugRouteImport.update({
+  id: '/solicitacoes/$slug',
+  path: '/solicitacoes/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthGoogleRoute = ApiAuthGoogleRouteImport.update({
+  id: '/api/auth/google',
+  path: '/api/auth/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFilesSplatRoute = ApiFilesSplatRouteImport.update({
+  id: '/api/files/$',
+  path: '/api/files/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreaTeSolicitacoesIdRoute = AreaTeSolicitacoesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => AreaTeUnidadesRoute,
+  getParentRoute: () => AreaTeSolicitacoesRoute,
 } as any)
 const AreaTeTiposSolicitacaoIdRoute =
   AreaTeTiposSolicitacaoIdRouteImport.update({
@@ -159,20 +169,10 @@ const AreaTeTiposSolicitacaoIdRoute =
     path: '/$id',
     getParentRoute: () => AreaTeTiposSolicitacaoRoute,
   } as any)
-const AreaTeSolicitacoesIdRoute = AreaTeSolicitacoesIdRouteImport.update({
+const AreaTeUnidadesIdRoute = AreaTeUnidadesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => AreaTeSolicitacoesRoute,
-} as any)
-const ApiFilesSplatRoute = ApiFilesSplatRouteImport.update({
-  id: '/api/files/$',
-  path: '/api/files/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthGoogleRoute = ApiAuthGoogleRouteImport.update({
-  id: '/api/auth/google',
-  path: '/api/auth/google',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AreaTeUnidadesRoute,
 } as any)
 const ApiAuthGoogleCallbackRoute = ApiAuthGoogleCallbackRouteImport.update({
   id: '/callback',
@@ -381,53 +381,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sobre': {
-      id: '/sobre'
-      path: '/sobre'
-      fullPath: '/sobre'
-      preLoaderRoute: typeof SobreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ferramentas': {
-      id: '/ferramentas'
-      path: '/ferramentas'
-      fullPath: '/ferramentas'
-      preLoaderRoute: typeof FerramentasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contatos': {
-      id: '/contatos'
-      path: '/contatos'
-      fullPath: '/contatos'
-      preLoaderRoute: typeof ContatosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/comunicados': {
-      id: '/comunicados'
-      path: '/comunicados'
-      fullPath: '/comunicados'
-      preLoaderRoute: typeof ComunicadosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/area-te': {
@@ -437,18 +395,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/solicitacoes/': {
-      id: '/solicitacoes/'
-      path: '/solicitacoes'
-      fullPath: '/solicitacoes/'
-      preLoaderRoute: typeof SolicitacoesIndexRouteImport
+    '/comunicados': {
+      id: '/comunicados'
+      path: '/comunicados'
+      fullPath: '/comunicados'
+      preLoaderRoute: typeof ComunicadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contatos': {
+      id: '/contatos'
+      path: '/contatos'
+      fullPath: '/contatos'
+      preLoaderRoute: typeof ContatosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ferramentas': {
+      id: '/ferramentas'
+      path: '/ferramentas'
+      fullPath: '/ferramentas'
+      preLoaderRoute: typeof FerramentasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sobre': {
+      id: '/sobre'
+      path: '/sobre'
+      fullPath: '/sobre'
+      preLoaderRoute: typeof SobreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/upload': {
+      id: '/api/upload'
+      path: '/api/upload'
+      fullPath: '/api/upload'
+      preLoaderRoute: typeof ApiUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/area-te/': {
@@ -458,60 +458,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeIndexRouteImport
       parentRoute: typeof AreaTeRoute
     }
-    '/solicitacoes/$slug': {
-      id: '/solicitacoes/$slug'
-      path: '/solicitacoes/$slug'
-      fullPath: '/solicitacoes/$slug'
-      preLoaderRoute: typeof SolicitacoesSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/area-te/usuarios': {
-      id: '/area-te/usuarios'
-      path: '/usuarios'
-      fullPath: '/area-te/usuarios'
-      preLoaderRoute: typeof AreaTeUsuariosRouteImport
-      parentRoute: typeof AreaTeRoute
-    }
-    '/area-te/unidades': {
-      id: '/area-te/unidades'
-      path: '/unidades'
-      fullPath: '/area-te/unidades'
-      preLoaderRoute: typeof AreaTeUnidadesRouteImport
-      parentRoute: typeof AreaTeRoute
-    }
-    '/area-te/tipos-solicitacao': {
-      id: '/area-te/tipos-solicitacao'
-      path: '/tipos-solicitacao'
-      fullPath: '/area-te/tipos-solicitacao'
-      preLoaderRoute: typeof AreaTeTiposSolicitacaoRouteImport
-      parentRoute: typeof AreaTeRoute
-    }
-    '/area-te/solicitacoes': {
-      id: '/area-te/solicitacoes'
-      path: '/solicitacoes'
-      fullPath: '/area-te/solicitacoes'
-      preLoaderRoute: typeof AreaTeSolicitacoesRouteImport
-      parentRoute: typeof AreaTeRoute
-    }
-    '/area-te/perfil': {
-      id: '/area-te/perfil'
-      path: '/perfil'
-      fullPath: '/area-te/perfil'
-      preLoaderRoute: typeof AreaTePerfilRouteImport
-      parentRoute: typeof AreaTeRoute
-    }
-    '/area-te/ferramentas': {
-      id: '/area-te/ferramentas'
-      path: '/ferramentas'
-      fullPath: '/area-te/ferramentas'
-      preLoaderRoute: typeof AreaTeFerramentasRouteImport
+    '/area-te/comunicados': {
+      id: '/area-te/comunicados'
+      path: '/comunicados'
+      fullPath: '/area-te/comunicados'
+      preLoaderRoute: typeof AreaTeComunicadosRouteImport
       parentRoute: typeof AreaTeRoute
     }
     '/area-te/contatos': {
@@ -521,46 +472,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaTeContatosRouteImport
       parentRoute: typeof AreaTeRoute
     }
-    '/area-te/comunicados': {
-      id: '/area-te/comunicados'
-      path: '/comunicados'
-      fullPath: '/area-te/comunicados'
-      preLoaderRoute: typeof AreaTeComunicadosRouteImport
+    '/area-te/ferramentas': {
+      id: '/area-te/ferramentas'
+      path: '/ferramentas'
+      fullPath: '/area-te/ferramentas'
+      preLoaderRoute: typeof AreaTeFerramentasRouteImport
       parentRoute: typeof AreaTeRoute
     }
-    '/api/upload': {
-      id: '/api/upload'
-      path: '/api/upload'
-      fullPath: '/api/upload'
-      preLoaderRoute: typeof ApiUploadRouteImport
+    '/area-te/perfil': {
+      id: '/area-te/perfil'
+      path: '/perfil'
+      fullPath: '/area-te/perfil'
+      preLoaderRoute: typeof AreaTePerfilRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
+    '/area-te/solicitacoes': {
+      id: '/area-te/solicitacoes'
+      path: '/solicitacoes'
+      fullPath: '/area-te/solicitacoes'
+      preLoaderRoute: typeof AreaTeSolicitacoesRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
+    '/area-te/tipos-solicitacao': {
+      id: '/area-te/tipos-solicitacao'
+      path: '/tipos-solicitacao'
+      fullPath: '/area-te/tipos-solicitacao'
+      preLoaderRoute: typeof AreaTeTiposSolicitacaoRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
+    '/area-te/unidades': {
+      id: '/area-te/unidades'
+      path: '/unidades'
+      fullPath: '/area-te/unidades'
+      preLoaderRoute: typeof AreaTeUnidadesRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
+    '/area-te/usuarios': {
+      id: '/area-te/usuarios'
+      path: '/usuarios'
+      fullPath: '/area-te/usuarios'
+      preLoaderRoute: typeof AreaTeUsuariosRouteImport
+      parentRoute: typeof AreaTeRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/solicitacoes/': {
+      id: '/solicitacoes/'
+      path: '/solicitacoes'
+      fullPath: '/solicitacoes/'
+      preLoaderRoute: typeof SolicitacoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/area-te/unidades/$id': {
-      id: '/area-te/unidades/$id'
-      path: '/$id'
-      fullPath: '/area-te/unidades/$id'
-      preLoaderRoute: typeof AreaTeUnidadesIdRouteImport
-      parentRoute: typeof AreaTeUnidadesRoute
-    }
-    '/area-te/tipos-solicitacao/$id': {
-      id: '/area-te/tipos-solicitacao/$id'
-      path: '/$id'
-      fullPath: '/area-te/tipos-solicitacao/$id'
-      preLoaderRoute: typeof AreaTeTiposSolicitacaoIdRouteImport
-      parentRoute: typeof AreaTeTiposSolicitacaoRoute
-    }
-    '/area-te/solicitacoes/$id': {
-      id: '/area-te/solicitacoes/$id'
-      path: '/$id'
-      fullPath: '/area-te/solicitacoes/$id'
-      preLoaderRoute: typeof AreaTeSolicitacoesIdRouteImport
-      parentRoute: typeof AreaTeSolicitacoesRoute
-    }
-    '/api/files/$': {
-      id: '/api/files/$'
-      path: '/api/files/$'
-      fullPath: '/api/files/$'
-      preLoaderRoute: typeof ApiFilesSplatRouteImport
+    '/solicitacoes/$slug': {
+      id: '/solicitacoes/$slug'
+      path: '/solicitacoes/$slug'
+      fullPath: '/solicitacoes/$slug'
+      preLoaderRoute: typeof SolicitacoesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/google': {
@@ -569,6 +541,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/google'
       preLoaderRoute: typeof ApiAuthGoogleRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/files/$': {
+      id: '/api/files/$'
+      path: '/api/files/$'
+      fullPath: '/api/files/$'
+      preLoaderRoute: typeof ApiFilesSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/area-te/solicitacoes/$id': {
+      id: '/area-te/solicitacoes/$id'
+      path: '/$id'
+      fullPath: '/area-te/solicitacoes/$id'
+      preLoaderRoute: typeof AreaTeSolicitacoesIdRouteImport
+      parentRoute: typeof AreaTeSolicitacoesRoute
+    }
+    '/area-te/tipos-solicitacao/$id': {
+      id: '/area-te/tipos-solicitacao/$id'
+      path: '/$id'
+      fullPath: '/area-te/tipos-solicitacao/$id'
+      preLoaderRoute: typeof AreaTeTiposSolicitacaoIdRouteImport
+      parentRoute: typeof AreaTeTiposSolicitacaoRoute
+    }
+    '/area-te/unidades/$id': {
+      id: '/area-te/unidades/$id'
+      path: '/$id'
+      fullPath: '/area-te/unidades/$id'
+      preLoaderRoute: typeof AreaTeUnidadesIdRouteImport
+      parentRoute: typeof AreaTeUnidadesRoute
     }
     '/api/auth/google/callback': {
       id: '/api/auth/google/callback'
@@ -685,13 +685,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
