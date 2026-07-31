@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listSolicitacoes } from "@/lib/solicitacoes.functions";
 import { statusColor, urgencyColor } from "@/lib/portal-constants";
 
 export const Route = createFileRoute("/area-te/")({
@@ -18,13 +19,10 @@ function Stat({ label, value, tone = "primary" }: { label: string; value: number
 }
 
 function Dashboard() {
+  const listFn = useServerFn(listSolicitacoes);
   const { data: solicitacoes = [] } = useQuery({
     queryKey: ["admin-solic"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("solicitacoes").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => listFn(),
   });
   const count = (s: string) => solicitacoes.filter((x: any) => x.status === s).length;
   const critical = solicitacoes.filter((x: any) => x.urgencia === "Crítica").length;
