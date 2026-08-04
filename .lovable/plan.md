@@ -1,51 +1,61 @@
 ## Objetivo
 
-Concluir a migração standalone: nenhuma rota deve mais importar o cliente Supabase. A camada de dados (Prisma + auth local + storage local) já está pronta; falta ligar as telas nela e apagar o que sobrou do Supabase.
+Finalizar o Portal TE como aplicação 100% standalone (Node + Postgres + Prisma), desvinculada do Lovable/Supabase. O código da aplicação já foi migrado; falta remover as referências remanescentes, corrigir os erros de build e validar o Docker.
 
 ## Estado atual (verificado)
 
-- Prontos: `auth.functions.ts`, `users.functions.ts`, `unidades.functions.ts`, `conteudo.functions.ts` (ferramentas, comunicados, contatos), `solicitacoes.functions.ts` (tipos, campos, criação pública, gestão), `authz.server.ts`, `storage.server.ts`, `/api/upload`, `/api/files/$`, `image-upload-field`, `storage-image`, `user-avatar`.
-- Ainda importam Supabase: 18 rotas (`index`, `comunicados`, `contatos`, `ferramentas`, `solicitacoes.index`, `solicitacoes.$slug`, e todas as `area-te.*`), além de `src/start.ts` e `src/integrations/supabase/`.
-- Falta uma função de "perfil próprio" (ler/atualizar dados e avatar do usuário logado) para a tela `area-te.perfil`.
+- Todas as rotas e server functions já usam Prisma + auth local (`auth.functions.ts`, `auth-middleware.local.ts`, `auth-attacher.local.ts`).
+- O package.json não depende mais de `@supabase/supabase-js`.
+- Ainda existem arquivos/funções quebrando o build:
+  - `src/integrations/supabase/client.ts` (e outros) importam `@supabase/supabase-js`, que não está instalado.
+  - `src/start.ts` ainda registra `attachSupabaseAuth` junto com `attachLocalAuth`.
+  - `supabase/config.toml` ainda existe.
+  - `.env` e `.env.example` ainda trazem variáveis `SUPABASE_URL`/`VITE_SUPABASE_URL`.
+  - Alguns `map()` têm parâmetros com tipo `any` implícito (`auth.google.callback.ts`, `index.tsx`, `solicitacoes.$slug.tsx`).
+- Erro de runtime no preview: `Cannot find module '@supabase/supabase-js' imported from '/dev-server/src/integrations/supabase/client.ts`.
+- `README.standalone.md` e `MIGRACAO_POSTGRES.md` ainda listam passos da Fase B como pendentes.
 
-## Etapa 1 — Perfil próprio
+## Escopo aprovado
 
-Adicionar em `src/lib/profile.functions.ts` (com middleware de auth local):
-- `getMeuPerfil` — dados do usuário logado + papéis.
-- `updateMeuPerfil` — nome, cargo, unidade, telefone, bio, avatar (caminho do storage local). Status e papéis não são editáveis pelo próprio usuário.
-- `changeMinhaSenha` — senha atual + nova, com bcrypt.
+- Build standalone primeiro (sem migração de dados do Supabase nesta rodada).
+- E-mail de admin inicial continua: `tecipp@colegiopositivo.com.br`.
+- Desvincular totalmente do preview Lovable: apagar todo código Supabase restante.
 
-## Etapa 2 — Rotas públicas
+## Etapa 1 — Remover referências Supabase remanescentes
 
-Substituir chamadas `supabase.from(...)` por `useSuspenseQuery`/`useQuery` sobre as server functions já existentes:
-- `index.tsx` → `listComunicadosPublic`, `listFerramentasPublic`
-- `comunicados.tsx` → `listComunicadosPublic`
-- `ferramentas.tsx` → `listFerramentasPublic`
-- `contatos.tsx` → `listContatosPublic` (e-mail/telefone continuam ocultos para anônimos)
-- `solicitacoes.index.tsx` → `listTiposPublic`
-- `solicitacoes.$slug.tsx` → `getTipoBySlug` + `listUnidades` + `createSolicitacao`
+- Apagar `src/integrations/supabase/` (client.ts, client.server.ts, auth-middleware.ts, auth-attacher.ts, types.ts).
+- Apagar `supabase/config.toml` e a pasta `supabase/` se ficar vazia.
+- Atualizar `src/start.ts`: usar apenas `attachLocalAuth` (remover import e registro de `attachSupabaseAuth`).
+- Limpar `.env` e `.env.example`: remover `SUPABASE_URL`, `VITE_SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PUBLISHABLE_KEY` e quaisquer outras chaves Supabase. Manter `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `UPLOAD_DIR`, `SMTP_*`, `GOOGLE_OAUTH_*`, `PUBLIC_APP_URL`.
 
-## Etapa 3 — Rotas administrativas (`area-te.*`)
+## Etapa 2 — Corrigir erros de tipo (parâmetros implícitos `any`)
 
-- `area-te.tsx` (layout/guarda) → usar `useAuth` local em vez de sessão Supabase.
-- `area-te.index.tsx` (dashboard/KPIs) → contagens vindas de `listSolicitacoes` e listas de conteúdo.
-- `area-te.solicitacoes.tsx` / `.$id.tsx` → `listSolicitacoes`, `getSolicitacao`, `updateSolicitacao`, `listEquipeTE`.
-- `area-te.tipos-solicitacao.tsx` / `.$id.tsx` → `listTiposAdmin`, `getTipo`, `saveTipo`, `deleteTipo`, `listCampos`, `saveCampo`, `deleteCampo`, `swapCamposOrdem`.
-- `area-te.comunicados.tsx`, `.ferramentas.tsx`, `.contatos.tsx` → funções CRUD de `conteudo.functions.ts` + `listProfileOptions`.
-- `area-te.usuarios.tsx` → funções de `users.functions.ts`.
-- `area-te.perfil.tsx` → funções da Etapa 1.
+- `src/routes/api/auth.google.callback.ts` (linha 65): tipar o parâmetro do `map()`.
+- `src/routes/index.tsx` (linhas 54, 169, 219): tipar os parâmetros dos `map()`.
+- `src/routes/solicitacoes.$slug.tsx` (linha 49): tipar o parâmetro do `map()`.
 
-Sem mudanças de layout ou visual: só a origem dos dados.
+## Etapa 3 — Validar build standalone
 
-## Etapa 4 — Remoção do Supabase
+- Rodar `npx prisma generate`.
+- Rodar `npx vite build --config vite.config.node.ts`.
+- Garantir que `.output/server/index.mjs` seja gerado sem erros.
+- Rodar `npx tsgo --noEmit` e confirmar zero erros de TypeScript.
 
-- Apagar `src/integrations/supabase/` inteiro e `supabase/config.toml`.
-- Limpar `src/start.ts` (só `attachLocalAuth`) e as variáveis `VITE_SUPABASE_*` do `.env.example`.
-- Remover `@supabase/supabase-js` do `package.json`.
-- Rodar typecheck e build para confirmar que nada mais referencia o Supabase.
+## Etapa 4 — Validar Docker
 
-## Notas técnicas
+- Rodar `docker compose up -d --build`.
+- Confirmar que o container `app` fica saudável e responde em `http://localhost:3000`.
+- Verificar logs de erro de inicialização (`docker compose logs -f app`).
+- Validar fluxo básico: homepage carrega, `/auth` carrega, `/api/auth/google` redireciona (se configurado).
 
-- Todos os DTOs continuam em snake_case via `prisma-helpers.server.ts`, então os componentes de tela quase não mudam — troca-se apenas a função de busca.
-- Mutations passam a usar `useMutation` + `invalidateQueries`, mantendo os toasts atuais.
-- Após esta etapa o portal roda 100% no Docker (Node + Postgres + Prisma), sem dependência do Lovable/Supabase; o preview do Lovable deixa de refletir o backend real.
+## Etapa 5 — Atualizar documentação
+
+- `README.standalone.md`: marcar todos os passos da Fase B como concluídos, remover avisos de "preview do Lovable ainda funciona com Supabase".
+- `MIGRACAO_POSTGRES.md`: atualizar seção 7 (próximos passos) para refletir que a Fase B está concluída; adicionar nota sobre o script de migração de dados opcional (`scripts/migrate-from-supabase.ts`) para rodada futura.
+- `.lovable/plan.md`: arquivar/após aprovação, este plano será concluído.
+
+## Fora do escopo deste plano
+
+- Script de migração de dados do Supabase para Postgres local (será feito em rodada futura, conforme prioridade escolhida).
+- Novas funcionalidades no portal (somente a finalização da migração standalone).
+- Publicação no Lovable (o app será standalone; publicação no Lovable deixará de refletir o backend real).
