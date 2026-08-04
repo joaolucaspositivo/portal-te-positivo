@@ -51,7 +51,7 @@ function Index() {
   const { data: ferramentas } = useQuery({
     queryKey: ["home-ferramentas"],
     queryFn: async () =>
-      (await listFerramentasPublic()).filter((f) => f.status === "Ativa").slice(0, 4),
+      (await listFerramentasPublic()).filter((f: { status: string }) => f.status === "Ativa").slice(0, 4),
   });
 
   return (
@@ -166,7 +166,7 @@ function Index() {
             </div>
             {comunicados && comunicados.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-3">
-                {comunicados.map((c) => (
+                {comunicados.map((c: { id: string; titulo: string; imagem_url?: string | null; destaque: boolean; data_publicacao: string; resumo?: string | null; categoria?: string | null }) => (
                   <div key={c.id} className="p-5 rounded-xl bg-card border hover:border-primary/50 transition">
                     {c.imagem_url && (
                       <StorageImage
@@ -216,7 +216,7 @@ function Index() {
             </div>
             {ferramentas && ferramentas.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {ferramentas.map((f) => (
+                {ferramentas.map((f: { id: string; nome: string; categoria?: string | null; imagem_url?: string | null; descricao?: string | null }) => (
                   <div key={f.id} className="p-5 rounded-xl border bg-card hover:border-primary/50 transition">
                     {f.imagem_url && (
                       <StorageImage
