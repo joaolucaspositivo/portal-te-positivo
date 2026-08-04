@@ -85,11 +85,34 @@ npx prisma studio
 | `supabase.auth.getUser()` | `getCurrentUser()` server fn |
 | `supabase.auth.signInWithPassword` | `signIn` server fn |
 
-## 7) Próximos passos
+## 7) Script de migração de dados do Supabase
 
-- **Script de migração de dados**: opcional, será feito em rodada futura
-  (`scripts/migrate-from-supabase.ts`). Preencha `MIGRATE_SUPABASE_URL` e
-  `MIGRATE_SUPABASE_SERVICE_ROLE_KEY` para exportar dados do Supabase anterior.
+Criado em `scripts/migrate-from-supabase.ts`. Ele lê do Supabase atual
+(auth.users, public.profiles, public.user_roles, public.unidades, etc.) e
+faz `upsert` no Postgres local, respeitando FKs. Também baixa os arquivos dos
+buckets `portal-media` e `portal-avatars` para `UPLOAD_DIR`.
+
+Preencha em `.env`:
+```
+MIGRATE_SUPABASE_URL="https://<ref>.supabase.co"
+MIGRATE_SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
+```
+
+Rode (fora do Docker, com o Postgres local acessível):
+```bash
+npx prisma generate
+npx tsx scripts/migrate-from-supabase.ts
+```
+
+Ou, dentro do container:
+```bash
+docker compose exec app bunx tsx scripts/migrate-from-supabase.ts
+```
+
+Após concluir, remova as variáveis `MIGRATE_*` do `.env`.
+
+## 8) Próximos passos
+
 - **Testes end-to-end** do Docker em ambiente de staging.
 - **Customização da identidade visual** (cores, logos, domínio) — ajuste
   `src/styles.css` e `PUBLIC_APP_URL`.

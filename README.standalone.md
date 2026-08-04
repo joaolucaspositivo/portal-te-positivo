@@ -88,7 +88,7 @@ docker run --rm -v portal-te_portal_uploads:/data -v $(pwd):/backup alpine \
 | 3. Reescrita das `*.functions.ts` p/ Prisma | ✅ |
 | 4. Upload/download em disco local | ✅ |
 | 5. Remoção de código Supabase | ✅ |
-| 6. Script de migração de dados | ⏳ opcional — próxima rodada |
+| 6. Script de migração de dados | ✅ `scripts/migrate-from-supabase.ts` |
 
 ## Build standalone (Node)
 
