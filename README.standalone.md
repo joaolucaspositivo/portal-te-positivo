@@ -1,8 +1,8 @@
 # Portal TE — Deploy standalone (Docker)
 
 > Este README cobre a **versão standalone** (Postgres + Node + disco local),
-> destinada a rodar fora do Lovable. Enquanto a migração Fase B não terminar,
-> o preview do Lovable continua funcionando com Supabase — os dois convivem.
+> destinada a rodar fora do Lovable. A Fase B de migração foi concluída: o app
+> não depende mais do Supabase.
 
 ## Pré-requisitos
 
@@ -41,8 +41,6 @@ se precisar trocar.
    (`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`).
 4. Reinicie o container: `docker compose restart app`.
 
-A implementação do fluxo OAuth Google chega no passo 2 da Fase B (ver abaixo).
-
 ## SMTP
 
 Preencha `SMTP_*` no `.env`. O envio real é usado para:
@@ -53,7 +51,7 @@ Se `SMTP_HOST` ficar vazio, o link cai no log do container (dev-only).
 
 ## Migração de dados do Supabase → Postgres local
 
-Script disponível na Fase B: `scripts/migrate-from-supabase.ts`.
+Script disponível: `scripts/migrate-from-supabase.ts`.
 Ele lê do Supabase atual (via service role) e insere no Postgres local
 respeitando FKs; baixa arquivos dos buckets pra `UPLOAD_DIR`.
 
@@ -81,21 +79,17 @@ docker run --rm -v portal-te_portal_uploads:/data -v $(pwd):/backup alpine \
   tar czf /backup/uploads-$(date +%F).tgz -C /data .
 ```
 
-## Status atual da migração (Fase B)
+## Status da migração (Fase B)
 
 | Passo | Estado |
 |---|---|
-| 1. Runtime Node + Dockerfile + compose | ✅ (este PR) |
-| 2. Auth cliente (use-auth + auth.tsx + start.ts) | ⏳ próximo turno |
-| 3. Reescrita das `*.functions.ts` p/ Prisma | ⏳ |
-| 4. Upload/download em disco local | ⏳ |
-| 5. Script de migração de dados | ⏳ |
-| 6. Remoção de código Supabase | ⏳ |
+| 1. Runtime Node + Dockerfile + compose | ✅ |
+| 2. Auth cliente (use-auth + auth.tsx + start.ts) | ✅ |
+| 3. Reescrita das `*.functions.ts` p/ Prisma | ✅ |
+| 4. Upload/download em disco local | ✅ |
+| 5. Remoção de código Supabase | ✅ |
+| 6. Script de migração de dados | ⏳ opcional — próxima rodada |
 
-Enquanto os passos 2–6 não terminam, `docker compose up` **builda** mas o
-app ainda tenta falar com Supabase — o container é útil pra validar a
-infraestrutura, não a aplicação completa. A troca definitiva do runtime
-(Cloudflare Worker → Node) acontece junto do passo 2.
 ## Build standalone (Node)
 
 O `vite.config.ts` padrão é o do editor (alvo Cloudflare). Para rodar fora do

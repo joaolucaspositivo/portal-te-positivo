@@ -1,5 +1,4 @@
 // functionMiddleware cliente: anexa o access token JWT a toda chamada de server fn.
-// Substitui o attachSupabaseAuth gerado.
 // Guarda access token em memória (não em localStorage — o refresh é que persiste).
 import { createMiddleware } from "@tanstack/react-start";
 

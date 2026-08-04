@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { AppRole } from "@prisma/client";
+
 
 export const Route = createFileRoute("/api/auth/google/callback")({
   server: {
@@ -62,7 +64,7 @@ export const Route = createFileRoute("/api/auth/google/callback")({
           await prisma.user.update({ where: { id: user.id }, data: { googleId: profile.sub } });
         }
 
-        const roles = user.roles.map((r) => r.role);
+        const roles = user.roles.map((r) => r.role) as AppRole[];
         const accessToken = signAccessToken({ sub: user.id, email: user.email, roles });
         const refreshToken = await issueRefreshToken(user.id);
 

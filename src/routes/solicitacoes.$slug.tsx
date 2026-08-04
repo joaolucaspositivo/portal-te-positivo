@@ -46,7 +46,16 @@ function SolicSlug() {
     queryFn: () => getTipoBySlug({ data: { slug } }),
   });
 
-  const campos: DynamicField[] = (tipo?.campos ?? []).map((c) => ({
+  const campos: DynamicField[] = (tipo?.campos ?? []).map((c: {
+    id: string;
+    chave: string;
+    rotulo: string;
+    tipo_campo: string;
+    obrigatorio: boolean;
+    placeholder: string | null;
+    ajuda: string | null;
+    opcoes: unknown;
+  }) => ({
     id: c.id,
     chave: c.chave,
     label: c.rotulo,
