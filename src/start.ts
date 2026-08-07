@@ -1,6 +1,5 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
 import { attachLocalAuth } from "@/lib/auth-attacher.local";
-import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -12,6 +11,6 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  functionMiddleware: [attachSupabaseAuth, attachLocalAuth],
+  functionMiddleware: [attachLocalAuth],
   requestMiddleware: [errorMiddleware],
 }));
