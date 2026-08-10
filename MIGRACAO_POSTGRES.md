@@ -1,133 +1,104 @@
-# Migração Supabase → Postgres puro (Fase A)
+# Migração de dados: Supabase → Postgres local
 
-Esta fase entrega a **fundação** para sair do Supabase:
-camada de banco (Prisma), auth caseiro (JWT + bcrypt) e infra local (Docker).
+Este documento cobre **apenas a migração única dos dados** da versão antiga
+(hospedada no Supabase) para a instalação standalone em Postgres.
 
-A **Fase B** foi concluída: o app agora roda 100% standalone, usando Prisma
-para todas as queries, armazenamento local de arquivos e autenticação própria.
-Os arquivos e pastas do Supabase foram removidos.
+Para instalar e operar o Portal TE, veja o [README](./README.md).
 
 ---
 
-## 1) Suba o Postgres local
+## 1. Quando usar
 
-```bash
-docker compose up -d
-# verifica
-docker compose ps
-```
+Só se você tinha o Portal TE rodando no Supabase e quer trazer usuários,
+conteúdos e arquivos para a nova instalação. Instalações novas podem ignorar
+este documento (e o script `scripts/migrate-from-supabase.ts`).
 
-Postgres ficará em `localhost:5432`, usuário `portal`, senha `portal_dev_password`,
-banco `portal_te`. Credenciais e volume estão em `docker-compose.yml`.
+## 2. Pré-requisitos
 
-## 2) Copie o `.env`
+- Nova instalação já no ar, com as migrações aplicadas (`prisma migrate deploy`).
+- Acesso ao projeto Supabase antigo: URL e **service role key**.
+- Banco de destino idealmente vazio (o script faz `upsert`, mas é mais seguro).
+- Backup do banco de destino antes de rodar.
 
-```bash
-cp .env.example .env
-```
+## 3. Configuração
 
-Edite `.env` e ajuste:
-- `DATABASE_URL` — já vem apontando pro Docker acima
-- `JWT_SECRET` / `JWT_REFRESH_SECRET` — gere com `openssl rand -base64 64`
-- `UPLOAD_DIR` — crie o diretório (`mkdir -p /var/lib/portal-te/uploads`)
-- `GOOGLE_OAUTH_*` — só se for ativar login Google (opcional)
+No `.env` da nova instalação, preencha temporariamente:
 
-## 3) Instale dependências
-
-```bash
-bun install
-```
-
-## 4) Gere o cliente Prisma e aplique o schema
-
-```bash
-# Gera os tipos TypeScript do Prisma
-npx prisma generate
-
-# Cria/atualiza as tabelas no Postgres a partir de prisma/schema.prisma
-npx prisma migrate dev --name init
-```
-
-Pra inspecionar visualmente:
-
-```bash
-npx prisma studio
-```
-
-## 5) Estrutura entregue
-
-| Arquivo | Função |
-|---|---|
-| `docker-compose.yml` | Postgres 16 local + app Node |
-| `Dockerfile` / `docker/entrypoint.sh` | Build e startup do app standalone |
-| `prisma/schema.prisma` | Schema completo (users, profiles, roles, unidades, solicitações, ferramentas, comunicados, contatos) |
-| `prisma/migrations/` | Migrações versionadas |
-| `src/lib/db.server.ts` | Singleton do Prisma Client |
-| `src/lib/auth.server.ts` | Hash bcrypt, sign/verify JWT, refresh tokens com rotação |
-| `src/lib/auth.functions.ts` | `signUp`, `signIn`, `signOut`, `refreshSession`, `getCurrentUser` |
-| `src/lib/auth-middleware.local.ts` | `requireAuth` / `requireRole` para server functions |
-| `src/lib/auth-attacher.local.ts` | Cliente: anexa `Authorization: Bearer <jwt>` automaticamente |
-| `src/lib/auth-client.ts` | Gerência de tokens no navegador (memória + localStorage) |
-| `src/lib/storage.server.ts` | Salva/leitura de arquivos em disco local |
-| `src/routes/api/upload.ts` | Endpoint de upload autenticado |
-| `src/routes/api/files.$.ts` | Endpoint de leitura pública de arquivos |
-
-## 6) Diferenças importantes vs Supabase
-
-| Supabase | Postgres puro |
-|---|---|
-| `auth.users` (gerenciado) | tabela `users` própria, com `password_hash` |
-| `auth.uid()` em RLS | checagem no **código** via `requireAuth` + Prisma `where` |
-| RLS policies | filtros explícitos no código (Prisma) |
-| Service role key | acesso direto ao Postgres via Prisma |
-| Trigger `handle_new_user` | feito em `signUp` (promove tecipp@... a admin) |
-| Storage buckets | disco local em `UPLOAD_DIR` |
-| `supabase.auth.getUser()` | `getCurrentUser()` server fn |
-| `supabase.auth.signInWithPassword` | `signIn` server fn |
-
-## 7) Script de migração de dados do Supabase
-
-Criado em `scripts/migrate-from-supabase.ts`. Ele lê do Supabase atual
-(auth.users, public.profiles, public.user_roles, public.unidades, etc.) e
-faz `upsert` no Postgres local, respeitando FKs. Também baixa os arquivos dos
-buckets `portal-media` e `portal-avatars` para `UPLOAD_DIR`.
-
-Preencha em `.env`:
 ```
 MIGRATE_SUPABASE_URL="https://<ref>.supabase.co"
 MIGRATE_SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
 ```
 
-Rode (fora do Docker, com o Postgres local acessível):
+Confirme também que `DATABASE_URL` aponta para o Postgres de destino e que
+`UPLOAD_DIR` existe (é para lá que os arquivos serão baixados).
+
+## 4. Execução
+
+Fora do Docker (com o Postgres acessível pela máquina):
+
 ```bash
 npx prisma generate
 npx tsx scripts/migrate-from-supabase.ts
 ```
 
-Ou, dentro do container:
+Dentro do container:
+
 ```bash
 docker compose exec app bunx tsx scripts/migrate-from-supabase.ts
 ```
 
-Após concluir, remova as variáveis `MIGRATE_*` do `.env`.
+O script é idempotente: pode ser executado novamente em caso de falha no meio
+do caminho.
 
-## 8) Próximos passos
+## 5. O que é migrado
 
-- **Testes end-to-end** do Docker em ambiente de staging.
-- **Customização da identidade visual** (cores, logos, domínio) — ajuste
-  `src/styles.css` e `PUBLIC_APP_URL`.
+| Origem (Supabase) | Destino (Postgres) |
+|---|---|
+| `auth.users` | tabela `users` |
+| `public.profiles` | `profiles` (nome, telefone, cargo, status, avatar) |
+| `public.user_roles` | `user_roles` |
+| `public.unidades` / `usuario_unidades` | `unidades` / `usuario_unidades` |
+| `public.solicitacao_tipos` / `solicitacao_campos` | tipos e campos dos formulários |
+| `public.solicitacoes` | `solicitacoes` (inclui responsável e unidade) |
+| `public.ferramentas`, `comunicados`, `contatos` | tabelas equivalentes |
+| Buckets `portal-media` e `portal-avatars` | arquivos em `UPLOAD_DIR/<bucket>/` |
 
-## 8) Como o auth caseiro funciona (resumo)
+A ordem respeita as chaves estrangeiras (usuários → perfis → papéis → unidades
+→ solicitações → conteúdos).
 
-1. **Login**: `signIn(email, senha)` valida com bcrypt → devolve `accessToken` (JWT 15min) + `refreshToken` (opaco, 30 dias).
-2. Cliente guarda `accessToken` em memória e `refreshToken` em `localStorage` (`portal-te.refreshToken`).
-3. A cada server fn, o middleware `attachLocalAuth` injeta `Authorization: Bearer <jwt>`.
-4. No servidor, `requireAuth` valida o JWT e popula `context.userId / roles`.
-5. Quando o JWT expira (401), o cliente chama `refreshSession(refreshToken)` que **rotaciona** o refresh (revoga o antigo, emite novo).
-6. Logout: `signOut(refreshToken)` revoga o refresh; cliente limpa localStorage.
+## 6. O que **não** é migrado
 
-## 9) Avisos
+- **Senhas.** O Supabase não expõe os hashes por API. Cada usuário precisa usar
+  "Esqueci minha senha" (exige SMTP configurado) ou entrar com Google, ou o
+  admin define uma senha nova em Área TE → Usuários.
+- Sessões e refresh tokens ativos.
+- Políticas de RLS — na versão standalone o controle de acesso é feito no
+  código (`requireAuth` / `requireRole` + filtros do Prisma).
 
-- **Não rode `prisma migrate` em produção sem backup.**
-- O preview do Lovable não reflete mais o backend real; use o Docker local para validar.
-- Para ajustar o primeiro admin, edite `src/lib/auth.functions.ts` na função `signUp`.
+## 7. Depois de migrar
+
+1. Confira contagens de registros:
+   `docker compose exec postgres psql -U portal -d portal_te -c "select count(*) from users;"`
+2. Valide login, avatares, imagens de comunicados/ferramentas e uma solicitação.
+3. **Remova `MIGRATE_SUPABASE_URL` e `MIGRATE_SUPABASE_SERVICE_ROLE_KEY` do `.env`**
+   e reinicie o app.
+4. Opcional: remova `scripts/migrate-from-supabase.ts`, a pasta `supabase/` e a
+   devDependency `@supabase/supabase-js`.
+
+## 8. Equivalências Supabase → standalone
+
+| Supabase | Standalone |
+|---|---|
+| `auth.users` (gerenciado) | tabela `users` com `password_hash` |
+| `auth.uid()` em RLS | `requireAuth` + filtros no Prisma |
+| Service role key | acesso direto ao Postgres via Prisma |
+| Trigger `handle_new_user` | lógica dentro de `signUp` |
+| Storage buckets | disco local em `UPLOAD_DIR` |
+| `supabase.auth.signInWithPassword` | server fn `signIn` |
+| `supabase.auth.getUser()` | server fn `getCurrentUser` |
+
+## 9. Avisos
+
+- Nunca rode `prisma migrate` em produção sem backup.
+- A service role key dá acesso total ao projeto antigo: use-a apenas durante a
+  migração e remova em seguida.
