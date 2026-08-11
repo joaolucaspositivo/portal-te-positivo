@@ -90,7 +90,10 @@ Criar a visão "Minhas solicitações" e a página de acompanhamento com linha d
 **Etapa 8 — Unidades sob a plataforma**
 Cadastro de unidades restrito ao administrador da plataforma, com designação do administrador de unidade e permissões derivadas desse vínculo.
 
-**Etapa 9 — Documentação**
+**Etapa 9 — Notificações**
+Tabelas de templates, notificações (evento + destinatários) e histórico de envio; aba "Notificações" em Configurações, com editor de template, seletor de variáveis, pré-visualização e escolha de destinatários por papel; disparo nos eventos de solicitação e de usuário; preferências pessoais no perfil.
+
+**Etapa 10 — Documentação**
 Atualizar o README: instalação continua a mesma; acrescentar como criar o primeiro portal e o primeiro administrador da plataforma.
 
 ## Detalhes técnicos
