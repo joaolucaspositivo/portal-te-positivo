@@ -28,6 +28,26 @@ enum UnidadeStatus {
   inativa
 }
 
+enum PortalStatus {
+  pendente
+  ativo
+  inativo
+  recusado
+}
+
+enum PortalPapel {
+  admin_portal
+  equipe
+  editor
+  coordenador
+  usuario
+}
+
+enum NotificacaoStatus {
+  enviado
+  falhou
+}
+
 // ============================================================
 // Auth (substitui auth.users do Supabase)
 // ============================================================
@@ -45,6 +65,8 @@ model User {
   roles           UserRole[]
   refreshTokens   RefreshToken[]
   unidades        UsuarioUnidade[]
+  portais         PortalMembro[]
+  prefsNotificacao NotificacaoPreferencia[]
 
   @@map("users")
 }
@@ -133,6 +155,8 @@ model Unidade {
 
   usuarios     UsuarioUnidade[]
   solicitacoes Solicitacao[]
+  portais      PortalUnidade[]
+  notificacoes Notificacao[]
 
   @@map("unidades")
 }
@@ -141,6 +165,7 @@ model UsuarioUnidade {
   userId    String   @map("user_id") @db.Uuid
   unidadeId String   @map("unidade_id") @db.Uuid
   principal Boolean  @default(false)
+  admin     Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -156,7 +181,8 @@ model UsuarioUnidade {
 
 model SolicitacaoTipo {
   id          String   @id @default(uuid()) @db.Uuid
-  slug        String   @unique
+  portalId    String   @map("portal_id") @db.Uuid
+  slug        String
   nome        String
   descricao   String?
   icone       String?
@@ -169,7 +195,9 @@ model SolicitacaoTipo {
 
   campos       SolicitacaoCampo[]
   solicitacoes Solicitacao[]
+  portal       Portal @relation(fields: [portalId], references: [id], onDelete: Cascade)
 
+  @@unique([portalId, slug])
   @@map("solicitacao_tipos")
 }
 
@@ -196,6 +224,7 @@ model SolicitacaoCampo {
 
 model Solicitacao {
   id                     String   @id @default(uuid()) @db.Uuid
+  portalId               String   @map("portal_id") @db.Uuid
   tipoId                 String?  @map("tipo_id") @db.Uuid
   unidadeId              String?  @map("unidade_id") @db.Uuid
   nomeSolicitante        String   @map("nome_solicitante")
@@ -218,16 +247,57 @@ model Solicitacao {
   responsavelTe          String?  @map("responsavel_te")
   responsavelId          String?  @map("responsavel_id") @db.Uuid
   observacoesInternas    String?  @map("observacoes_internas")
+  solicitanteId          String?  @map("solicitante_id") @db.Uuid
+  prazo                  DateTime? @db.Date
+  acompanhamentoToken    String   @unique @default(uuid()) @map("acompanhamento_token")
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   tipo     SolicitacaoTipo? @relation(fields: [tipoId], references: [id])
   unidadeRef Unidade?       @relation(fields: [unidadeId], references: [id])
+  portal     Portal         @relation(fields: [portalId], references: [id], onDelete: Cascade)
+  eventos    SolicitacaoEvento[]
+  comentarios SolicitacaoComentario[]
 
   @@index([status])
   @@index([tipoId])
   @@index([unidadeId])
+  @@index([portalId, status])
+  @@index([solicitanteId])
   @@map("solicitacoes")
+}
+
+model SolicitacaoEvento {
+  id            String   @id @default(uuid()) @db.Uuid
+  solicitacaoId String   @map("solicitacao_id") @db.Uuid
+  tipo          String
+  de            String?
+  para          String?
+  autorId       String?  @map("autor_id") @db.Uuid
+  autorNome     String?  @map("autor_nome")
+  detalhe       String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  solicitacao Solicitacao @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([solicitacaoId])
+  @@map("solicitacao_eventos")
+}
+
+model SolicitacaoComentario {
+  id            String   @id @default(uuid()) @db.Uuid
+  solicitacaoId String   @map("solicitacao_id") @db.Uuid
+  autorId       String?  @map("autor_id") @db.Uuid
+  autorNome     String   @map("autor_nome")
+  mensagem      String
+  interno       Boolean  @default(false)
+  anexosUrls    Json?    @map("anexos_urls")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  solicitacao Solicitacao @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([solicitacaoId])
+  @@map("solicitacao_comentarios")
 }
 
 // ============================================================
@@ -236,6 +306,7 @@ model Solicitacao {
 
 model Ferramenta {
   id            String   @id @default(uuid()) @db.Uuid
+  portalId      String   @map("portal_id") @db.Uuid
   nome          String
   descricao     String?
   categoria     String?
@@ -248,11 +319,15 @@ model Ferramenta {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  portal Portal @relation(fields: [portalId], references: [id], onDelete: Cascade)
+
+  @@index([portalId])
   @@map("ferramentas")
 }
 
 model Comunicado {
   id              String   @id @default(uuid()) @db.Uuid
+  portalId        String   @map("portal_id") @db.Uuid
   titulo          String
   resumo          String?
   conteudo        String
@@ -265,12 +340,16 @@ model Comunicado {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  portal Portal @relation(fields: [portalId], references: [id], onDelete: Cascade)
+
   @@index([publicado])
+  @@index([portalId])
   @@map("comunicados")
 }
 
 model Contato {
   id               String   @id @default(uuid()) @db.Uuid
+  portalId         String   @map("portal_id") @db.Uuid
   nome             String
   funcao           String?
   unidade          String?
@@ -282,5 +361,151 @@ model Contato {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  portal Portal @relation(fields: [portalId], references: [id], onDelete: Cascade)
+
+  @@index([portalId])
   @@map("contatos")
+}
+
+// ============================================================
+// Portais (multi-setor)
+// ============================================================
+
+model Portal {
+  id             String       @id @default(uuid()) @db.Uuid
+  slug           String       @unique
+  nome           String
+  sigla          String
+  descricao      String?
+  status         PortalStatus @default(pendente)
+  logoUrl        String?      @map("logo_url")
+  corPrimaria    String?      @map("cor_primaria")
+  corSecundaria  String?      @map("cor_secundaria")
+  emailContato   String?      @map("email_contato")
+  ordem          Int          @default(0)
+  solicitanteNome  String?    @map("solicitante_nome")
+  solicitanteEmail String?    @map("solicitante_email")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  config       PortalConfig?
+  membros      PortalMembro[]
+  unidades     PortalUnidade[]
+  ferramentas  Ferramenta[]
+  comunicados  Comunicado[]
+  contatos     Contato[]
+  tipos        SolicitacaoTipo[]
+  solicitacoes Solicitacao[]
+  templates    NotificacaoTemplate[]
+  notificacoes Notificacao[]
+
+  @@map("portais")
+}
+
+model PortalConfig {
+  portalId  String   @id @map("portal_id") @db.Uuid
+  home      Json     @default("{}")
+  sobre     Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  portal Portal @relation(fields: [portalId], references: [id], onDelete: Cascade)
+
+  @@map("portal_config")
+}
+
+model PortalMembro {
+  id        String      @id @default(uuid()) @db.Uuid
+  portalId  String      @map("portal_id") @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  papel     PortalPapel @default(usuario)
+  unidadeId String?     @map("unidade_id") @db.Uuid
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  portal Portal @relation(fields: [portalId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([portalId, userId, papel])
+  @@index([userId])
+  @@map("portal_membros")
+}
+
+model PortalUnidade {
+  portalId  String   @map("portal_id") @db.Uuid
+  unidadeId String   @map("unidade_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  portal  Portal  @relation(fields: [portalId], references: [id], onDelete: Cascade)
+  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+
+  @@id([portalId, unidadeId])
+  @@map("portal_unidades")
+}
+
+// ============================================================
+// Notificações (evento + template + destinatários)
+// ============================================================
+
+model NotificacaoTemplate {
+  id        String   @id @default(uuid()) @db.Uuid
+  portalId  String?  @map("portal_id") @db.Uuid
+  evento    String
+  nome      String
+  assunto   String
+  corpo     String
+  padrao    Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  portal        Portal?        @relation(fields: [portalId], references: [id], onDelete: Cascade)
+  notificacoes  Notificacao[]
+
+  @@index([portalId, evento])
+  @@map("notificacao_templates")
+}
+
+model Notificacao {
+  id            String   @id @default(uuid()) @db.Uuid
+  portalId      String?  @map("portal_id") @db.Uuid
+  unidadeId     String?  @map("unidade_id") @db.Uuid
+  evento        String
+  templateId    String?  @map("template_id") @db.Uuid
+  destinatarios Json     @default("[]")
+  emailsExtras  Json     @default("[]") @map("emails_extras")
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  portal   Portal?              @relation(fields: [portalId], references: [id], onDelete: Cascade)
+  unidade  Unidade?             @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  template NotificacaoTemplate? @relation(fields: [templateId], references: [id])
+
+  @@index([portalId, evento])
+  @@map("notificacoes")
+}
+
+model NotificacaoLog {
+  id           String            @id @default(uuid()) @db.Uuid
+  portalId     String?           @map("portal_id") @db.Uuid
+  evento       String
+  destinatario String
+  assunto      String
+  status       NotificacaoStatus
+  erro         String?
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([portalId, createdAt])
+  @@map("notificacao_logs")
+}
+
+model NotificacaoPreferencia {
+  userId    String   @map("user_id") @db.Uuid
+  evento    String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, evento])
+  @@map("notificacao_preferencias")
 }
