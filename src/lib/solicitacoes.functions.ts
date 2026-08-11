@@ -4,25 +4,34 @@ import { z } from "zod";
 import { requireAuth } from "./auth-middleware.local";
 import { TipoInput, CampoInput, SolicitacaoInput } from "./conteudo-schemas";
 
+/** Escopo de portal aceito pelas funções de solicitação. */
+const PortalScope = z.object({ portal: z.string().max(60).optional() });
+
 // --------------------------------------------------------------- Tipos (público)
 
-export const listTiposPublic = createServerFn({ method: "GET" }).handler(async () => {
+export const listTiposPublic = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => PortalScope.parse(data ?? {}))
+  .handler(async ({ data }) => {
   const { prisma } = await import("./db.server");
   const { serializeTipo } = await import("./prisma-helpers.server");
+  const { requirePortalId } = await import("./portal.server");
+  const portalId = await requirePortalId(data.portal);
   const rows = await prisma.solicitacaoTipo.findMany({
-    where: { ativo: true },
+    where: { ativo: true, portalId },
     orderBy: [{ ordem: "asc" }, { nome: "asc" }],
   });
   return rows.map((t) => serializeTipo(t));
 });
 
 export const getTipoBySlug = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ slug: z.string().max(80) }).parse(data))
+  .inputValidator((data: unknown) => z.object({ slug: z.string().max(80), portal: z.string().max(60).optional() }).parse(data))
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
     const { serializeTipo } = await import("./prisma-helpers.server");
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
     const tipo = await prisma.solicitacaoTipo.findFirst({
-      where: { slug: data.slug, ativo: true },
+      where: { slug: data.slug, ativo: true, portalId },
       include: { campos: { where: { ativo: true }, orderBy: { ordem: "asc" } } },
     });
     return tipo ? serializeTipo(tipo) : null;
@@ -32,12 +41,16 @@ export const getTipoBySlug = createServerFn({ method: "GET" })
 
 export const listTiposAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data: unknown) => PortalScope.parse(data ?? {}))
+  .handler(async ({ data, context }) => {
     const { assertAdmin } = await import("./authz.server");
     assertAdmin(context);
     const { prisma } = await import("./db.server");
     const { serializeTipo } = await import("./prisma-helpers.server");
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
     const rows = await prisma.solicitacaoTipo.findMany({
+      where: { portalId },
       orderBy: [{ ordem: "asc" }, { nome: "asc" }],
       include: { campos: true },
     });
@@ -62,7 +75,7 @@ export const getTipo = createServerFn({ method: "GET" })
 export const saveTipo = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator((data: unknown) =>
-    TipoInput.extend({ id: z.string().uuid().optional() }).parse(data),
+    TipoInput.extend({ id: z.string().uuid().optional(), portal: z.string().max(60).optional() }).parse(data),
   )
   .handler(async ({ data, context }) => {
     const { assertAdmin } = await import("./authz.server");
@@ -79,9 +92,11 @@ export const saveTipo = createServerFn({ method: "POST" })
       ordem: data.ordem ?? 0,
       prazoDias: data.prazo_dias ?? null,
     };
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
     const row = data.id
       ? await prisma.solicitacaoTipo.update({ where: { id: data.id }, data: payload })
-      : await prisma.solicitacaoTipo.create({ data: payload });
+      : await prisma.solicitacaoTipo.create({ data: { ...payload, portalId } });
     return serializeTipo(row);
   });
 
@@ -175,11 +190,16 @@ export const swapCamposOrdem = createServerFn({ method: "POST" })
 
 /** Pública: qualquer pessoa pode abrir uma solicitação. */
 export const createSolicitacao = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => SolicitacaoInput.parse(data))
+  .inputValidator((data: unknown) =>
+    SolicitacaoInput.extend({ portal: z.string().max(60).optional() }).parse(data),
+  )
   .handler(async ({ data }) => {
     const { prisma } = await import("./db.server");
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
     const row = await prisma.solicitacao.create({
       data: {
+        portalId,
         tipoId: data.tipo_id ?? null,
         unidadeId: data.unidade_id ?? null,
         nomeSolicitante: data.nome_solicitante,
@@ -206,12 +226,16 @@ export const createSolicitacao = createServerFn({ method: "POST" })
 
 export const listSolicitacoes = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data: unknown) => PortalScope.parse(data ?? {}))
+  .handler(async ({ data, context }) => {
     const { assertEquipe } = await import("./authz.server");
     assertEquipe(context);
     const { prisma } = await import("./db.server");
     const { serializeSolicitacao } = await import("./prisma-helpers.server");
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
     const rows = await prisma.solicitacao.findMany({
+      where: { portalId },
       orderBy: { createdAt: "desc" },
       take: 1000,
     });
