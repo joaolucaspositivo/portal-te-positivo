@@ -34,9 +34,12 @@ Tudo com valores padrão já preenchidos, para o portal nunca nascer vazio.
 
 - **Administrador da plataforma**: aprova portais, gerencia todos.
 - **Administrador da plataforma**: também cadastra as unidades escolares e define quem é o administrador de cada unidade.
-- **Administrador de unidade**: gerencia tudo referente à sua unidade (dados da unidade, usuários vinculados, solicitações da unidade, conteúdos ligados a ela).
+- **Administrador de unidade (diretor da escola)**: enxerga e gerencia tudo da **sua unidade em todos os portais** — vê as solicitações de TE, CIPP e demais setores daquela escola, os usuários vinculados e os dados da unidade. Não enxerga nada de outras unidades.
+- **Coordenador de área**: papel dentro de um portal, limitado à sua unidade (ou às unidades a que está vinculado). Fica abaixo do diretor.
 - **Administrador do portal**: configura páginas, identidade e usuários do seu portal.
 - **Equipe / editor / usuário**: como hoje, mas por portal.
+
+Resumo do alcance: plataforma > unidade (diretor, transversal aos portais) > portal (admin do portal) > área/coordenação (portal + unidade) > usuário.
 
 ## Menus da área administrativa
 
@@ -46,7 +49,7 @@ Tudo com valores padrão já preenchidos, para o portal nunca nascer vazio.
 - **Minhas solicitações** — só as solicitações abertas pela pessoa logada (ou pela unidade dela, quando for administradora de unidade), separado de "Todas as solicitações".
 - **Solicitações** — visão completa, para equipe e administradores.
 - **Páginas** — edição das páginas públicas (Início, Sobre e demais textos públicos), com pré-visualização.
-- **Configurações** — identidade do portal (nome, sigla, logo, cores, contato), tipos de solicitação, unidades atendidas e demais ajustes.
+- **Configurações** — identidade do portal (nome, sigla, logo, cores, contato), tipos de solicitação, unidades atendidas, **notificações** e demais ajustes.
 - **Unidades** — visível ao administrador da plataforma (criar, ativar, desativar, definir administrador) e ao administrador de unidade (só a sua).
 - **Usuários** — como hoje, com permissões por portal e por unidade.
 
@@ -87,7 +90,10 @@ Criar a visão "Minhas solicitações" e a página de acompanhamento com linha d
 **Etapa 8 — Unidades sob a plataforma**
 Cadastro de unidades restrito ao administrador da plataforma, com designação do administrador de unidade e permissões derivadas desse vínculo.
 
-**Etapa 9 — Documentação**
+**Etapa 9 — Notificações**
+Tabelas de templates, notificações (evento + destinatários) e histórico de envio; aba "Notificações" em Configurações, com editor de template, seletor de variáveis, pré-visualização e escolha de destinatários por papel; disparo nos eventos de solicitação e de usuário; preferências pessoais no perfil.
+
+**Etapa 10 — Documentação**
 Atualizar o README: instalação continua a mesma; acrescentar como criar o primeiro portal e o primeiro administrador da plataforma.
 
 ## Detalhes técnicos
@@ -101,9 +107,22 @@ Atualizar o README: instalação continua a mesma; acrescentar como criar o prim
 - Novos modelos: `SolicitacaoEvento` (histórico de status/ações) e `SolicitacaoComentario` (com marcador de interno/público e autor), ambos ligados a `Solicitacao` e filtrados por portal.
 - `Unidade` ganha `adminUserId` (ou papel `admin_unidade` em `portal_membro` com escopo de unidade) e as consultas da área administrativa passam a filtrar por unidade quando o papel for de unidade.
 - Acesso público ao acompanhamento por token opaco de leitura enviado no e-mail de confirmação, sem expor dados de outras solicitações.
+- Escopo do diretor: o vínculo `usuario_unidades` ganha o papel `admin_unidade`; as consultas de solicitações aceitam o filtro "todas as unidades em que sou admin", independentemente do portal. Ou seja, a checagem de acesso passa a ser "papel no portal **ou** admin da unidade da solicitação".
 
-## Ponto em aberto
+## Notificações (inspirado no GLPI)
 
-Unidades passam a ser cadastradas só pelo administrador da plataforma e ficam compartilhadas entre os portais (mesma rede de escolas para todos os setores); cada portal escolhe quais atende.
+O GLPI separa três coisas: **evento** (o que aconteceu), **template** (o texto, com variáveis) e **destinatários** (quem recebe). Vamos adotar o mesmo desenho, simplificado.
 
-Falta definir um ponto: o administrador de unidade manda em **todos os portais** dentro da sua unidade (ex.: vê as solicitações de TE e de CIPP daquela escola) ou apenas dentro do portal em que atua? Isso muda o desenho das permissões da Etapa 3.
+- **Eventos do sistema**: nova solicitação, solicitação atribuída, mudança de status, novo comentário público, nota interna, prazo próximo/vencido, solicitação encerrada, novo usuário aguardando aprovação, usuário aprovado.
+- **Templates**: cada template tem assunto e corpo (editor de texto que já existe), com variáveis inseridas por um seletor — ex.: `{{solicitacao.titulo}}`, `{{solicitacao.status}}`, `{{solicitacao.link}}`, `{{unidade.nome}}`, `{{portal.nome}}`, `{{responsavel.nome}}`, `{{solicitante.nome}}`. Pré-visualização com dados de exemplo.
+- **Notificação = evento + template + destinatários + ativo/inativo**. Destinatários por papel, não por e-mail fixo: solicitante, responsável, equipe do portal, admin do portal, admin da unidade, coordenadores da área, além de e-mails avulsos.
+- **Herança e escopo**: a plataforma mantém templates padrão; cada portal pode sobrescrever; cada unidade pode ajustar destinatários e ligar/desligar eventos. Quem não personaliza usa o padrão — nada nasce vazio.
+- **Preferências pessoais**: cada usuário pode desligar notificações que o afetam diretamente, no perfil.
+- **Registro de envios**: histórico com evento, destinatário, status (enviado/falhou) e data, para diagnosticar entrega.
+- Envio pelo SMTP já configurado, em fila com repetição em caso de falha.
+- Preparado para outros canais no futuro (aviso interno no portal), sem implementá-los agora.
+
+## Decisões fechadas
+
+- Unidades são cadastradas só pelo administrador da plataforma e ficam compartilhadas entre os portais; cada portal escolhe quais atende.
+- O administrador de unidade (diretor) tem visão transversal: todos os portais, mas só da sua unidade.
