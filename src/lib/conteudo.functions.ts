@@ -8,19 +8,26 @@ import {
   ContatoInput,
 } from "./conteudo-schemas";
 
+/** Escopo de portal aceito por todas as funções de conteúdo. */
+const PortalScope = z.object({ portal: z.string().max(60).optional() });
+
 // ---------------------------------------------------------------- Ferramentas
 
-export const listFerramentasPublic = createServerFn({ method: "GET" }).handler(async () => {
+export const listFerramentasPublic = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => PortalScope.parse(data ?? {}))
+  .handler(async ({ data }) => {
   const { prisma } = await import("./db.server");
   const { serializeFerramenta } = await import("./prisma-helpers.server");
-  const rows = await prisma.ferramenta.findMany({ orderBy: { nome: "asc" } });
+  const { requirePortalId } = await import("./portal.server");
+  const portalId = await requirePortalId(data.portal);
+  const rows = await prisma.ferramenta.findMany({ where: { portalId }, orderBy: { nome: "asc" } });
   return rows.map(serializeFerramenta);
 });
 
 export const saveFerramenta = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator((data: unknown) =>
-    FerramentaInput.extend({ id: z.string().uuid().optional() }).parse(data),
+    FerramentaInput.extend({ id: z.string().uuid().optional(), portal: z.string().max(60).optional() }).parse(data),
   )
   .handler(async ({ data, context }) => {
     const { assertEditor } = await import("./authz.server");
@@ -38,15 +45,17 @@ export const saveFerramenta = createServerFn({ method: "POST" })
       imagemUrl: data.imagem_url ?? null,
       status: data.status ?? "Ativa",
     };
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
     const row = data.id
       ? await prisma.ferramenta.update({ where: { id: data.id }, data: payload })
-      : await prisma.ferramenta.create({ data: payload });
+      : await prisma.ferramenta.create({ data: { ...payload, portalId } });
     return serializeFerramenta(row);
   });
 
 export const deleteFerramenta = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), portal: z.string().max(60).optional() }).parse(data))
   .handler(async ({ data, context }) => {
     const { assertEditor } = await import("./authz.server");
     assertEditor(context);
@@ -57,11 +66,15 @@ export const deleteFerramenta = createServerFn({ method: "POST" })
 
 // ---------------------------------------------------------------- Comunicados
 
-export const listComunicadosPublic = createServerFn({ method: "GET" }).handler(async () => {
+export const listComunicadosPublic = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => PortalScope.parse(data ?? {}))
+  .handler(async ({ data }) => {
   const { prisma } = await import("./db.server");
   const { serializeComunicado } = await import("./prisma-helpers.server");
+  const { requirePortalId } = await import("./portal.server");
+  const portalId = await requirePortalId(data.portal);
   const rows = await prisma.comunicado.findMany({
-    where: { publicado: true },
+    where: { publicado: true, portalId },
     orderBy: { dataPublicacao: "desc" },
   });
   return rows.map(serializeComunicado);
@@ -69,19 +82,22 @@ export const listComunicadosPublic = createServerFn({ method: "GET" }).handler(a
 
 export const listComunicadosAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data: unknown) => PortalScope.parse(data ?? {}))
+  .handler(async ({ data, context }) => {
     const { assertEditor } = await import("./authz.server");
     assertEditor(context);
     const { prisma } = await import("./db.server");
     const { serializeComunicado } = await import("./prisma-helpers.server");
-    const rows = await prisma.comunicado.findMany({ orderBy: { dataPublicacao: "desc" } });
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
+    const rows = await prisma.comunicado.findMany({ where: { portalId }, orderBy: { dataPublicacao: "desc" } });
     return rows.map(serializeComunicado);
   });
 
 export const saveComunicado = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator((data: unknown) =>
-    ComunicadoInput.extend({ id: z.string().uuid().optional() }).parse(data),
+    ComunicadoInput.extend({ id: z.string().uuid().optional(), portal: z.string().max(60).optional() }).parse(data),
   )
   .handler(async ({ data, context }) => {
     const { assertEditor } = await import("./authz.server");
@@ -99,15 +115,17 @@ export const saveComunicado = createServerFn({ method: "POST" })
       destaque: data.destaque ?? false,
       publicado: data.publicado ?? true,
     };
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
     const row = data.id
       ? await prisma.comunicado.update({ where: { id: data.id }, data: payload })
-      : await prisma.comunicado.create({ data: payload });
+      : await prisma.comunicado.create({ data: { ...payload, portalId } });
     return serializeComunicado(row);
   });
 
 export const deleteComunicado = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), portal: z.string().max(60).optional() }).parse(data))
   .handler(async ({ data, context }) => {
     const { assertEditor } = await import("./authz.server");
     assertEditor(context);
@@ -119,12 +137,16 @@ export const deleteComunicado = createServerFn({ method: "POST" })
 // ------------------------------------------------------------------- Contatos
 
 /** Público: e-mail e telefone só aparecem para usuários autenticados. */
-export const listContatosPublic = createServerFn({ method: "GET" }).handler(async () => {
+export const listContatosPublic = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => PortalScope.parse(data ?? {}))
+  .handler(async ({ data }) => {
   const { prisma } = await import("./db.server");
   const { optionalUser } = await import("./authz.server");
+  const { requirePortalId } = await import("./portal.server");
+  const portalId = await requirePortalId(data.portal);
   const me = await optionalUser();
   const rows = await prisma.contato.findMany({
-    where: { ativo: true },
+    where: { ativo: true, portalId },
     orderBy: { nome: "asc" },
   });
   const userIds = rows.map((c) => c.userId).filter(Boolean) as string[];
@@ -150,19 +172,22 @@ export const listContatosPublic = createServerFn({ method: "GET" }).handler(asyn
 
 export const listContatosAdmin = createServerFn({ method: "GET" })
   .middleware([requireAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data: unknown) => PortalScope.parse(data ?? {}))
+  .handler(async ({ data, context }) => {
     const { assertEditor } = await import("./authz.server");
     assertEditor(context);
     const { prisma } = await import("./db.server");
     const { serializeContato } = await import("./prisma-helpers.server");
-    const rows = await prisma.contato.findMany({ orderBy: { nome: "asc" } });
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
+    const rows = await prisma.contato.findMany({ where: { portalId }, orderBy: { nome: "asc" } });
     return rows.map((c) => ({ ...serializeContato(c), user_id: c.userId }));
   });
 
 export const saveContato = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator((data: unknown) =>
-    ContatoInput.extend({ id: z.string().uuid().optional() }).parse(data),
+    ContatoInput.extend({ id: z.string().uuid().optional(), portal: z.string().max(60).optional() }).parse(data),
   )
   .handler(async ({ data, context }) => {
     const { assertEditor } = await import("./authz.server");
@@ -179,15 +204,17 @@ export const saveContato = createServerFn({ method: "POST" })
       ativo: data.ativo ?? true,
       userId: data.user_id ?? null,
     };
+    const { requirePortalId } = await import("./portal.server");
+    const portalId = await requirePortalId(data.portal);
     const row = data.id
       ? await prisma.contato.update({ where: { id: data.id }, data: payload })
-      : await prisma.contato.create({ data: payload });
+      : await prisma.contato.create({ data: { ...payload, portalId } });
     return serializeContato(row);
   });
 
 export const deleteContato = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), portal: z.string().max(60).optional() }).parse(data))
   .handler(async ({ data, context }) => {
     const { assertEditor } = await import("./authz.server");
     assertEditor(context);
