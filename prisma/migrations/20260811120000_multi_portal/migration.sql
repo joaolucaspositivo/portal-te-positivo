@@ -32,7 +32,7 @@ ALTER TABLE "usuario_unidades" DROP CONSTRAINT "usuario_unidades_unidade_id_fkey
 ALTER TABLE "usuario_unidades" DROP CONSTRAINT "usuario_unidades_user_id_fkey";
 
 -- DropIndex
-DROP INDEX "solicitacao_tipos_slug_key";
+ALTER TABLE "solicitacao_tipos" DROP CONSTRAINT "solicitacao_tipos_slug_key";
 
 -- AlterTable
 ALTER TABLE "comunicados" ADD COLUMN     "portal_id" UUID,
