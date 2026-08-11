@@ -33,8 +33,33 @@ Tudo com valores padrão já preenchidos, para o portal nunca nascer vazio.
 ## Papéis
 
 - **Administrador da plataforma**: aprova portais, gerencia todos.
+- **Administrador da plataforma**: também cadastra as unidades escolares e define quem é o administrador de cada unidade.
+- **Administrador de unidade**: gerencia tudo referente à sua unidade (dados da unidade, usuários vinculados, solicitações da unidade, conteúdos ligados a ela).
 - **Administrador do portal**: configura páginas, identidade e usuários do seu portal.
 - **Equipe / editor / usuário**: como hoje, mas por portal.
+
+## Menus da área administrativa
+
+Área do portal reorganizada em menus claros:
+
+- **Painel** — indicadores, como hoje.
+- **Minhas solicitações** — só as solicitações abertas pela pessoa logada (ou pela unidade dela, quando for administradora de unidade), separado de "Todas as solicitações".
+- **Solicitações** — visão completa, para equipe e administradores.
+- **Páginas** — edição das páginas públicas (Início, Sobre e demais textos públicos), com pré-visualização.
+- **Configurações** — identidade do portal (nome, sigla, logo, cores, contato), tipos de solicitação, unidades atendidas e demais ajustes.
+- **Unidades** — visível ao administrador da plataforma (criar, ativar, desativar, definir administrador) e ao administrador de unidade (só a sua).
+- **Usuários** — como hoje, com permissões por portal e por unidade.
+
+## Acompanhamento de solicitações
+
+Clicar em uma solicitação abre a página de acompanhamento, com:
+
+- Cabeçalho com título, tipo, unidade, urgência, status atual e responsável.
+- Linha do tempo do andamento: cada mudança de status e cada atualização ficam registradas com data e autor.
+- Comentários: mensagens públicas (visíveis ao solicitante, com aviso por e-mail) e notas internas (só equipe).
+- Anexos adicionais enviados depois da abertura.
+- Ações da equipe: mudar status, definir responsável, definir prazo, encerrar.
+- Link de acompanhamento para quem abriu sem estar logado, para consultar pelo e-mail recebido.
 
 ## Etapas de implementação
 
@@ -53,7 +78,16 @@ Página `/$portal/area/configuracoes` com abas Identidade, Página inicial e Pá
 **Etapa 5 — Vitrine e cadastro de portais**
 Página raiz com a lista de portais ativos, formulário público "Solicitar um portal" e painel do administrador da plataforma para aprovar, recusar, ativar e desativar.
 
-**Etapa 6 — Documentação**
+**Etapa 6 — Menu de Páginas e menus reorganizados**
+Separar "Páginas" (conteúdo público) de "Configurações" (identidade e ajustes) e reorganizar a navegação da área administrativa conforme a lista de menus acima.
+
+**Etapa 7 — Minhas solicitações e acompanhamento**
+Criar a visão "Minhas solicitações" e a página de acompanhamento com linha do tempo, comentários públicos, notas internas, anexos e ações da equipe. Inclui novas tabelas de histórico e de comentários, além de notificação por e-mail ao solicitante.
+
+**Etapa 8 — Unidades sob a plataforma**
+Cadastro de unidades restrito ao administrador da plataforma, com designação do administrador de unidade e permissões derivadas desse vínculo.
+
+**Etapa 9 — Documentação**
 Atualizar o README: instalação continua a mesma; acrescentar como criar o primeiro portal e o primeiro administrador da plataforma.
 
 ## Detalhes técnicos
@@ -64,7 +98,12 @@ Atualizar o README: instalação continua a mesma; acrescentar como criar o prim
 - Tema: cores do portal aplicadas como variáveis CSS no layout do portal, mantendo os tokens semânticos existentes — sem cores fixas nos componentes.
 - Configuração das páginas em colunas estruturadas/JSON validadas por Zod, com defaults no servidor para tolerar portais recém-criados.
 - Migrações Prisma com preenchimento (backfill) do portal TE antes de tornar `portalId` obrigatório.
+- Novos modelos: `SolicitacaoEvento` (histórico de status/ações) e `SolicitacaoComentario` (com marcador de interno/público e autor), ambos ligados a `Solicitacao` e filtrados por portal.
+- `Unidade` ganha `adminUserId` (ou papel `admin_unidade` em `portal_membro` com escopo de unidade) e as consultas da área administrativa passam a filtrar por unidade quando o papel for de unidade.
+- Acesso público ao acompanhamento por token opaco de leitura enviado no e-mail de confirmação, sem expor dados de outras solicitações.
 
 ## Ponto em aberto
 
-Unidades escolares hoje são globais. Sugiro mantê-las compartilhadas entre portais (mesma rede de escolas para todos os setores), com cada portal escolhendo quais atende. Se preferir unidades separadas por portal, ajusto a Etapa 1.
+Unidades passam a ser cadastradas só pelo administrador da plataforma e ficam compartilhadas entre os portais (mesma rede de escolas para todos os setores); cada portal escolhe quais atende.
+
+Falta definir um ponto: o administrador de unidade manda em **todos os portais** dentro da sua unidade (ex.: vê as solicitações de TE e de CIPP daquela escola) ou apenas dentro do portal em que atua? Isso muda o desenho das permissões da Etapa 3.
